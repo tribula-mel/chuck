@@ -1,0 +1,13 @@
+The idea behind the speed run is to maximize the score after the first 8
+levels are finished. The current max score achieved is 53000.
+
+The best times per level:
+
+1 - 896
+2 - 896
+3 - 893
+4 - 877
+5 - 878
+6 - 860
+7 - 845
+8 - 797

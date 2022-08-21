@@ -1,0 +1,910 @@
+-| chuck.bin
+-| Load address: 0x8000
+-| Exec address: 0x9a97
+-| Length:       0x233e
+
+-| 9aa0 call $bb4e - TXT Init
+   9aa3 call $bb6c - TXT Clear Window
+        call $8cb9 - drawing func ?
+        call $8ccd - drawing func ?
+   9aa9 Get  ready Player
+   9b79 GAME  OVER Player
+        call $9a79 - prints the text out ?
+   7a00 256 byte table for all players
+        each player has 64 bytes for various data, actual size per player
+        is 0x3a, the first byte in each 64 byte segment being number of lives,
+        the second byte being level number (0x0 = level 1), offset 4 (6 bytes)
+        is the 6 digit score, offset 0xa (3 bytes) is the first three digits
+        for the bonus (last 4th digit is always 0)
+        first player segment starts at 0x7a00, followed by 0x7a40, 0x7a80, and
+        0x7ac0 for all other players
+   7b00 current player data (copied to this location for a current player)
+      7b00 player number (0 .. 3)
+      7b01 current level (0 .. 7)
+      7b02 ?
+      7b03 number of levels on which platforms are drawn
+      7b04 number of ladders
+      7b05 elevator presence
+      7b06 number of seeds
+      7b07 number of ducks in the level
+   7b5c current player lives (starting number is 5)
+   7b60 current player score (5 bytes), multiplied by 10
+   7b66 current player bonus (3 bytes), the last fourth digit doesn't
+        change (always zero), so the three bytes are multiplied by 10
+   7b96 current player time (three bytes)
+   7b5d current player level
+
+-| routine $8c76 draws individual letter ($8cb8 ret)
+   hl = address in the screen buffer
+   b  = number of bytes per line (width)
+   c  = number of lines (height)
+   de = ?
+   ix = table address for the sprite (call $8c34 adjusts ix)
+
+-| $9d77 to start the game (the loop that starts the game play)
+   $9fbe to start the key definition
+
+-| title screen banner "CHUCKIE EGG" drawing starts at $9d7c (9d30 call $9d7c)
+   9d8a ld a,$31
+   9d8c ld d,$20
+   9d8e call $9dc3 - drawing big 'U' letter of the title screen
+                     each letter is 2 bytes per line, 30 lines in height
+
+-| the title loop
+   9d2d call $8bf5 - clears the overall screen
+   9d30 call $9d7c - title screen banner "CHUCKIE EGG"
+   9d33 call $a060 - prints high scores table
+   9d36 call $9dca - prints "Press S to start K to change keys"
+   9d39 ld b,$fa
+   9d3b call $9d58 - checks for 'S' and 'K' key presses, loops for
+                     $fa times by waiting for frame flyback ($bd19)
+   9d3e call $9e00 - draws the demo level, drives it for a bit
+   9d41 call $8bf5 - clears the overall screen
+   9d44 call $9d7c - title screen banner "CHUCKIE EGG" again
+   9d47 call $9e3f - prints current keys definitions
+   9d4a call $9dca - prints "Press S to start K to change keys"
+   9d4d ld b,$fa
+   9d4f call $9d58 - checks for 'S' and 'K' key presses, loops for
+                     $fa times by waiting for frame flyback ($bd19)
+   9d52 call $9e00 - draws another demo level, drives it for a bit
+   9d55 jp $9d2d   - loops back
+
+-| The below belongs to the level 27 (third level), bonus 1000, time 800
+   5 little ducks, 10 seeds, 12 eggs, 7 ladders (two long, two middle, three
+   short), cage, big duck, elevator (two platforms), chuck, 27 platforms
+   (all different lengths are composed of a single small one! )
+
+    "SCORE" with the colored background
+      bc $0309
+      de $0008
+      hl $c000
+      ix $84fc
+
+   "this does not seem to do any !?"
+      bc $0409
+      de $01a0
+      hl $c00d
+      ix $8517
+
+   '0'
+      bc $0107
+      de $0028
+      hl $c841
+      ix $84b6
+
+   '0'
+      bc $0107
+      de $0128
+      hl $c843
+      ix $84b6
+
+   "life sprite"
+      bc $0103
+      de $0102
+      hl $d090
+      ix $85ef
+
+      $85ef: 40 e0 00
+
+   "PLAYER " plus one spot for number, all in colored background
+      bc $0409
+      de $0008
+      hl $f850
+      ix $853b
+   '1'
+      bc $0107
+      de $0108
+      hl $c0ad
+      ix $84bd
+
+   "LEVEL " plus 3 positions for the level number (with colored background)
+      bc $0509
+      de $0008
+      hl $f862
+      ix $855f
+   '2'
+      bc $0107
+      de $0008
+      hl $c0c0
+      ix $84c4
+   '7'
+      bc $0107
+      de $0108
+      hl $c0c2
+      ix $84e7
+
+   '3'
+      bc $0107
+      ix $84cb
+   '4'
+      bc $0107
+      ix $84d2
+   '5'
+      bc $0107
+      ix $84d9
+   '6'
+      bc $0107
+      ix $84e0
+   '9'
+      bc $0107
+      ix $84f5
+
+   8dbe call $8cb9
+   "BONUS " plus 4 places for numbers with the colored background
+      bc $0609
+      de $0008
+      hl $f877
+      ix $858c
+   ...
+   8dca ld a,($7b67)
+   8dcd call $8e59
+   '0'
+      bc $0107
+      de $0108
+      hl $c0d5
+      ix $84b6
+
+   8de2 call $8cb9
+   "TIME " with 3 places for numbers with the colored background
+      bc $0509
+      de $0008
+      hl $f88f
+      ix $85c2
+
+   Time "800":
+   8dfd call $8e59
+   '8'
+      bc $0107
+      de $0108
+      hl $c0e8
+      ix $84ee
+   8e00 xor a
+   8e01 ld ($7b97),a
+   8e04 call $8e59
+   '0'
+      bc $0107
+      de $0008
+      hl $c0eb
+      ix $84b6
+   8e07 xor a
+   8e08 ld ($7b98),a
+   8e0b call $8e59
+   '0'
+      bc $0107
+      de $0108
+      hl $c0ed
+      ix $84b6
+
+   8ebd call $8ccd
+   "platform" (five lines, second and fourth are empty, very short, this is
+               a building block for all platform sizes)
+      bc $0108
+      de $0080
+      hl $c780 $c784 $c788 $c73c (overall $18 hl?)
+         $c740 $c79c $c7a0 $c7a4
+         ...
+      ix $8100
+
+      $8100: fb 00 bf 00 ef 00 00 00
+
+   8eec call $8ccd
+   "ladder" (looks like big 'H', different sizes of the ladders are
+             composed by using this basic shape)
+      bc $0108
+      de $0008
+      hl $c734 $c6e4 $c694 $c644 $c5f4 $c5a4 $c554 $c504 $c4b4
+         ... six more rows
+      ix $8108
+
+      $8108: 42 42 42 42 7e 42 42 42
+
+   8f2e call $8ccd
+   "egg"
+      bc $0108
+      de $0088
+      hl $c6f0 $c76c (ten more)
+      ix $8110
+
+      $8110: 00 38 6c 5e 7e 7c 38 00
+
+   8f58 call $8ccd
+   "seed"
+      bc $0108
+      de $00a0
+      hl $c738 (nine more)
+      ix $8118
+
+      $8118: 00 00 00 08 14 2a 55 00
+
+   8f73 call $8cb9
+   "cage"
+      bc $0330
+      de $0002
+      hl $c8f0
+      ix $830c
+
+      $830c: 00 38 00 00 44 00 00 44 00 00 44 00 00 38 00 00
+             10 00 00 fe 00 03 7d 80 0c d6 60 11 55 10 22 54
+             88 24 92 48 44 92 44 48 92 24 88 92 22 89 11 22
+             d1 11 16 b1 11 1a 99 11 32 97 11 d2 91 ff 12 91
+             11 12 91 11 12 91 11 12 91 11 12 91 11 12 91 11
+             12 91 11 12 91 11 12 d1 11 16 b1 11 1a 99 11 32
+             97 11 d2 91 ff 12 91 11 12 91 11 12 91 11 12 91
+             11 12 91 11 12 91 11 12 91 11 12 91 11 12 91 11
+             12 51 11 14 31 11 18 19 11 30 07 11 c0 00 fe 00
+
+   9e26 call $8bf2
+   ...
+      9099 call $8fe2
+   "duck"
+      bc $0114
+      de $0020
+      hl $dad8 $da04 $dde4 $de90 $dd70
+      ix $839c
+
+      facing right, straight legs
+      $839c: 0c 1b 1c 08 08 04 04 02 32 7b 7f 7f 7f 3e 18 10
+             10 10 10 18
+
+      facing right, spread legs
+      $83b0: 0d 1a 1d 08 08 04 04 02 32 7b 7f 7f 7f 3e 18 28
+             28 44 45 22
+
+      facing left, straight legs
+      $83c4: 30 d8 38 10 10 20 20 40 4c de fe fe fe 7c 18 08
+             08 08 08 18
+
+      facing left, spread legs
+      $83c4: b0 58 b8 10 10 20 20 40 4c de fe fe fe 7c 18 14
+             14 22 a2 44
+
+      from the back, left leg longer
+      $83ec: 18 3c 3c 3c 18 18 18 3c 7e 7e 7e 7e 7e 3c 3c 24
+             24 26 20 60
+
+      from the back, right leg longer (has additional byte !)
+      $83ec: 18 3c 3c 3c 18 18 18 3c 7e 7e 7e 7e 7e 3c 3c 24
+             24 64 04 04 06
+
+      facing right, stooping to get the seed
+      bc = $0214
+      de = $0020
+      ix = $8416
+      00 00 00 00 00 00 00 00 00 00 00 00 00 38 30 28
+      78 78 7c c4 7f 82 7f 80 3f 00 3f 00 1f 00 16 00
+      10 00 10 00 10 00 18 00
+
+      facing right, the seed is gone
+      bc = $0214
+      de = $0020
+      ix = $843e
+      00 00 00 00 00 00 00 00 00 00 00 00 00 00 30 00
+      78 00 7c 00 7e 00 7f f8 3f f4 3f 14 1f 08 16 08
+      10 08 10 00 10 00 18 00
+
+      facing left, stooping to get the seed
+      bc = $0214
+      de = $0020
+      ix = $8466
+      00 00 00 00 00 00 00 00 00 00 00 00 1c 00 14 0c
+      1e 1e 23 3e 43 fe 01 fe 00 fc 00 fc 00 f8 00 68
+      00 08 00 08 00 08 00 18
+
+      facing left, the seed is gone
+      bc = $0214
+      de = $0020
+      ix = $848e
+      00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0c
+      00 1e 00 3e 00 7e 1f fe 2f fc 28 fc 10 f8 10 68
+      10 08 00 08 00 08 00 18
+
+   90bd call $8ffd
+   "flying duck"
+      bc $0218
+      de $0002
+      hl $c992
+      ix $81bc
+
+   90d9 call $8cb9
+   "elevator"
+      bc $0204
+      de $0088
+      hl $df94
+      ix $8120
+         1f f8 1f f8 1b d8 11 88
+
+   90ea call $8cb9
+   "elevator"
+      bc $0204
+      de $0088
+      hl $ed14
+      ix $8120
+
+   9143 call $8c76
+   "chuck"
+      bc $0110
+      de $0002
+      hl $feae
+      ix $8128
+
+      chuck facing right, straight legs
+      $8128: 18 3c ff 34 3c 10 18 3c 6e 6e 6e 6e 3c 18 10 18
+
+      chuck facing right, spread legs, arm to the right
+      $8138: 18 3c ff 34 3c 10 18 3c 6e 6e 76 76 3c 38 4a 24
+
+      chuck facing right, spread legs, arm to the left
+      $8148: 18 3c ff 34 3c 10 18 3c 6e 6e 5e 5e 3c 38 4a 24
+
+      chuck facing left, straight legs
+      $8158: 18 3c ff 2c 3c 08 18 3c 76 76 76 76 3c 18 08 18
+
+      chuck facing left, spread legs, arm to the left
+      $8168: 18 3c ff 2c 3c 08 18 3c 76 76 6e 6e 3c 1c 52 24
+
+      chuck facing left, spread legs, arm to the right
+      $8178: 18 3c ff 2c 3c 08 18 3c 76 76 7a 7a 3c 1c 52 24
+
+      chuck from the back, both arms not visible
+      $8188: 18 3c ff 3c 3c 18 18 bd ff 7e 7e 7e 3c 24 24 66
+
+      chuck from the back, left arm down, right arm up (+2 bytes)
+      $8198: 18 3c ff 3c 3d 19 19 3d ff fe fe fe bc 3e 20 20
+             20 60
+
+      chuck from the back, left arm up, right arm down (+2 bytes)
+      $8198: 18 3c ff 3c bc 98 98 bc ff 7f 7f 7f 3d 7c 04 04
+             04 06
+
+   "elevator" only the outline, seems to be used for scrolling up
+      bc $0206
+      de $0088
+      hl $cf94 cf5c ff0c
+      ix $8796
+
+   "title letter C"
+      bc $021e
+      de $0002
+      hl $c001
+      ix $85f2
+
+   "title letter H"
+      bc $021e
+      de $0102
+      hl $c008
+      ix $862e
+
+   "title letter U"
+      bc $021e
+      de $0002
+      hl $c010
+      ix $866a
+
+   "title letter C"
+      bc $021e
+      de $0002
+      hl $c017
+      ix $85f2
+
+   "title letter K"
+      bc $021e
+      de $0002
+      hl $c01f
+      ix $86a6
+
+   "title letter I"
+      bc $021e
+      de $0102
+      hl $c026
+      ix $86e2
+
+   "title letter E"
+      bc $021e
+      de $0002
+      hl $c02e
+      ix $871e
+
+   "title letter E"
+      bc $021e
+      de $0002
+      hl $c039
+      ix $871e
+
+   "title letter G"
+      bc $021e
+      de $0102
+      hl $c040
+      ix $875a
+
+   "title letter G"
+      bc $021e
+      de $0002
+      hl $c048
+      ix $875a
+
+   "flying duck"
+      bc $0218
+      de $0002
+      ix $81ec
+
+      flying duck facing right, closed beak, wing down
+      $81bc: 00 70 00 f8 01 e8 01 ef 01 ff 01 f8 00 f0 00 e0
+             00 60 0e 70 1f 70 3f f8 7f f8 ff 78 ff b8 bf bc
+             bf bc df bc 6f 7c 76 fc 39 f8 1f f8 0f f0 03 e0
+
+      flying duck facing right, spread beak, wing up
+      $81ec: 00 70 00 f9 01 ea 01 ec 01 fc 01 fa 00 f1 00 e0
+             00 60 0e 70 1f 70 3f f8 71 f8 ee 78 df b8 bf fc
+             ff fc ff fc 7f fc 7f fc 3f f8 1f f8 0f f0 03 e0
+
+      flying duck facing left, closed beak, wing down
+      $821c: 0e 00 1f 00 17 80 f7 80 ff 80 1f 80 0f 00 07 00
+             06 00 0e 70 0e f8 1f fc 1f fe 1e ff 1d ff 3d fd
+             3d fd 3d fb 3e f6 3f 6e 1f 9c 1f f8 0f f0 07 c0
+
+      flying duck facing left, spread beak, wing up
+      $824c: 0e 00 9f 00 57 80 37 80 3f 80 5f 80 8f 00 07 00
+             06 00 0e 70 0e f8 1f fc 1f 8e 1e 77 1d fb 3f fd
+             3f ff 3f ff 3f fe 3f fe 1f fc 1f f8 0f f0 07 c0
+
+-| $a063 location for control codes and the text:
+         $1f move current cursor (x,y) position to ($5, $7)
+         $f set pen ink to $3
+         $e set paper ink to $0
+         "HIGH  SCORES"
+   $7900 high score table, ten high scores, each 16 bytes long (the score
+            takes 8 bytes, and the name 8 bytes as well)
+
+   $9dcd location for "Press S to start K to change keys" and control codes
+            for positioning of the text and color
+
+-| Watchpoints for different areas on the screen
+   $c8f0,$50 - for the cage
+   $c0a0,$50 - "PLAYER X", "LEVEL X", "BONUS X" and "TIME X" strings
+
+-| $8d2d clears the screen
+
+-| $7b46 <- bc ($0110)
+   $7b48 <- de ($0002)
+   $7b4a <- hl ($feae) (chuck sprite!!)
+   $7b4c <- ix ($8128)
+   (current position for the chuck) ?
+   call $8c76
+
+-| current break points
+   8c76
+   8cb8
+   9d2d
+   9d52
+   9e29
+
+-| for the game loop $9d77 is relevant
+   stack is loaded from $7ba4
+   the starting address is then 9a9d
+
+   9a9d call $9cb5
+      prints "How many players? " and waits for the input
+   9aa0 call $bb4e
+   9aa3 call $bb6c - clears the screen
+   9aa9 call $95d4 - prints "Get  ready Player "
+   9acb ld a,($7b00)
+      current player number (0, 1, 2 or 3)
+   9ace add a,$31
+   9ad0 call $bb5a
+      prints player number on the screen
+   9ad3 ld b,$96
+   9ad5 call $9d1c
+      loops $96 times waiting for the framefly back signal
+   9ad8 call $95b6
+   9adb call $8bef
+      draws the level
+   9ade call $8bf2
+      draws the flying duck, chuck, and adjust number of lives if one lost
+         in the previous round
+   9ae1 call $8bec
+      tests for 'H' and "H+ESC" key presses
+      tests for left, right, up, down and jump key presses
+      $7b56 is updated accordingly (low significant bits are set
+         if the key press is detected); $80 is for "H+ESC"
+      $7b57 right key
+      $7b58 left key
+      $7b59 down key
+      $7b5a up key
+      $7b5b jump key
+      call $91b8
+         inputs: 'a' (key to test), 'e' (mask to set if the key is pressed)
+         output: 'd' (set to mask in 'e' if the is pressed)
+         does the key test and adjusts register d accordingly
+   9ae4 call $8be9
+      takes into account chuck position and $7b56 content and does some
+   9ae7 call $a22e
+      some to do with sound ?
+   9aea call $95cb
+   9aed call nz,$a2ad
+   9af0 call $9c4b
+   9af3 ld a,($7b69)
+      this is where the number of eggs is stored
+   9af6 or a
+   9af7 jp z,$9b1a
+   9afa call $95c2
+      updates the elevator if present in the level
+   9afd call $95c5
+      updates all duck locations and time/bonus as well
+   9b00 ld a,($7ba7)
+   9b03 ld b,a
+   9b04 ld a,($7b56)
+   9b07 or b
+   9b08 jp m,$9a9a
+      if "H+ESC" is pressed go back to the title loop
+   9b0b cp $7f
+   9b0d jr z,$9b42
+   9b0f call $9bc6
+      collision check
+   9b12 jr c,$9b55
+      if carry is set then collision is detected
+      number of lives is decremented by 1 and if reaches 0
+      the game is over
+   9b14 call $95d7
+      busy wait (time out) for 9 ticks out of 300 ticks/sec
+      this amounts to 30 msec
+   9b17 jp $9ae1
+
+-| collision check
+   first checks y position as per below
+   then time ($7b96, three bytes)
+   number of ducks is stored at $7b07
+   duck table starts at $7b0e, each duck is presented with 8 bytes
+      first two bytes (offsets 0/1) are (x, y) coordinates for the duck
+      third and fourth are used to calculate (x, y):
+         x = (offset $2) * 8
+         y = (offset $3) * 8 + $14
+         these offsets are referenced in the platform tiles
+            one full line of the platforms fits $14 (20) base platforms
+            so x corresponds to the base platform that the characters is
+               standing on ($0 .. $13)
+            each base platform is 7 lines in height, the top and bottom
+               lines being empty
+            so y starts at $1 and increases by $1 as the base platforms
+               are added on top of each other
+      fifth byte (offset $04) alternating index
+         usually changes state 0->1 / 1->0 on every sprite update
+         $00 straight legs when moving right/left
+         $01 spread legs when moving left/right
+         $02 transitory state that happens only when a duck runs into
+             a seed; the duck is then cleared and this state marks
+             a beginning of states $04/$08/$10
+         $04 stooping down mid position
+         $08 stooping down bottom position
+         $10 stooping down back to mid position
+         so this one seems to have some with the duck updates
+            but also with limiting ducks movements; without updating
+            it duck are moving in straight lines
+      sixth byte (offset $05) ?
+         actually this one seems to have something with duck
+            updates (spreading legs, changing sprite for left/right)
+      seventh byte (offset $06) duck state (going left/rigt/up/down)
+         $1 going left
+         $4 going up
+         $2 going right
+         $8 going down
+      eight byte (offset $07) unused
+   call $8be3 - takes A reg as an input (duck number), returns
+                IY register pointing to the selected duck memory area
+                from the $7b0e table
+                A reg starts from zero
+   all duck positions are compared to chuck's position
+   $7b52 carries 1 if the flying duck can get out of the cage
+      if 1 then its position ($7b4e == x, $7b4f == y) is checked against
+      chuck's position
+
+-| when level 9 is about to start
+   95f3 inc c
+   95f4 ld a, c
+   95f5 ld ($7b52), a # flying duck is free !
+
+   905c ld a, $00 # no ducks
+   905e ld ($7b07), a
+
+-| chuck position
+   7b36 x
+   7b37 y
+   coordinate origin as at the left bottom (0, 0)
+   resolution is 160x200
+
+   if y position is below $14 the game is over
+   if y position is equal or above $b0 the game is over
+
+-| call $a2c4
+   plays the "life lost" tunes ?
+
+-| call $8c0a
+   inputs:
+      de = (x, y) coordinates
+   translates (x, y) into the screen address
+
+-| call $8c34
+   inputs:
+     a = index into table at $8000
+        this index is stored at $5 offset in the table at $7b36
+           this seems to be required sprite
+   translates the index into required sprite address in memory
+   it seems that $8000 table is referenced two times during this
+      process, first the index in 'a' reg is used to get an index
+      from the $8000 table, then this new index is used to get
+      the actual sprite address again from $8000 table
+
+-| call $914a
+   uses $7b00 and $7b5c (number of lives) to do some with it
+
+-| 9813 ld (iy+$05), a
+   9816 ld (iy+$02), d
+
+   look at this
+
+-| 7b38, 7b39 ?
+   7b3e, 7b3f ?
+   7b3a ?
+
+-| 9c9c contains ".,za[space]" default keys for right/left/down/up/jump
+
+-| flying duck
+   7b53 current sprite 
+
+-| elevator
+   7b05 set to 0 if not available in the level
+
+-| call $8fc0
+   hl = ($3e0 + d) * 32 + e
+
+-| call $9983
+   access the frame buffer memory
+   does some xor-ing
+   calls routine at $8c76 that does the actual work
+
+-| call $8c76 (draws on the screen)
+   input: hl (frame buffer address at which do draw)
+   input: de (d=0 ; e = colour)
+   input: ix (sprite table of what to draw)
+   input: bc (b = width of the sprite ; c = height of the sprite)
+
+   each byte in the sprite table holds 8 pixels to draw
+   each byte is processed as follows
+      the content is shifted left through carry flag
+      if carry is set then a byte is read from the frame buffer
+         and xored with e reg, and the result is written back to the
+         frame buffer
+      d reg is incremented
+      if d is odd then e is shifted left and frame buffer pointer
+         is increased by 1
+      if d is even then e is shifted right and frame buffer pointer
+         is unchanged; this ensures that two pixels with same colours
+         are written to the same frame buffer position, since in mode 0
+         two pixels are represented in one byte
+   sprite is drawn left to right, then top to bottom first
+   mode 0 colour is pattern is:
+      p0(0) p1(0) p0(2) p1(2) p0(1) p1(1) p0(3) p1(3)
+      where p0 is the left pixel and the p1 is right one
+      the above pattern clearly shows the need for right shifting
+         of the colour in reg e for setting of the p1 colour bits
+
+-| 7b9b increments by 1 per each game loop execution
+   if it reaches 8 it is reset to 0 and the flying duck is updated
+   if it reaches 4 time update
+
+-| 7b07 number of ducks in the current level
+   7b9c this value is decremented by 1; if below 0 it is loaded with
+        the value at address 7b0d
+   7b0d default value (8) for 7b9c
+        this seems to be max number of ducks, though i don't think
+           that any level has 8 ducks
+
+-| 96e1 code starting at this address does a duck update
+        only one duck is updated per game loop
+        the number at 7b9c is used to determine which duck is updated
+   985a code starting at this address does the flying duck update
+   98f3 code starting at this address does the time update
+        if the last digit equals 0 then the bonus is updated as well
+   9946 code starting at this address does the bonus update
+
+-| contain the time (three bytes)
+   7b96
+   7b97
+   7b98
+
+-| contains the bonus (three bytes)
+   7b66
+   7b67
+   7b68
+
+-| call $8c34
+   this seems to be choosing a sprite from the table
+   setc ix and bc
+   'a' seems to be an index into $8000 table
+   hl = $8000 + a*2
+   ld a,(hl)
+   add a,$07
+   a = a/8
+   b = a
+   inc hl
+   ld c,(hl)
+   push bc
+   inc hl
+   ld c,(hl)
+   inc hl
+   ld b,(hl)
+   ld hl,$8000
+   add hl,bc
+   push hl
+   pop ix
+      setx ix to the final computation
+
+-| $0911 - level 1 - top right position of the duck on the top most level
+-| $1301 - level 1 - bottom right position of the duck on the bottom most level
+-| $0001 - level 1 - bottom left position of the duck on the bottom most level
+   it seems that offset y starts at 1 and increases by 4
+      so if 5 platforms the first is at 1, then 5, 9, $d and $11
+
+-| call $8bfe
+   input: reg de (contains the duck offset)
+   output: reg a
+   checks for a duck boundary positions
+      x offset goes to $14
+      y offset goes to $19
+   also consults a table to get the content of reg a (by a call $8fc0)
+      hl = ($3e0 + reg d) * $20 + reg e
+      a = (hl)
+   this table represent the level configuration
+   zero output means that duck can't go in that direction (no platform
+      block in front)
+
+-| call $8fc0
+   input: d carries duck's x offset
+   input: e carries duck's y offset
+   output: a from the table at $7c00
+   calc starts at hl=$3e0
+   hl = 32 * (hl + d) + e
+   a = (hl)
+ 
+   if de = $0 then we would have $7c00
+   if de = $10 then we would have $7c00
+     if two above are true then we have a table starting
+        at $7c00 with 32 byte long elements, x offset
+        determining the element, while y offset determines
+        a specific byte within the element
+
+-| 9813 fd 77 05
+   980f fd 77 04
+   8ebd cd cd 8c
+
+-| call $8c0a
+   input: de (contains x/y coordinates)
+   output: hl
+   address in the frame buffer corresponding to x/y
+
+-| call $8c5b
+   input: a
+   table $8c66
+   returns colour in e ?
+
+-| call $8c34
+   input: a (value is directly based on the offset $5 from the duck table)
+   table $8000
+   output: bc
+   output: ix
+   returns sprite address (ix) and width/height (bc)
+
+-| $97b0 erases the current selected duck
+
+-| it seems that the duck decision (where to move next) is executed only
+   if the duck is standing with straight legs or if on ladder with the left
+   foot stretched; in this case the code at $96f9 is executed; this state
+   corresponds to offset $4 in the duck table being equal to $0; in the case
+   of $1 then code at $97ae is executed and in all other cases code at $9784
+
+-| it seems that as platforms are being drawn, after each platform is put
+   in the frame buffer, the table starting at $7c00 is being created; for
+   this de reg is used to index the table (starts at $0 for the first
+   platform block); $1 means there is a platform block on the location;
+   the platform block to the right is represented on the location +$20,
+   so we have $7c00/$7c20/$7c40/../$7e60; then next level goes like
+   $7c01/$7c21/$7c31/../$7e61;
+      $2 means ladder block
+      $3 means ladder block that is overlapping with the platform block
+      $4/14/24/34/44/54/64/74/84/94/a4/b4 eggs
+      $8/18/28/38/48/58/68/78/88/98/a8/b8 seeds
+
+   table $87a2
+      carries 2 byte pointers, 8 overall (for each level), that point to
+         memory blocks that define particular level
+      index into this table is stored at $7b01
+
+   level data blob
+      offset $0 number of levels on which platforms are drawn
+             $1 number of ladders
+             $2 elevator presence
+             $3 number of seeds
+             $4 number of ducks in the level
+             $5 offset y (starting point for the first platform)
+             $6 offset x (starting point for the first platform)
+             $7 ending offset x (where to stop drawing) including
+             offsets $5/6/7 repeat ($0) number of times
+             offset $l offset x (starting point for the first ladder)
+             offset $(l+1) offset y (starting point for the first ladder)
+             offset $(l+2) ending offset y (where to stop drawing) including
+             the above three repeat ($1) times
+             offset $el used/present if elevator is enabled; otherwise omitted
+             offset $egg offset x
+             offset $(egg+1) offset y
+             the above two repeat $c times
+                there is a table that is checked first and if allowed
+                   egg is put on the screen, otherwise discarded
+                code for drawing eggs starts at $8f0c; it uses table at
+                   $7b6a to determine if egg should be put on the screen
+             offset $seed offset x
+             offset $(seed+1) offset y
+             the above two repeat ($3) times
+                there is a table that is checked first and if allowed
+                   seed is put on the screen, otherwise discarded
+             offset $duck offset x starting point
+             offset $(duck+1) offset y
+             the above two repeat 5 times and the duck table starting
+                at $7b0e is initialized
+
+-| $8d1d colour table ($10 bytes)
+   initial screen is drawn with all inks being black
+   then as the ending step $bc32 is called and all $10 inks are set
+      accordingly, and suddenly boom the screen is on !
+   8d13 call $bc32
+
+-| bit 3 if set ladder down is available
+   bit 2 if set ladder up is available
+   bit 1 if set platform to the right is available
+   bit 0 if set platform to the left is available
+
+   the above 4 bits are contained in the c reg
+   call $984c
+      input c reg
+      output a number of possible next moves
+
+   $9736 only one move
+   $973a many moves possible
+         filters out impossible next move; for example if the duck is going
+            up it can't got down again; if going right it can't move left
+   $9746 filtering ends
+   $9747 again next possible moves are calculated
+   $974c if more than 2 moves are possible jump to $9752
+         otherwise jump to $9760
+   $9752 ld b,c # b is input for $9a5c call
+   $9753 call $9a5c # movement randomiser
+            uses 4 bytes at $7ba0 to return a random value in reg a
+         this is repeated until possible moves equal to 1
+         $7ba0..3 locations are initialized to $76 with code at $9615
+   $9760 next move is stored in reg a
+   $9761 and $03
+   $9763 if no moving left or right jump to $97ae
+   $9765 and $01
+   $9767 if zero we are moving right so jump to $9772
+   $977a check if the position to the right contains a seed, if not jump
+         to $97ae
+   $97b0 clear the current duck sprite on the screen
+   $97b6 check if the duck ran into the seed; if so jump to $9823
