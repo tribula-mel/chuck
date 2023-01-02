@@ -25,6 +25,15 @@ static const uint8_t scale = 3;
 static const uint16_t x_res = 160;
 static const uint16_t y_res = 200;
 
+typedef enum {
+   pastel_yellow = 0x02,
+   bright_magenta = 0x08,
+   pastel_cyan = 0x20,
+   green = 0x80,
+   bright_white = 0x88,
+   bright_red = 0xa0,
+} colour_t;
+
 typedef struct __offset
 {
    uint8_t x;
@@ -48,6 +57,7 @@ typedef struct __level
    uint8_t n_platforms;
    uint8_t n_ladders;
    bool elevator;
+   uint8_t n_eggs;
    uint8_t n_seeds;
    uint8_t n_ducks;
    platform_offset_t platform_offsets[MAX_N_PLATFORMS];
@@ -62,6 +72,7 @@ static level_t level_classic_one =
    .n_platforms      = 0x0d,
    .n_ladders        = 0x04,
    .elevator         = false,
+   .n_eggs           = 0x0c,
    .n_seeds          = 0x0a,
    .n_ducks          = 0x02,
    .platform_offsets =
@@ -377,7 +388,7 @@ static sprite_t platform =
 {
    .width  = 0x01,
    .height = 0x08,
-   .colour = 0x80, // TODO define the colour
+   .colour = 0x80,
    // 8x8 pixels
    .sprite =
       {
@@ -396,7 +407,7 @@ static sprite_t ladder =
 {
    .width  = 0x01,
    .height = 0x08,
-   .colour = 0x08, // TODO define the colour
+   .colour = 0x08,
    // 8x8 pixels
    .sprite =
       {
@@ -415,7 +426,7 @@ static sprite_t egg =
 {
    .width  = 0x01,
    .height = 0x08,
-   .colour = 0x88, // TODO define the colour
+   .colour = 0x88,
    // 8x8 pixels
    .sprite =
       {
@@ -434,7 +445,7 @@ static sprite_t cage =
 {
    .width  = 0x03,
    .height = 0x30,
-   .colour = 0x02, // TODO define the colour
+   .colour = 0x02,
    // 24x48 pixels
    .sprite =
       {
@@ -493,7 +504,7 @@ static sprite_t seed =
 {
    .width  = 0x01,
    .height = 0x08,
-   .colour = 0xa0, // TODO define the colour
+   .colour = 0xa0,
    // 8x8 pixels
    .sprite =
       {
@@ -513,7 +524,7 @@ static sprite_t duck_r =
 {
    .width  = 0x01,
    .height = 0x14,
-   .colour = 0x20, // TODO define the colour
+   .colour = 0x20,
    // 8x20 pixels
    .sprite =
       {
@@ -545,7 +556,7 @@ static sprite_t duck_rs =
 {
    .width  = 0x01,
    .height = 0x14,
-   .colour = 0x20, // TODO define the colour
+   .colour = 0x20,
    // 8x20 pixels
    .sprite =
       {
@@ -577,7 +588,7 @@ static sprite_t duck_l =
 {
    .width  = 0x01,
    .height = 0x14,
-   .colour = 0x20, // TODO define the colour
+   .colour = 0x20,
    // 8x20 pixels
    .sprite =
       {
@@ -609,7 +620,7 @@ static sprite_t duck_ls =
 {
    .width  = 0x01,
    .height = 0x14,
-   .colour = 0x20, // TODO define the colour
+   .colour = 0x20,
    // 8x20 pixels
    .sprite =
       {
@@ -641,7 +652,7 @@ static sprite_t duck_bll =
 {
    .width  = 0x01,
    .height = 0x14,
-   .colour = 0x20, // TODO define the colour
+   .colour = 0x20,
    // 8x20 pixels
    .sprite =
       {
@@ -673,7 +684,7 @@ static sprite_t duck_brl =
 {
    .width  = 0x01,
    .height = 0x15,
-   .colour = 0x20, // TODO define the colour
+   .colour = 0x20,
    // 8x21 pixels
    .sprite =
       {
@@ -706,7 +717,7 @@ static sprite_t duck_rbs =
 {
    .width  = 0x02,
    .height = 0x14,
-   .colour = 0x20, // TODO define the colour
+   .colour = 0x20,
    // 16x20 pixels
    .sprite =
       {
@@ -738,7 +749,7 @@ static sprite_t duck_res =
 {
    .width  = 0x02,
    .height = 0x14,
-   .colour = 0x20, // TODO define the colour
+   .colour = 0x20,
    // 16x20 pixels
    .sprite =
       {
@@ -770,7 +781,7 @@ static sprite_t duck_lbs =
 {
    .width  = 0x02,
    .height = 0x14,
-   .colour = 0x20, // TODO define the colour
+   .colour = 0x20,
    // 16x20 pixels
    .sprite =
       {
@@ -802,7 +813,7 @@ static sprite_t duck_les =
 {
    .width  = 0x02,
    .height = 0x14,
-   .colour = 0x20, // TODO define the colour
+   .colour = 0x20,
    // 16x20 pixels
    .sprite =
       {
@@ -834,7 +845,7 @@ static sprite_t chuck_r =
 {
    .width  = 0x01,
    .height = 0x10,
-   .colour = 0x02, // TODO define the colour
+   .colour = 0x02,
    // 8x16 pixels
    .sprite =
       {
@@ -862,7 +873,7 @@ static sprite_t chuck_rslar =
 {
    .width  = 0x01,
    .height = 0x10,
-   .colour = 0x02, // TODO define the colour
+   .colour = 0x02,
    // 8x16 pixels
    .sprite =
       {
@@ -890,7 +901,7 @@ static sprite_t chuck_rslal =
 {
    .width  = 0x01,
    .height = 0x10,
-   .colour = 0x02, // TODO define the colour
+   .colour = 0x02,
    // 8x16 pixels
    .sprite =
       {
@@ -918,7 +929,7 @@ static sprite_t chuck_l =
 {
    .width  = 0x01,
    .height = 0x10,
-   .colour = 0x02, // TODO define the colour
+   .colour = 0x02,
    // 8x16 pixels
    .sprite =
       {
@@ -946,7 +957,7 @@ static sprite_t chuck_lslal =
 {
    .width  = 0x01,
    .height = 0x10,
-   .colour = 0x02, // TODO define the colour
+   .colour = 0x02,
    // 8x16 pixels
    .sprite =
       {
@@ -974,7 +985,7 @@ static sprite_t chuck_lslar =
 {
    .width  = 0x01,
    .height = 0x10,
-   .colour = 0x02, // TODO define the colour
+   .colour = 0x02,
    // 8x16 pixels
    .sprite =
       {
@@ -1002,7 +1013,7 @@ static sprite_t chuck_b =
 {
    .width  = 0x01,
    .height = 0x10,
-   .colour = 0x02, // TODO define the colour
+   .colour = 0x02,
    // 8x16 pixels
    .sprite =
       {
@@ -1030,7 +1041,7 @@ static sprite_t chuck_bldru =
 {
    .width  = 0x01,
    .height = 0x12,
-   .colour = 0x02, // TODO define the colour
+   .colour = 0x02,
    // 8x18 pixels
    .sprite =
       {
@@ -1060,7 +1071,7 @@ static sprite_t chuck_blurd =
 {
    .width  = 0x01,
    .height = 0x12,
-   .colour = 0x02, // TODO define the colour
+   .colour = 0x02,
    // 8x18 pixels
    .sprite =
       {
@@ -1090,7 +1101,7 @@ static sprite_t flying_duck_rcbwd =
 {
    .width  = 0x02,
    .height = 0x18,
-   .colour = 0x02, // TODO define the colour
+   .colour = 0x02,
    // 16x24 pixels
    .sprite =
       {
@@ -1126,7 +1137,7 @@ static sprite_t flying_duck_rsbwu =
 {
    .width  = 0x02,
    .height = 0x18,
-   .colour = 0x02, // TODO define the colour
+   .colour = 0x02,
    // 16x24 pixels
    .sprite =
       {
@@ -1162,7 +1173,7 @@ static sprite_t flying_duck_lcbwd =
 {
    .width  = 0x02,
    .height = 0x18,
-   .colour = 0x02, // TODO define the colour
+   .colour = 0x02,
    // 16x24 pixels
    .sprite =
       {
@@ -1198,7 +1209,7 @@ static sprite_t flying_duck_lsbwu =
 {
    .width  = 0x02,
    .height = 0x18,
-   .colour = 0x02, // TODO define the colour
+   .colour = 0x02,
    // 16x24 pixels
    .sprite =
       {
@@ -1234,7 +1245,7 @@ static sprite_t elevator =
 {
    .width  = 0x02,
    .height = 0x04,
-   .colour = 0x88, // TODO define the colour
+   .colour = 0x88,
    // 16x4 pixels
    .sprite =
       {
@@ -1245,14 +1256,182 @@ static sprite_t elevator =
       }
 };
 
+/* chuck x offset to sdl */
+static uint16_t x_convert_to_sdl (uint8_t offset)
+{
+   // 8 pixels per chuck x offset
+   return (8 * scale * offset);
+}
+
+/* chuck y offset to sdl */
+static uint16_t y_convert_to_sdl (uint8_t offset)
+{
+   // 8 pixels per chuck y offset
+   // plus difference between top and bottom left
+   // plus we need to make a room for the sprite
+   return ((scale * y_res) - (8 * scale * (offset + 1)) + 1);
+}
+
+static int set_colour (SDL_Renderer *renderer, colour_t colour)
+{
+   switch (colour)
+   {
+      case pastel_yellow:
+         SDL_SetRenderDrawColor (renderer, 0xff, 0xff, 0x80, 0x00);
+         break;
+      case bright_magenta:
+         SDL_SetRenderDrawColor (renderer, 0xff, 0x00, 0xff, 0x00);
+         break;
+      case pastel_cyan:
+         SDL_SetRenderDrawColor (renderer, 0x80, 0xff, 0xff, 0x00);
+         break;
+      case green:
+         SDL_SetRenderDrawColor (renderer, 0x00, 0x80, 0x00, 0x00);
+         break;
+      case bright_white:
+         SDL_SetRenderDrawColor (renderer, 0xff, 0xff, 0xff, 0x00);
+         break;
+      case bright_red:
+         SDL_SetRenderDrawColor (renderer, 0xff, 0x00, 0x00, 0x00);
+         break;
+      default:
+         // black
+         SDL_SetRenderDrawColor (renderer, 0x00, 0x00, 0x00, 0x00);
+   }
+
+   return 0;
+}
+
+static int draw_element (SDL_Renderer *renderer, sprite_t *element,
+                         uint16_t x, uint16_t y)
+{
+   SDL_Rect rect;
+   uint16_t i = 0, j = 0, k = 0;
+   uint16_t index = 0;
+   uint16_t x_backup = x;
+   uint8_t mask = 0x80;
+
+   for (i = 0; i < element->height; i++)
+   {
+      for (j = 0; j < element->width; j++)
+      {
+         for (k = 0; k < 8; k++)
+         {
+            if (element->sprite[index] & mask)
+            {
+               //SDL_RenderDrawPoint (renderer, x, y);
+               rect.x = x;
+               rect.y = y;
+               rect.w = scale;
+               rect.h = scale;
+               SDL_RenderFillRect (renderer, &rect);
+            }
+
+            x += scale;
+            mask = mask >> 1;
+         }
+
+         mask = 0x80;
+         index++;
+      }
+
+      x = x_backup;
+      y += scale;
+   }
+
+   return 0;
+}
+
+static int draw_platform (SDL_Renderer *renderer, uint16_t x,
+                          uint16_t y, uint8_t w)
+{
+   int i = 0;
+
+   set_colour (renderer, platform.colour);
+
+   for (i = 0; i < w; i++)
+   {
+      draw_element (renderer, &platform, x, y);
+      x += (8 * scale);
+   }
+
+   return 0;
+}
+
+static int draw_ladder (SDL_Renderer *renderer, uint16_t x,
+                        uint16_t y, uint8_t h)
+{
+   int i = 0;
+
+   set_colour (renderer, ladder.colour);
+
+   for (i = 0; i < h; i++)
+   {
+      draw_element (renderer, &ladder, x, y);
+      y -= (8 * scale);
+   }
+
+   return 0;
+}
+
+static int draw_level (SDL_Renderer *renderer, uint8_t level_number)
+{
+   uint16_t x = 0;
+   uint16_t y = 0;
+   uint8_t n = 0;
+   uint8_t i = 0;
+
+   // draw platforms first
+   for (i = 0; i < level_classic_one.n_platforms; i++)
+   {
+      x = x_convert_to_sdl (level_classic_one.platform_offsets[i].offset.x);
+      y = y_convert_to_sdl (level_classic_one.platform_offsets[i].offset.y);
+      n = level_classic_one.platform_offsets[i].offset_x_end -
+          level_classic_one.platform_offsets[i].offset.x + 1;
+      draw_platform (renderer, x, y, n);
+   }
+
+   // next draw ladders
+   for (i = 0; i < level_classic_one.n_ladders; i++)
+   {
+      x = x_convert_to_sdl (level_classic_one.ladder_offsets[i].offset.x);
+      y = y_convert_to_sdl (level_classic_one.ladder_offsets[i].offset.y);
+      n = level_classic_one.ladder_offsets[i].offset_y_end -
+          level_classic_one.ladder_offsets[i].offset.y + 1;
+      draw_ladder (renderer, x, y, n);
+   }
+
+   // next draw eggs
+   for (i = 0; i < level_classic_one.n_eggs; i++)
+   {
+      x = x_convert_to_sdl (level_classic_one.egg_offsets[i].x);
+      y = y_convert_to_sdl (level_classic_one.egg_offsets[i].y);
+      set_colour (renderer, egg.colour);
+      draw_element (renderer, &egg, x, y);
+   }
+
+   // next draw seeds
+   for (i = 0; i < level_classic_one.n_seeds; i++)
+   {
+      x = x_convert_to_sdl (level_classic_one.seed_offsets[i].x);
+      y = y_convert_to_sdl (level_classic_one.seed_offsets[i].y);
+      set_colour (renderer, seed.colour);
+      draw_element (renderer, &seed, x, y);
+   }
+
+   // next draw cage
+   //    TODO: define cage offset
+
+   return 0;
+}
+
 int main (void)
 {
    SDL_Window *win = NULL;
    SDL_Renderer *renderer = NULL;
    SDL_Texture *texture = NULL;
-   int posX = 100, posY = 100, width = x_res * scale, height = y_res * scale;
+   int width = x_res * scale, height = y_res * scale;
    SDL_bool loopShouldStop = SDL_FALSE;
-   SDL_Rect rect;
 
    if (-1 == SDL_Init (SDL_INIT_VIDEO | SDL_INIT_AUDIO))
    {
@@ -1260,17 +1439,18 @@ int main (void)
 		exit (EXIT_FAILURE);
    }
 
-   win = SDL_CreateWindow ("Chuckie Egg", posX, posY, width, height, 0);
+   win = SDL_CreateWindow ("Chuckie Egg", SDL_WINDOWPOS_UNDEFINED,
+                           SDL_WINDOWPOS_UNDEFINED, width, height, 0);
 
    renderer = SDL_CreateRenderer (win, -1, SDL_RENDERER_ACCELERATED);
 
    texture = SDL_CreateTexture (renderer, SDL_PIXELFORMAT_RGBA8888,
                                 SDL_TEXTUREACCESS_TARGET, width, height);
 
-   rect.x = 0;
-   rect.y = 0;
-   rect.w = 32;
-   rect.h = 32;
+   draw_level (renderer, 1);
+
+   // show it in the window
+   SDL_RenderPresent (renderer);
 
    while (!loopShouldStop)
    {
@@ -1284,30 +1464,6 @@ int main (void)
                break;
          }
       }
-
-      // set the texture as a target
-      SDL_SetRenderTarget (renderer, texture);
-      // draw colour
-      SDL_SetRenderDrawColor (renderer, 0x00, 0x00, 0x00, 0x00);
-      // clears the overall texture
-      SDL_RenderClear (renderer);
-      // rect colour
-      SDL_SetRenderDrawColor (renderer, 0xFF, 0x00, 0x00, 0x00);
-      // render the rect in the texture
-      SDL_RenderDrawRect (renderer, &rect);
-#if 0
-      if (-1 == SDL_RenderFillRect (renderer, &rect))
-      {
-         fprintf (stderr, "could not initialize SDL: %s\n", SDL_GetError ());
-		   exit (EXIT_FAILURE);
-      }
-#endif
-      // render to the window instead of the texture
-      SDL_SetRenderTarget (renderer, NULL);
-      // copy the overall texture to the window
-      SDL_RenderCopy (renderer, texture, NULL, NULL);
-      // show it in the window
-      SDL_RenderPresent (renderer);
    }
 
    SDL_DestroyTexture (texture);
@@ -1315,5 +1471,5 @@ int main (void)
    SDL_DestroyWindow (win);
    SDL_Quit ();
 
-   return 0;
+   return (EXIT_SUCCESS);
 }
