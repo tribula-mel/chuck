@@ -19,11 +19,14 @@
 
 // running the game in original resolution would result in tiny graphics
 // for now this will be hard coded
-static const uint8_t scale = 3;
+static const uint8_t scale = 2;
+
+#define DOTS_PER_PIXEL_X (4)
+#define DOTS_PER_PIXEL_Y (2)
 
 // original game on cpc464 ran in mode 0
-static const uint16_t x_res = 160;
-static const uint16_t y_res = 200;
+static const uint16_t x_res = DOTS_PER_PIXEL_X * 160;
+static const uint16_t y_res = DOTS_PER_PIXEL_Y * 200;
 
 typedef enum {
    pastel_yellow = 0x02,
@@ -1260,7 +1263,7 @@ static sprite_t elevator =
 static uint16_t x_convert_to_sdl (uint8_t offset)
 {
    // 8 pixels per chuck x offset
-   return (8 * scale * offset);
+   return (DOTS_PER_PIXEL_X * 8 * scale * offset);
 }
 
 /* chuck y offset to sdl */
@@ -1269,7 +1272,7 @@ static uint16_t y_convert_to_sdl (uint8_t offset)
    // 8 pixels per chuck y offset
    // plus difference between top and bottom left
    // plus we need to make a room for the sprite
-   return ((scale * y_res) - (8 * scale * (offset + 1)) + 1);
+   return (scale * y_res - (DOTS_PER_PIXEL_Y * 8 * scale * (offset + 1)) + 1);
 }
 
 static int set_colour (SDL_Renderer *renderer, colour_t colour)
@@ -1322,12 +1325,12 @@ static int draw_element (SDL_Renderer *renderer, sprite_t *element,
                //SDL_RenderDrawPoint (renderer, x, y);
                rect.x = x;
                rect.y = y;
-               rect.w = scale;
-               rect.h = scale;
+               rect.w = DOTS_PER_PIXEL_X * scale;
+               rect.h = DOTS_PER_PIXEL_Y * scale;
                SDL_RenderFillRect (renderer, &rect);
             }
 
-            x += scale;
+            x += DOTS_PER_PIXEL_X * scale;
             mask = mask >> 1;
          }
 
@@ -1336,7 +1339,7 @@ static int draw_element (SDL_Renderer *renderer, sprite_t *element,
       }
 
       x = x_backup;
-      y += scale;
+      y += DOTS_PER_PIXEL_Y * scale;
    }
 
    return 0;
@@ -1352,7 +1355,7 @@ static int draw_platform (SDL_Renderer *renderer, uint16_t x,
    for (i = 0; i < w; i++)
    {
       draw_element (renderer, &platform, x, y);
-      x += (8 * scale);
+      x += (DOTS_PER_PIXEL_X * 8 * scale);
    }
 
    return 0;
@@ -1368,7 +1371,7 @@ static int draw_ladder (SDL_Renderer *renderer, uint16_t x,
    for (i = 0; i < h; i++)
    {
       draw_element (renderer, &ladder, x, y);
-      y -= (8 * scale);
+      y -= (DOTS_PER_PIXEL_Y * 8 * scale);
    }
 
    return 0;
