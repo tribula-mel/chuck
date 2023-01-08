@@ -5,7 +5,8 @@
 
 -| 9aa0 call $bb4e - TXT Init
    9aa3 call $bb6c - TXT Clear Window
-        call $8cb9 - drawing func ?
+        call $8cb9 - drawing func
+           takes x, y in de (160 x 200)
         call $8ccd - drawing func ?
    9aa9 Get  ready Player
    9b79 GAME  OVER Player
@@ -241,8 +242,17 @@
       bc $0330
       de $0002
       hl $c8f0
-      ix $830c
+      ix $827c
 
+      $827c: 00 38 00 00 44 00 00 44 00 00 44 00 00 38 00 00
+             10 00 00 fe 00 03 7d 80 0c d6 60 11 55 10 22 54
+             88 24 92 48 44 92 44 48 92 24 88 92 22 89 11 22
+             d1 11 16 b1 11 1a 99 11 32 97 11 d2 91 ff 12 91
+             11 12 91 11 12 91 11 12 91 11 12 91 11 12 91 11
+             12 91 11 12 91 11 12 d1 11 16 b1 11 1a 99 11 32
+             97 11 d2 91 ff 12 91 11 12 91 11 12 91 11 12 91
+             11 12 91 11 12 91 11 12 91 11 12 91 11 12 91 11
+             12 51 11 14 31 11 18 19 11 30 07 11 c0 00 fe 00
       $830c: 00 38 00 00 44 00 00 44 00 00 44 00 00 38 00 00
              10 00 00 fe 00 03 7d 80 0c d6 60 11 55 10 22 54
              88 24 92 48 44 92 44 48 92 24 88 92 22 89 11 22
@@ -252,6 +262,8 @@
              97 11 d2 91 ff 12 91 11 12 91 11 12 91 11 12 91
              11 12 91 11 12 91 11 12 91 11 12 91 11 12 91 11
              12 51 11 14 31 11 18 19 11 30 07 11 c0 00 fe 00
+      it turned out that both 827c and 830c contain the same
+         cage sprite, but 830c is not being used
 
    9e26 call $8bf2
    ...
@@ -533,7 +545,7 @@
       $7b5b jump key
       call $91b8
          inputs: 'a' (key to test), 'e' (mask to set if the key is pressed)
-         output: 'd' (set to mask in 'e' if the is pressed)
+         output: 'd' (set to mask in 'e' if the key is pressed)
          does the key test and adjusts register d accordingly
    9ae4 call $8be9
       takes into account chuck position and $7b56 content and does some
@@ -550,6 +562,13 @@
       updates the elevator if present in the level
    9afd call $95c5
       updates all duck locations and time/bonus as well
+      (by using counter at $7b9b)
+      96c4 jp z, $985a
+         updates the flying duck
+      96c9 jp z, $98f3
+         updates the time/bonus
+      96de jr c, $96e1
+         updates the ducks
    9b00 ld a,($7ba7)
    9b03 ld b,a
    9b04 ld a,($7b56)
@@ -567,6 +586,8 @@
    9b14 call $95d7
       busy wait (time out) for 9 ticks out of 300 ticks/sec
       this amounts to 30 msec
+         the game loop uses from 1 to 5 ticks out of 9 so the real wait
+            is in between 3 - 15 msec
    9b17 jp $9ae1
 
 -| collision check
@@ -578,13 +599,14 @@
       third and fourth are used to calculate (x, y):
          x = (offset $2) * 8
          y = (offset $3) * 8 + $14
-         these offsets are referenced in the platform tiles
+            ($14 here is the height of the duck sprite)
+         these offsets are referenced in the platform tiles (8x8 pixels)
             one full line of the platforms fits $14 (20) base platforms
             so x corresponds to the base platform that the characters is
                standing on ($0 .. $13)
-            each base platform is 7 lines in height, the top and bottom
-               lines being empty
-            so y starts at $1 and increases by $1 as the base platforms
+            each base platform is 8 lines in height, three bottom lines
+               being empty
+            so y starts at $0 and increases by $1 as the base platforms
                are added on top of each other
       fifth byte (offset $04) alternating index
          usually changes state 0->1 / 1->0 on every sprite update
@@ -598,7 +620,7 @@
          $10 stooping down back to mid position
          so this one seems to have some with the duck updates
             but also with limiting ducks movements; without updating
-            it duck are moving in straight lines
+            it ducks are moving in straight lines
       sixth byte (offset $05) ?
          actually this one seems to have something with duck
             updates (spreading legs, changing sprite for left/right)
@@ -700,7 +722,7 @@
          is unchanged; this ensures that two pixels with same colours
          are written to the same frame buffer position, since in mode 0
          two pixels are represented in one byte
-   sprite is drawn left to right, then top to bottom first
+   sprite is drawn left to right first, then top to bottom
    mode 0 colour is pattern is:
       p0(0) p1(0) p0(2) p1(2) p0(1) p1(1) p0(3) p1(3)
       where p0 is the left pixel and the p1 is right one
@@ -738,7 +760,7 @@
 
 -| call $8c34
    this seems to be choosing a sprite from the table
-   setc ix and bc
+   sets ix and bc
    'a' seems to be an index into $8000 table
    hl = $8000 + a*2
    ld a,(hl)
@@ -761,8 +783,7 @@
 -| $0911 - level 1 - top right position of the duck on the top most level
 -| $1301 - level 1 - bottom right position of the duck on the bottom most level
 -| $0001 - level 1 - bottom left position of the duck on the bottom most level
-   it seems that offset y starts at 1 and increases by 4
-      so if 5 platforms the first is at 1, then 5, 9, $d and $11
+   it seems that offset y starts at 0 and increases by 8
 
 -| call $8bfe
    input: reg de (contains the duck offset)
@@ -773,7 +794,7 @@
    also consults a table to get the content of reg a (by a call $8fc0)
       hl = ($3e0 + reg d) * $20 + reg e
       a = (hl)
-   this table represent the level configuration
+   this table represents the level configuration
    zero output means that duck can't go in that direction (no platform
       block in front)
 
@@ -889,7 +910,7 @@
    $9736 only one move
    $973a many moves possible
          filters out impossible next move; for example if the duck is going
-            up it can't got down again; if going right it can't move left
+            up it can't get down again; if going right it can't move left
    $9746 filtering ends
    $9747 again next possible moves are calculated
    $974c if more than 2 moves are possible jump to $9752
