@@ -43,7 +43,7 @@ typedef struct __offset
 {
    uint8_t x;
    uint8_t y;
-} offset_t, egg_offset_t, seed_offset_t, duck_offset_t;
+} offset_t, elevator_offset_t, egg_offset_t, seed_offset_t, duck_offset_t;
 
 typedef struct __platform_offset
 {
@@ -62,12 +62,12 @@ typedef struct __level
    uint8_t n_platforms;
    uint8_t n_ladders;
    bool elevator;
-   bool flying_duck;
    uint8_t n_eggs;
    uint8_t n_seeds;
    uint8_t n_ducks;
    platform_offset_t platform_offsets[MAX_N_PLATFORMS];
    ladder_offset_t ladder_offsets[MAX_N_LADDERS];
+   elevator_offset_t elevator_offset;
    egg_offset_t egg_offsets[MAX_N_EGGS];
    seed_offset_t seed_offsets[MAX_N_SEED];
    duck_offset_t duck_offsets[MAX_N_DUCKS];
@@ -79,7 +79,6 @@ static level_t level_classic_one =
    .n_platforms      = 0x0d,
    .n_ladders        = 0x04,
    .elevator         = false,
-   .flying_duck      = false,
    .n_eggs           = 0x0c,
    .n_seeds          = 0x0a,
    .n_ducks          = 0x02,
@@ -343,6 +342,683 @@ static level_t level_classic_one =
          },
       },
    .max_bonus = 1000,
+};
+
+static level_t level_classic_two =
+{
+   .n_platforms      = 0x0d,
+   .n_ladders        = 0x08,
+   .elevator         = false,
+   .n_eggs           = 0x0c,
+   .n_seeds          = 0x07,
+   .n_ducks          = 0x03,
+   .platform_offsets =
+      {
+         { // 0x01
+            .offset =
+               {
+                  .y = 0x00,
+                  .x = 0x00
+               },
+            .offset_x_end = 0x03,
+         },
+         {
+            .offset =
+               {
+                  .y = 0x00,
+                  .x = 0x05
+               },
+            .offset_x_end = 0x13,
+         },
+         {
+            .offset =
+               {
+                  .y = 0x04,
+                  .x = 0x00
+               },
+            .offset_x_end = 0x06,
+         },
+         {
+            .offset =
+               {
+                  .y = 0x04,
+                  .x = 0x08
+               },
+            .offset_x_end = 0x0a,
+         },
+         {
+            .offset =
+               {
+                  .y = 0x04,
+                  .x = 0x0c
+               },
+            .offset_x_end = 0x0e,
+         },
+         { // 0x06
+            .offset =
+               {
+                  .y = 0x04,
+                  .x = 0x10
+               },
+            .offset_x_end = 0x13,
+         },
+         {
+            .offset =
+               {
+                  .y = 0x08,
+                  .x = 0x00
+               },
+            .offset_x_end = 0x03,
+         },
+         {
+            .offset =
+               {
+                  .y = 0x08,
+                  .x = 0x05
+               },
+            .offset_x_end = 0x0e,
+         },
+         {
+            .offset =
+               {
+                  .y = 0x08,
+                  .x = 0x10
+               },
+            .offset_x_end = 0x13,
+         },
+         {
+            .offset =
+               {
+                  .y = 0x0c,
+                  .x = 0x00
+               },
+            .offset_x_end = 0x0a,
+         },
+         {
+            .offset =
+               {
+                  .y = 0x0c,
+                  .x = 0x0c
+               },
+            .offset_x_end = 0x13,
+         },
+         { // 0x0c
+            .offset =
+               {
+                  .y = 0x10,
+                  .x = 0x04
+               },
+            .offset_x_end = 0x0a,
+         },
+         { // 0x0d
+            .offset =
+               {
+                  .y = 0x10,
+                  .x = 0x0c
+               },
+            .offset_x_end = 0x13,
+         },
+      },
+   .ladder_offsets =
+      {
+         { // 0x01
+            .offset =
+               {
+                  .x = 0x02,
+                  .y = 0x01
+               },
+            .offset_y_end = 0x0e,
+         },
+         { // 0x02
+            .offset =
+               {
+                  .x = 0x04,
+                  .y = 0x0d
+               },
+            .offset_y_end = 0x12,
+         },
+         { // 0x03
+            .offset =
+               {
+                  .x = 0x06,
+                  .y = 0x05
+               },
+            .offset_y_end = 0x0e,
+         },
+         { // 0x04
+            .offset =
+               {
+                  .x = 0x09,
+                  .y = 0x01
+               },
+            .offset_y_end = 0x06,
+         },
+         { // 0x05
+            .offset =
+               {
+                  .x = 0x09,
+                  .y = 0x09
+               },
+            .offset_y_end = 0x12,
+         },
+         { // 0x06
+            .offset =
+               {
+                  .x = 0x0d,
+                  .y = 0x09
+               },
+            .offset_y_end = 0x0e,
+         },
+         { // 0x07
+            .offset =
+               {
+                  .x = 0x11,
+                  .y = 0x01
+               },
+            .offset_y_end = 0x0a,
+         },
+         { // 0x08
+            .offset =
+               {
+                  .x = 0x11,
+                  .y = 0x0d
+               },
+            .offset_y_end = 0x12,
+         },
+      },
+   .egg_offsets =
+      {
+         {
+            .x = 0x05,
+            .y = 0x01
+         },
+         {
+            .x = 0x0c,
+            .y = 0x01
+         },
+         {
+            .x = 0x00,
+            .y = 0x05
+         },
+         {
+            .x = 0x04,
+            .y = 0x05
+         },
+         {
+            .x = 0x0d,
+            .y = 0x05
+         },
+         { // 0x06
+            .x = 0x00,
+            .y = 0x09
+         },
+         {
+            .x = 0x07,
+            .y = 0x09
+         },
+         {
+            .x = 0x13,
+            .y = 0x09
+         },
+         {
+            .x = 0x07,
+            .y = 0x0d
+         },
+         {
+            .x = 0x07,
+            .y = 0x11
+         },
+         {
+            .x = 0x0f,
+            .y = 0x11
+         },
+         { // 0x0c
+            .x = 0x13,
+            .y = 0x11
+         },
+      },
+   .seed_offsets =
+      {
+         {
+            .x = 0x00,
+            .y = 0x01
+         },
+         {
+            .x = 0x03,
+            .y = 0x01
+         },
+         {
+            .x = 0x0f,
+            .y = 0x01
+         },
+         {
+            .x = 0x10,
+            .y = 0x05
+         },
+         {
+            .x = 0x00,
+            .y = 0x0d
+         },
+         { // 0x06
+            .x = 0x0a,
+            .y = 0x0d
+         },
+         {
+            .x = 0x0c,
+            .y = 0x11
+         },
+      },
+   .duck_offsets =
+      {
+         { // 0x01
+            .x = 0x06,
+            .y = 0x11
+         },
+         {
+            .x = 0x01,
+            .y = 0x01
+         },
+         {
+            .x = 0x12,
+            .y = 0x09
+         },
+         {
+            .x = 0x0b,
+            .y = 0x09
+         },
+         { // 0x5
+            .x = 0x0d,
+            .y = 0x11
+         },
+      },
+   .max_bonus = 2000,
+};
+
+static level_t level_classic_three =
+{
+   .n_platforms      = 0x18,
+   .n_ladders        = 0x07,
+   .elevator         = true,
+   .n_eggs           = 0x0c,
+   .n_seeds          = 0x0a,
+   .n_ducks          = 0x03,
+   .platform_offsets =
+      {
+         { // 0x01
+            .offset =
+               {
+                  .y = 0x00,
+                  .x = 0x00
+               },
+            .offset_x_end = 0x02,
+         },
+         {
+            .offset =
+               {
+                  .y = 0x01,
+                  .x = 0x03
+               },
+            .offset_x_end = 0x04,
+         },
+         {
+            .offset =
+               {
+                  .y = 0x00,
+                  .x = 0x07
+               },
+            .offset_x_end = 0x09,
+         },
+         {
+            .offset =
+               {
+                  .y = 0x00,
+                  .x = 0x0b
+               },
+            .offset_x_end = 0x13,
+         },
+         {
+            .offset =
+               {
+                  .y = 0x03,
+                  .x = 0x10
+               },
+            .offset_x_end = 0x12,
+         },
+         { // 0x06
+            .offset =
+               {
+                  .y = 0x07,
+                  .x = 0x00
+               },
+            .offset_x_end = 0x04,
+         },
+         {
+            .offset =
+               {
+                  .y = 0x0c,
+                  .x = 0x00
+               },
+            .offset_x_end = 0x03,
+         },
+         {
+            .offset =
+               {
+                  .y = 0x0f,
+                  .x = 0x03
+               },
+            .offset_x_end = 0x04,
+         },
+         {
+            .offset =
+               {
+                  .y = 0x04,
+                  .x = 0x07
+               },
+            .offset_x_end = 0x0a,
+         },
+         {
+            .offset =
+               {
+                  .y = 0x04,
+                  .x = 0x0c
+               },
+            .offset_x_end = 0x0c,
+         },
+         {
+            .offset =
+               {
+                  .y = 0x05,
+                  .x = 0x0e
+               },
+            .offset_x_end = 0x0e,
+         },
+         { // 0x0c
+            .offset =
+               {
+                  .y = 0x06,
+                  .x = 0x0f
+               },
+            .offset_x_end = 0x0f,
+         },
+         { // 0x0d
+            .offset =
+               {
+                  .y = 0x07,
+                  .x = 0x11
+               },
+            .offset_x_end = 0x11,
+         },
+         { // 0x0e
+            .offset =
+               {
+                  .y = 0x08,
+                  .x = 0x12
+               },
+            .offset_x_end = 0x13,
+         },
+         { // 0x0f
+            .offset =
+               {
+                  .y = 0x09,
+                  .x = 0x0c
+               },
+            .offset_x_end = 0x0d,
+         },
+         { // 0x10
+            .offset =
+               {
+                  .y = 0x09,
+                  .x = 0x0f
+               },
+            .offset_x_end = 0x0f,
+         },
+         { // 0x11
+            .offset =
+               {
+                  .y = 0x0b,
+                  .x = 0x12
+               },
+            .offset_x_end = 0x13,
+         },
+         { // 0x12
+            .offset =
+               {
+                  .y = 0x0c,
+                  .x = 0x11
+               },
+            .offset_x_end = 0x11,
+         },
+         { // 0x13
+            .offset =
+               {
+                  .y = 0x0d,
+                  .x = 0x0f
+               },
+            .offset_x_end = 0x0f,
+         },
+         { // 0x14
+            .offset =
+               {
+                  .y = 0x0e,
+                  .x = 0x0c
+               },
+            .offset_x_end = 0x0d,
+         },
+         { // 0x15
+            .offset =
+               {
+                  .y = 0x0f,
+                  .x = 0x07
+               },
+            .offset_x_end = 0x0b,
+         },
+         { // 0x16
+            .offset =
+               {
+                  .y = 0x11,
+                  .x = 0x0d
+               },
+            .offset_x_end = 0x0f,
+         },
+         { // 0x17
+            .offset =
+               {
+                  .y = 0x10,
+                  .x = 0x10
+               },
+            .offset_x_end = 0x10,
+         },
+         { // 0x18
+            .offset =
+               {
+                  .y = 0x10,
+                  .x = 0x12
+               },
+            .offset_x_end = 0x13,
+         },
+      },
+   .ladder_offsets =
+      {
+         { // 0x01
+            .offset =
+               {
+                  .x = 0x01,
+                  .y = 0x01
+               },
+            .offset_y_end = 0x09,
+         },
+         { // 0x02
+            .offset =
+               {
+                  .x = 0x03,
+                  .y = 0x08
+               },
+            .offset_y_end = 0x11,
+         },
+         { // 0x03
+            .offset =
+               {
+                  .x = 0x08,
+                  .y = 0x05
+               },
+            .offset_y_end = 0x11,
+         },
+         { // 0x04
+            .offset =
+               {
+                  .x = 0x0a,
+                  .y = 0x05
+               },
+            .offset_y_end = 0x11,
+         },
+         { // 0x05
+            .offset =
+               {
+                  .x = 0x0d,
+                  .y = 0x0f
+               },
+            .offset_y_end = 0x13,
+         },
+         { // 0x06
+            .offset =
+               {
+                  .x = 0x12,
+                  .y = 0x01
+               },
+            .offset_y_end = 0x05,
+         },
+         { // 0x07
+            .offset =
+               {
+                  .x = 0x13,
+                  .y = 0x09
+               },
+            .offset_y_end = 0x0d,
+         },
+      },
+   .elevator_offset =
+      {
+         .x = 0x05, // 88e8
+         .y = 0x00 // TODO: what is this ?
+      },
+   .egg_offsets =
+      {
+         {
+            .x = 0x04,
+            .y = 0x02
+         },
+         {
+            .x = 0x0f,
+            .y = 0x01
+         },
+         {
+            .x = 0x10,
+            .y = 0x04
+         },
+         {
+            .x = 0x04,
+            .y = 0x08
+         },
+         {
+            .x = 0x04,
+            .y = 0x10
+         },
+         { // 0x06
+            .x = 0x09,
+            .y = 0x05
+         },
+         {
+            .x = 0x0f,
+            .y = 0x07
+         },
+         {
+            .x = 0x0f,
+            .y = 0x0a
+         },
+         {
+            .x = 0x01,
+            .y = 0x0d
+         },
+         {
+            .x = 0x11,
+            .y = 0x0d
+         },
+         {
+            .x = 0x13,
+            .y = 0x0e
+         },
+         { // 0x0c
+            .x = 0x13,
+            .y = 0x11
+         },
+      },
+   .seed_offsets =
+      {
+         {
+            .x = 0x02,
+            .y = 0x01
+         },
+         {
+            .x = 0x02,
+            .y = 0x08
+         },
+         {
+            .x = 0x07,
+            .y = 0x05
+         },
+         {
+            .x = 0x07,
+            .y = 0x10
+         },
+         {
+            .x = 0x00,
+            .y = 0x0d
+         },
+         { // 0x06
+            .x = 0x0d,
+            .y = 0x01
+         },
+         {
+            .x = 0x0c,
+            .y = 0x0f
+         },
+         {
+            .x = 0x0f,
+            .y = 0x0e
+         },
+         {
+            .x = 0x0d,
+            .y = 0x0a
+         },
+         { // 0x0a
+            .x = 0x12,
+            .y = 0x11
+         },
+      },
+   .duck_offsets =
+      {
+         { // 0x01
+            .x = 0x02,
+            .y = 0x0d
+         },
+         {
+            .x = 0x09,
+            .y = 0x10
+         },
+         {
+            .x = 0x11,
+            .y = 0x04
+         },
+         {
+            .x = 0x00,
+            .y = 0x01
+         },
+         { // 0x5
+            .x = 0x08,
+            .y = 0x05
+         },
+      },
+   .max_bonus = 3000,
 };
 
 static level_t level_classic_eight =
@@ -1448,27 +2124,27 @@ static int draw_level (SDL_Renderer *renderer, game_context_t *game)
    uint8_t off_y = 0;
 
    // draw platforms first
-   for (i = 0; i < level_classic_one.n_platforms; i++)
+   for (i = 0; i < game->levels[game->players_context->current_level].n_platforms; i++)
    {
-      off_x = level_classic_one.platform_offsets[i].offset.x;
-      off_y = level_classic_one.platform_offsets[i].offset.y;
+      off_x = game->levels[game->players_context->current_level].platform_offsets[i].offset.x;
+      off_y = game->levels[game->players_context->current_level].platform_offsets[i].offset.y;
       x = x_convert_to_sdl (off_x);
       y = y_convert_to_sdl (off_y);
-      n = level_classic_one.platform_offsets[i].offset_x_end -
-          level_classic_one.platform_offsets[i].offset.x + 1;
+      n = game->levels[game->players_context->current_level].platform_offsets[i].offset_x_end -
+          off_x + 1;
       draw_platform (renderer, x, y, n);
       game -> players_context -> sandbox [off_x][off_y] = 0x01;
    }
 
    // next draw ladders
-   for (i = 0; i < level_classic_one.n_ladders; i++)
+   for (i = 0; i < game->levels[game->players_context->current_level].n_ladders; i++)
    {
-      off_x = level_classic_one.ladder_offsets[i].offset.x;
-      off_y = level_classic_one.ladder_offsets[i].offset.y;
+      off_x = game->levels[game->players_context->current_level].ladder_offsets[i].offset.x;
+      off_y = game->levels[game->players_context->current_level].ladder_offsets[i].offset.y;
       x = x_convert_to_sdl (off_x);
       y = y_convert_to_sdl (off_y);
-      n = level_classic_one.ladder_offsets[i].offset_y_end -
-          level_classic_one.ladder_offsets[i].offset.y + 1;
+      n = game->levels[game->players_context->current_level].ladder_offsets[i].offset_y_end -
+          off_y + 1;
       draw_ladder (renderer, x, y, n);
       if (game -> players_context -> sandbox [off_x][off_y] == 0x01)
          game -> players_context -> sandbox [off_x][off_y] = 0x03;
@@ -1477,10 +2153,10 @@ static int draw_level (SDL_Renderer *renderer, game_context_t *game)
    }
 
    // next draw eggs
-   for (i = 0; i < level_classic_one.n_eggs; i++)
+   for (i = 0; i < game->levels[game->players_context->current_level].n_eggs; i++)
    {
-      off_x = level_classic_one.egg_offsets[i].x;
-      off_y = level_classic_one.egg_offsets[i].y;
+      off_x = game->levels[game->players_context->current_level].egg_offsets[i].x;
+      off_y = game->levels[game->players_context->current_level].egg_offsets[i].y;
       x = x_convert_to_sdl (off_x);
       y = y_convert_to_sdl (off_y);
       set_colour (renderer, egg.colour);
@@ -1489,10 +2165,10 @@ static int draw_level (SDL_Renderer *renderer, game_context_t *game)
    }
 
    // next draw seeds
-   for (i = 0; i < level_classic_one.n_seeds; i++)
+   for (i = 0; i < game->levels[game->players_context->current_level].n_seeds; i++)
    {
-      off_x = level_classic_one.seed_offsets[i].x;
-      off_y = level_classic_one.seed_offsets[i].y;
+      off_x = game->levels[game->players_context->current_level].seed_offsets[i].x;
+      off_y = game->levels[game->players_context->current_level].seed_offsets[i].y;
       x = x_convert_to_sdl (off_x);
       y = y_convert_to_sdl (off_y);
       set_colour (renderer, seed.colour);
@@ -1527,7 +2203,7 @@ static int draw_ducks (SDL_Renderer *renderer, game_context_t *game)
       off_x = game->ducks_state.ducks_state[i].el_offset.x;
       off_y = game->ducks_state.ducks_state[i].el_offset.y;
       x = x_convert_to_sdl (off_x);
-      y = y_convert_to_sdl (off_y + 1);
+      y = y_convert_to_sdl (off_y) - 51; // TODO: quick hack to fix ducks y position
       switch (game->ducks_state.ducks_state[i].direction)
       {
          case right:
@@ -1665,7 +2341,6 @@ static int init_game_context (game_context_t *game, uint8_t level)
    int i = 0;
 
    n_ducks = adjust_n_ducks (game->levels[level % 8].n_ducks, level);
-   printf ("ducks %d, level %d\n", n_ducks, level % 8);
    game->ducks_state.n_ducks = n_ducks;
 
    // initialize ducks state
@@ -1712,14 +2387,14 @@ int main (void)
    memset (&game, 0, sizeof (game));
    game.number_of_players = 1;
    game.players_context = &player_1;
-   game.levels[0] = level_classic_one;
+   game.levels[2] = level_classic_three;
 
    memset (&player_1, 0, sizeof (player_1));
    player_1.current_player = 1;
-   player_1.current_level = 0;
+   player_1.current_level = 2;
    player_1.score = 0;
    player_1.time = calc_level_time (player_1.current_level);
-   player_1.bonus = level_classic_one.max_bonus;
+   player_1.bonus = level_classic_three.max_bonus;
    player_1.lives = 5;
 
    init_game_context (&game, player_1.current_level);
