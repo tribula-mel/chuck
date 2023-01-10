@@ -929,3 +929,9 @@
          to $97ae
    $97b0 clear the current duck sprite on the screen
    $97b6 check if the duck ran into the seed; if so jump to $9823
+
+-| table $7b4e (flying duck)
+   offset $0 x coordinate
+   offset $1 y coordinate
+
+-| code at $985a does flying duck update
