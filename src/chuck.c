@@ -18,6 +18,8 @@
 #define MAX_N_LADDERS    (0x09)
 // number of seed
 #define MAX_N_SEED       (0x10)
+// two paddles for elevator
+#define N_PADDLES        (0x02)
 
 // running the game in original resolution would result in tiny graphics
 // for now this will be hard coded
@@ -69,7 +71,7 @@ typedef struct __level
    uint8_t n_ducks;
    platform_offset_t platform_offsets[MAX_N_PLATFORMS];
    ladder_offset_t ladder_offsets[MAX_N_LADDERS];
-   elevator_offset_t elevator_offset;
+   elevator_offset_t elevator_offset[N_PADDLES];
    egg_offset_t egg_offsets[MAX_N_EGGS];
    seed_offset_t seed_offsets[MAX_N_SEED];
    duck_offset_t duck_offsets[MAX_N_DUCKS];
@@ -900,8 +902,14 @@ static level_t level_classic_three =
       },
    .elevator_offset =
       {
-         .x = 0x05, // 88e8
-         .y = 0x00 // TODO: what is this ?
+         {
+            .x = 8 * 0x05, // $88f6, multiplied by 8 to get the x position
+            .y = 0x04
+         },
+         {
+            .x = 8 * 0x05,
+            .y = 0x042     // the above paddle is at this y
+         }
       },
    .egg_offsets =
       {
@@ -1287,8 +1295,14 @@ static level_t level_classic_four =
       },
    .elevator_offset =
       {
-         .x = 0x0b, // 88e8
-         .y = 0x00 // TODO: what is this ?
+         {
+            .x = 8 * 0x0b, // $898f
+            .y = 0x04
+         },
+         {
+            .x = 8 * 0x0b,
+            .y = 0x042
+         }
       },
    .egg_offsets =
       {
@@ -1618,8 +1632,14 @@ static level_t level_classic_five =
       },
    .elevator_offset =
       {
-         .x = 0x10, // 88e8
-         .y = 0x00 // TODO: what is this ?
+         {
+            .x = 8 * 0x10, // $8a11
+            .y = 0x04
+         },
+         {
+            .x = 8 * 0x10,
+            .y = 0x042
+         }
       },
    .egg_offsets =
       {
@@ -1945,8 +1965,14 @@ static level_t level_classic_six =
       },
    .elevator_offset =
       {
-         .x = 0x09, // 88e8
-         .y = 0x00 // TODO: what is this ?
+         {
+            .x = 8 * 0x09, // $8a95
+            .y = 0x04
+         },
+         {
+            .x = 8 * 0x09,
+            .y = 0x042
+         }
       },
    .egg_offsets =
       {
@@ -2320,8 +2346,14 @@ static level_t level_classic_seven =
       },
    .elevator_offset =
       {
-         .x = 0x12, // 88e8
-         .y = 0x00 // TODO: what is this ?
+         {
+            .x = 8 * 0x12, // $8b29
+            .y = 0x04
+         },
+         {
+            .x = 8 * 0x12,
+            .y = 0x042
+         }
       },
    .egg_offsets =
       {
@@ -3613,13 +3645,15 @@ static sprite_t flying_duck_lsbwu =
 static sprite_t elevator =
 {
    .width  = 0x02,
-   .height = 0x04,
+   .height = 0x06,
    .colour = 0x88,
-   // 16x4 pixels
+   // 16x6 pixels
    .sprite =
       {
          0x1f, 0xf8,
          0x1f, 0xf8,
+         0x04, 0x20,
+         0x0e, 0x70,
          0x1b, 0xd8,
          0x11, 0x88,
       }
@@ -3678,6 +3712,7 @@ typedef struct __game_context
    ducks_state_t ducks_state;
    // flying duck position
    element_state_t flying_duck_state;
+   element_state_t elevator_state[N_PADDLES];
 } game_context_t;
 
 /* chuck tile x offset to sdl */
@@ -3968,12 +4003,32 @@ static int draw_chuck (SDL_Renderer *renderer, game_context_t *game)
 {
    uint16_t x = 0;
    uint16_t y = 0;
-   uint8_t off_x = 0;
-   uint8_t off_y = 2;
 
    x = x_convert_to_sdl (0x3c);
    y = y_convert_to_sdl (0x18);
    draw_element (renderer, &chuck_r, x, y);
+
+   return 0;
+}
+
+static int draw_elevator (SDL_Renderer *renderer, game_context_t *game)
+{
+   uint16_t x = 0;
+   uint16_t y = 0;
+   uint8_t off_x = 0;
+   uint8_t off_y = 0;
+   uint8_t i = 0;
+
+   set_colour (renderer, elevator.colour);
+
+   for (i = 0; i < N_PADDLES; i++)
+   {
+      off_x = game->elevator_state[i].el_offset.x;
+      off_y = game->elevator_state[i].el_offset.y;
+      x = x_convert_to_sdl (off_x);
+      y = y_convert_to_sdl (off_y);
+      draw_element (renderer, &elevator, x, y);
+   }
 
    return 0;
 }
@@ -3986,6 +4041,26 @@ static int move_flying_duck (game_context_t *game)
    {
       wait = 8;
       game->flying_duck_state.sprite_state = (game->flying_duck_state.sprite_state + 1) % 2;
+   }
+
+   wait--;
+
+   return 0;
+}
+
+static int move_elevator (game_context_t *game)
+{
+   static uint8_t wait = 4;
+
+   if (wait == 0)
+   {
+      wait = 4;
+      game->elevator_state[0].el_offset.y += 2;
+      if (game->elevator_state[0].el_offset.y > 0xae)
+         game->elevator_state[0].el_offset.y = 4;
+      game->elevator_state[1].el_offset.y += 2;
+      if (game->elevator_state[1].el_offset.y > 0xae)
+         game->elevator_state[1].el_offset.y = 4;
    }
 
    wait--;
@@ -4051,6 +4126,13 @@ static int init_game_context (game_context_t *game, uint8_t level)
    game->flying_duck_state.el_offset.x = 0x04;
    game->flying_duck_state.el_offset.y = 0x9e;
 
+   // initialize elevator state
+   for (i = 0; i < N_PADDLES; i++)
+   {
+      game->elevator_state[i].el_offset.x = game->levels[level].elevator_offset[i].x;
+      game->elevator_state[i].el_offset.y = game->levels[level].elevator_offset[i].y;
+   }
+
    return 0;
 }
 
@@ -4111,6 +4193,8 @@ int main (void)
       draw_ducks (renderer, &game);
       draw_flying_duck (renderer, &game);
       draw_chuck (renderer, &game);
+      if (game.levels[player_1.current_level].elevator == true)
+         draw_elevator (renderer, &game);
 
       // show it in the window
       SDL_RenderPresent (renderer);
@@ -4132,6 +4216,7 @@ int main (void)
          }
       }
       move_flying_duck (&game);
+      move_elevator (&game);
       nanosleep (&delay, NULL);
    }
 

@@ -825,7 +825,7 @@
 -| call $8c5b
    input: a
    table $8c66
-   returns colour in e ?
+   returns colour in e
 
 -| call $8c34
    input: a (value is directly based on the offset $5 from the duck table)
@@ -935,3 +935,22 @@
    offset $1 y coordinate
 
 -| code at $985a does flying duck update
+
+-| routine at $966f
+   checks for presence of elevator ($7b05)
+   and draws it if present
+
+-| code at $93d0 changes chucks position when on elevator
+
+-| $8bda
+   d = x (0.159)
+   e = y (0..199)
+   b = colour ?
+   a = sprite ?
+
+-| $7b0b contains $ff for the second elevator paddle
+      the one that is always on top
+   $7b08 elevator paddle x position
+   $7b09 elevator paddle y position ($4 for the bottom paddle)
+   $7b0a elevator paddle y position for the second paddle ($42)
+   y increament is +2 lines
