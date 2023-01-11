@@ -736,9 +736,9 @@
 -| 7b07 number of ducks in the current level
    7b9c this value is decremented by 1; if below 0 it is loaded with
         the value at address 7b0d
-   7b0d default value (8) for 7b9c
-        this seems to be max number of ducks, though i don't think
-           that any level has 8 ducks
+   7b0d default value ($8) for 7b9c for first 32 levels
+        $05 starting level 33 (high duck speed)
+        this influences the speed at which the ducks are rendered
 
 -| 96e1 code starting at this address does a duck update
         only one duck is updated per game loop
@@ -940,7 +940,7 @@
    checks for presence of elevator ($7b05)
    and draws it if present
 
--| code at $93d0 changes chucks position when on elevator
+-| code at $93d0 changes chuck's position when on elevator
 
 -| $8bda
    d = x (0.159)
