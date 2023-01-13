@@ -3680,6 +3680,12 @@ typedef struct __ducks_state
    uint8_t n_ducks;
 } ducks_state_t;
 
+typedef union rand
+{
+   uint32_t number;
+   uint8_t  byte[4];
+} rand_t;
+
 #define OFFSET_X_MAX (0x14)
 #define OFFSET_Y_MAX (0x16)
 
@@ -3713,6 +3719,7 @@ typedef struct __game_context
    // flying duck position
    element_state_t flying_duck_state;
    element_state_t elevator_state[N_PADDLES];
+   rand_t random;
 } game_context_t;
 
 /* chuck tile x offset to sdl */
@@ -4068,6 +4075,41 @@ static int move_elevator (game_context_t *game)
    return 0;
 }
 
+static uint8_t randomizer (game_context_t *game)
+{
+   uint8_t a = 0;
+   uint8_t c = 0;
+   uint8_t cp = 0;
+
+   a = game->random.byte[0];
+   a &= 0x48;
+   a += 0x38;
+   a = a << 1;
+   c = (a & 0x80) >> 7;
+   a = a << 1;
+
+   cp = (game->random.byte[3] & 0x80) >> 7;
+   game->random.byte[3] <<= 1;
+   game->random.byte[3] |= c;
+   c = cp;
+
+   cp = (game->random.byte[2] & 0x80) >> 7;
+   game->random.byte[2] <<= 1;
+   game->random.byte[2] |= c;
+   c = cp;
+
+   cp = (game->random.byte[1] & 0x80) >> 7;
+   game->random.byte[1] <<= 1;
+   game->random.byte[1] |= c;
+   c = cp;
+
+   cp = (game->random.byte[0] & 0x80) >> 7;
+   game->random.byte[0] <<= 1;
+   game->random.byte[0] |= c;
+
+   return game->random.byte[0];
+}
+
 // every finished 16 levels time drops by 100
 static uint16_t calc_level_time (uint8_t level)
 {
@@ -4132,6 +4174,9 @@ static int init_game_context (game_context_t *game, uint8_t level)
       game->elevator_state[i].el_offset.x = game->levels[level].elevator_offset[i].x;
       game->elevator_state[i].el_offset.y = game->levels[level].elevator_offset[i].y;
    }
+
+   // radnom number for duck movements
+   game->random.number = 0x76767676;
 
    return 0;
 }

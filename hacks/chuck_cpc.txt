@@ -787,7 +787,7 @@
 
 -| call $8bfe
    input: reg de (contains the duck offset)
-   output: reg a
+   output: reg a ($0 for no move, $1 for left/right, $2 for up/down)
    checks for a duck boundary positions
       x offset goes to $14
       y offset goes to $19
@@ -954,3 +954,47 @@
    $7b09 elevator paddle y position ($4 for the bottom paddle)
    $7b0a elevator paddle y position for the second paddle ($42)
    y increament is +2 lines
+
+-| duck movement
+
+   $96e1 call $8be3
+   ...
+   $96f3 jp z, $97ae    # jump to handle spread legs case
+   $96f6 jp nc, $9784   # handle seed collection case
+   $96f9 push de        # handle straight legs
+   $96fa dec d
+   $96fb dec e
+   $96fc call $8bfe     # is there a tile on the left ?
+   $96ff pop de
+   $9700 and $01
+   $9702 ld c,a         # $1 for left
+   $9703 push de
+   $9704 inc d
+   $9705 dec e
+   $9706 call $8BFE     # is there a tile on the right ?
+   ...
+   $970f or $02         # $2 for right
+   ...
+   $971d or $08         # $8 for down
+   ...
+   $972c or $04         # $4 for up
+
+-| movement rand
+
+   9a5c: e5          push hl
+   9a5d: 21 a3 7b    ld   hl,$7ba3
+   9a60: 3a a0 7b    ld   a,($7ba0)
+   9a63: e6 48       and  $48
+   9a65: c6 38       add  a,$38
+   9a67: cb 27       sla  a
+   9a69: cb 27       sla  a
+   9a6b: cb 16       rl   (hl)
+   9a6d: 2b          dec  hl
+   9a6e: cb 16       rl   (hl)
+   9a70: 2b          dec  hl
+   9a71: cb 16       rl   (hl)
+   9a73: 2b          dec  hl
+   9a74: cb 16       rl   (hl)
+   9a76: 7e          ld   a,(hl)
+   9a77: e1          pop  hl
+   9a78: c9          ret
