@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -3668,7 +3669,8 @@ typedef enum {
 
 typedef struct __element_state
 {
-   offset_t el_offset;
+   offset_t tile_offset;
+   offset_t gfx_offset;
    uint8_t direction;
    uint8_t sprite_state;
 } element_state_t;
@@ -3864,13 +3866,13 @@ static int draw_level (SDL_Renderer *renderer, game_context_t *game)
    uint8_t off_y = 0;
 
    // draw platforms first
-   for (i = 0; i < game->levels[game->players_context->current_level].n_platforms; i++)
+   for (i = 0; i < game->levels[game->players_context->current_level % 8].n_platforms; i++)
    {
-      off_x = game->levels[game->players_context->current_level].platform_offsets[i].offset.x;
-      off_y = game->levels[game->players_context->current_level].platform_offsets[i].offset.y;
+      off_x = game->levels[game->players_context->current_level % 8].platform_offsets[i].offset.x;
+      off_y = game->levels[game->players_context->current_level % 8].platform_offsets[i].offset.y;
       x = tile_x_convert_to_sdl (off_x);
       y = tile_y_convert_to_sdl (off_y);
-      n = game->levels[game->players_context->current_level].platform_offsets[i].offset_x_end -
+      n = game->levels[game->players_context->current_level % 8].platform_offsets[i].offset_x_end -
           off_x + 1;
       draw_platform (renderer, x, y, n);
       for (int j = 0; j < n; j++)
@@ -3878,13 +3880,13 @@ static int draw_level (SDL_Renderer *renderer, game_context_t *game)
    }
 
    // next draw ladders
-   for (i = 0; i < game->levels[game->players_context->current_level].n_ladders; i++)
+   for (i = 0; i < game->levels[game->players_context->current_level % 8].n_ladders; i++)
    {
-      off_x = game->levels[game->players_context->current_level].ladder_offsets[i].offset.x;
-      off_y = game->levels[game->players_context->current_level].ladder_offsets[i].offset.y;
+      off_x = game->levels[game->players_context->current_level % 8].ladder_offsets[i].offset.x;
+      off_y = game->levels[game->players_context->current_level % 8].ladder_offsets[i].offset.y;
       x = tile_x_convert_to_sdl (off_x);
       y = tile_y_convert_to_sdl (off_y);
-      n = game->levels[game->players_context->current_level].ladder_offsets[i].offset_y_end -
+      n = game->levels[game->players_context->current_level % 8].ladder_offsets[i].offset_y_end -
           off_y + 1;
       draw_ladder (renderer, x, y, n);
       for (int j = 0; j < n; j++)
@@ -3897,10 +3899,10 @@ static int draw_level (SDL_Renderer *renderer, game_context_t *game)
    }
 
    // next draw eggs
-   for (i = 0; i < game->levels[game->players_context->current_level].n_eggs; i++)
+   for (i = 0; i < game->levels[game->players_context->current_level % 8].n_eggs; i++)
    {
-      off_x = game->levels[game->players_context->current_level].egg_offsets[i].x;
-      off_y = game->levels[game->players_context->current_level].egg_offsets[i].y;
+      off_x = game->levels[game->players_context->current_level % 8].egg_offsets[i].x;
+      off_y = game->levels[game->players_context->current_level % 8].egg_offsets[i].y;
       x = tile_x_convert_to_sdl (off_x);
       y = tile_y_convert_to_sdl (off_y);
       set_colour (renderer, egg.colour);
@@ -3909,10 +3911,10 @@ static int draw_level (SDL_Renderer *renderer, game_context_t *game)
    }
 
    // next draw seeds
-   for (i = 0; i < game->levels[game->players_context->current_level].n_seeds; i++)
+   for (i = 0; i < game->levels[game->players_context->current_level % 8].n_seeds; i++)
    {
-      off_x = game->levels[game->players_context->current_level].seed_offsets[i].x;
-      off_y = game->levels[game->players_context->current_level].seed_offsets[i].y;
+      off_x = game->levels[game->players_context->current_level % 8].seed_offsets[i].x;
+      off_y = game->levels[game->players_context->current_level % 8].seed_offsets[i].y;
       x = tile_x_convert_to_sdl (off_x);
       y = tile_y_convert_to_sdl (off_y);
       set_colour (renderer, seed.colour);
@@ -3943,10 +3945,10 @@ static int draw_ducks (SDL_Renderer *renderer, game_context_t *game)
    n_ducks = game->ducks_state.n_ducks;
    for (i = 0; i < n_ducks; i++)
    {
-      off_x = game->ducks_state.ducks_state[i].el_offset.x;
-      off_y = game->ducks_state.ducks_state[i].el_offset.y;
-      x = x_convert_to_sdl (8 * off_x);
-      y = y_convert_to_sdl (8 * off_y + 0x14);
+      off_x = game->ducks_state.ducks_state[i].gfx_offset.x;
+      off_y = game->ducks_state.ducks_state[i].gfx_offset.y;
+      x = x_convert_to_sdl (off_x);
+      y = y_convert_to_sdl (off_y);
       switch (game->ducks_state.ducks_state[i].direction)
       {
          case right:
@@ -3987,8 +3989,8 @@ static int draw_flying_duck (SDL_Renderer *renderer, game_context_t *game)
    uint8_t off_y = 0;
 
    set_colour (renderer, flying_duck_rcbwd.colour);
-   off_x = game->flying_duck_state.el_offset.x;
-   off_y = game->flying_duck_state.el_offset.y;
+   off_x = game->flying_duck_state.tile_offset.x;
+   off_y = game->flying_duck_state.tile_offset.y;
    x = x_convert_to_sdl (off_x);
    y = y_convert_to_sdl (off_y);
    switch (game->flying_duck_state.direction)
@@ -4034,8 +4036,8 @@ static int draw_elevator (SDL_Renderer *renderer, game_context_t *game)
 
    for (i = 0; i < N_PADDLES; i++)
    {
-      off_x = game->elevator_state[i].el_offset.x;
-      off_y = game->elevator_state[i].el_offset.y;
+      off_x = game->elevator_state[i].tile_offset.x;
+      off_y = game->elevator_state[i].tile_offset.y;
       x = x_convert_to_sdl (off_x);
       y = y_convert_to_sdl (off_y);
       draw_element (renderer, &elevator, x, y);
@@ -4066,12 +4068,12 @@ static int move_elevator (game_context_t *game)
    if (wait == 0)
    {
       wait = 4;
-      game->elevator_state[0].el_offset.y += 2;
-      if (game->elevator_state[0].el_offset.y > 0xae)
-         game->elevator_state[0].el_offset.y = 4;
-      game->elevator_state[1].el_offset.y += 2;
-      if (game->elevator_state[1].el_offset.y > 0xae)
-         game->elevator_state[1].el_offset.y = 4;
+      game->elevator_state[0].tile_offset.y += 2;
+      if (game->elevator_state[0].tile_offset.y > 0xae)
+         game->elevator_state[0].tile_offset.y = 4;
+      game->elevator_state[1].tile_offset.y += 2;
+      if (game->elevator_state[1].tile_offset.y > 0xae)
+         game->elevator_state[1].tile_offset.y = 4;
    }
 
    wait--;
@@ -4085,6 +4087,7 @@ static uint8_t randomizer (game_context_t *game)
    uint8_t c = 0;
    uint8_t cp = 0;
 
+   printf ("random %x%x%x%x\n", game->random.byte[0], game->random.byte[1], game->random.byte[2], game->random.byte[3]);
    a = game->random.byte[0];
    a &= 0x48;
    a += 0x38;
@@ -4131,18 +4134,10 @@ static uint8_t adjust_n_ducks (uint8_t n_ducks, uint8_t level)
 {
    if ((level >= 8) && (level <= 15))
       return 0;
-   if (level >= 25)
+   if (level >= 24)
       return 5;
 
    return n_ducks;
-}
-
-static bool ducks_fast (uint8_t level)
-{
-   if (level >= 33)
-      return true;
-
-   return false;
 }
 
 static bool flying_duck_out_of_cage (uint8_t level)
@@ -4171,27 +4166,32 @@ static int init_game_context (game_context_t *game, uint8_t level)
    // initialize ducks state
    for (i = 0; i < n_ducks; i++)
    {
-      game->ducks_state.ducks_state[i].el_offset.x = game->levels[level].duck_offsets[i].x;
-      game->ducks_state.ducks_state[i].el_offset.y = game->levels[level].duck_offsets[i].y;
+      game->ducks_state.ducks_state[i].tile_offset.x = game->levels[level % 8].duck_offsets[i].x;
+      game->ducks_state.ducks_state[i].tile_offset.y = game->levels[level % 8].duck_offsets[i].y;
+      game->ducks_state.ducks_state[i].gfx_offset.x = 8 * game->ducks_state.ducks_state[i].tile_offset.x;
+      game->ducks_state.ducks_state[i].gfx_offset.y = 8 * game->ducks_state.ducks_state[i].tile_offset.y + 0x14;
       game->ducks_state.ducks_state[i].direction = right;
+      game->ducks_state.ducks_state[i].sprite_state = 0;
    }
    game->ducks_state.duck_to_move = adjust_duck_speed (level, 8);
 
    // initialize flying duck state
-   game->flying_duck_state.el_offset.x = 0x04;
-   game->flying_duck_state.el_offset.y = 0x9e;
+   game->flying_duck_state.tile_offset.x = 0x04;
+   game->flying_duck_state.tile_offset.y = 0x9e;
    game->flying_duck_state.direction = right;
 
    // initialize elevator state
    for (i = 0; i < N_PADDLES; i++)
    {
-      game->elevator_state[i].el_offset.x = game->levels[level].elevator_offset[i].x;
-      game->elevator_state[i].el_offset.y = game->levels[level].elevator_offset[i].y;
+      game->elevator_state[i].tile_offset.x = game->levels[level % 8].elevator_offset[i].x;
+      game->elevator_state[i].tile_offset.y = game->levels[level % 8].elevator_offset[i].y;
    }
 
    // radnom number for duck movements
    game->random.number = 0x76767676;
 
+   // clear the sandbox
+   memset (game->players_context->sandbox, 0, OFFSET_X_MAX * OFFSET_Y_MAX);
    return 0;
 }
 
@@ -4201,7 +4201,7 @@ static uint8_t number_of_moves (uint8_t moves)
 
    for (int i = 0; i < 4; i++)
    {
-      if (moves >> 1)
+      if (moves & 0x1)
          count++;
       moves >>= 1;
    }
@@ -4216,6 +4216,7 @@ static int move_duck (game_context_t *game)
    uint8_t y = 0;
    uint8_t moves = 0;
    uint8_t random = 0;
+   uint8_t direction = 0;
 
    if (game->ducks_state.duck_to_move > game->ducks_state.n_ducks)
    {
@@ -4224,8 +4225,15 @@ static int move_duck (game_context_t *game)
    }
 
    index = game->ducks_state.duck_to_move - 1;
-   x = game->ducks_state.ducks_state[index].el_offset.x;
-   y = game->ducks_state.ducks_state[index].el_offset.y;
+   x = game->ducks_state.ducks_state[index].tile_offset.x;
+   y = game->ducks_state.ducks_state[index].tile_offset.y;
+
+   if (game->ducks_state.ducks_state[index].sprite_state == 0x01)
+   {
+      // just move in the same direction as previous move
+      moves = game->ducks_state.ducks_state[index].direction;
+      goto one_move;
+   }
 
    // can move left (either platform or ladder over platform) ?
    if ((game->players_context->sandbox[y - 1][x - 1] == 0x01) ||
@@ -4244,23 +4252,18 @@ static int move_duck (game_context_t *game)
        (game->players_context->sandbox[y - 1][x] == 0x03))
       moves |= down;
 
-   // filter out impossible moves
-   // keep moving right until an obstacle
-   if ((game->ducks_state.ducks_state[index].direction == right) &&
-       (moves & right))
-      moves &= ~left;
-   // keep moving left until an obstacle
-   else if ((game->ducks_state.ducks_state[index].direction == left) &&
-            (moves & left))
-      moves &= ~right;
-   // keep moving up until an obstacle
-   else if ((game->ducks_state.ducks_state[index].direction == up) &&
-            (moves & up))
-      moves &= ~down;
-   // keep moving down until an obstacle
-   else if ((game->ducks_state.ducks_state[index].direction == down) &&
-            (moves & down))
-      moves &= ~up;
+   printf ("moves %x duck (%x,%x)\n", moves, x, y);
+   if (number_of_moves (moves) == 1)
+      goto one_move;
+
+   direction = game->ducks_state.ducks_state[index].direction;
+   if (direction >= 4)
+      direction ^= 0xf3;
+   else
+      direction ^= 0xfc;
+   moves &= direction;
+
+   //assert (moves != 0);
 
    if (number_of_moves (moves) > 1)
    {
@@ -4268,58 +4271,44 @@ static int move_duck (game_context_t *game)
       do
       {
          random = randomizer (game);
+         printf ("radnom %x moves %x\n", random, moves);
          random &= moves;
-      } while (number_of_moves (random) > 1);
+         printf ("radnom %x\n", random);
+      } while (number_of_moves (random) != 1);
       moves = random;
    }
 
+   //assert (moves != 0);
+one_move:
    switch (moves)
    {
       case up:
-         y += 1;
-         game->ducks_state.ducks_state[index].el_offset.y = y;
+         game->ducks_state.ducks_state[index].gfx_offset.y += 4;
          if (game->ducks_state.ducks_state[index].direction != up)
-         {
-            game->ducks_state.ducks_state[index].direction = down;
-            game->ducks_state.ducks_state[index].sprite_state = 0;
-         }
-         else
-            game->ducks_state.ducks_state[index].sprite_state ^= 1;
+            game->ducks_state.ducks_state[index].direction = up;
          break;
       case down:
-         y -= 1;
-         game->ducks_state.ducks_state[index].el_offset.y = y;
+         game->ducks_state.ducks_state[index].gfx_offset.y -= 4;
          if (game->ducks_state.ducks_state[index].direction != down)
-         {
             game->ducks_state.ducks_state[index].direction = down;
-            game->ducks_state.ducks_state[index].sprite_state = 0;
-         }
-         else
-            game->ducks_state.ducks_state[index].sprite_state ^= 1;
          break;
       case right:
-         x += 1;
-         game->ducks_state.ducks_state[index].el_offset.x = x;
+         game->ducks_state.ducks_state[index].gfx_offset.x += 4;
          if (game->ducks_state.ducks_state[index].direction != right)
-         {
             game->ducks_state.ducks_state[index].direction = right;
-            game->ducks_state.ducks_state[index].sprite_state = 0;
-         }
-         else
-            game->ducks_state.ducks_state[index].sprite_state ^= 1;
          break;
       case left:
-         x -= 1;
-         game->ducks_state.ducks_state[index].el_offset.x = x;
+         game->ducks_state.ducks_state[index].gfx_offset.x -= 4;
          if (game->ducks_state.ducks_state[index].direction != left)
-         {
             game->ducks_state.ducks_state[index].direction = left;
-            game->ducks_state.ducks_state[index].sprite_state = 0;
-         }
-         else
-            game->ducks_state.ducks_state[index].sprite_state ^= 1;
          break;
+      default:
+         printf ("Hmm, moves %x\n", moves);
    }
+
+   game->ducks_state.ducks_state[index].sprite_state ^= 1;
+   game->ducks_state.ducks_state[index].tile_offset.x = game->ducks_state.ducks_state[index].gfx_offset.x / 8;
+   game->ducks_state.ducks_state[index].tile_offset.y = (game->ducks_state.ducks_state[index].gfx_offset.y - 0x14) / 8;
 
    game->ducks_state.duck_to_move--;
    if (game->ducks_state.duck_to_move == 0)
@@ -4336,11 +4325,12 @@ int main (void)
    struct timespec delay =
    {
       .tv_sec = 0,
-      .tv_nsec = 100000000,
+      .tv_nsec = 50000000,
    };
 
    player_context_t player_1;
    game_context_t game;
+   bool dump_sandbox = true;
 
    int width = x_res * scale, height = y_res * scale;
 
@@ -4385,8 +4375,19 @@ int main (void)
       draw_ducks (renderer, &game);
       draw_flying_duck (renderer, &game);
       draw_chuck (renderer, &game);
-      if (game.levels[player_1.current_level].elevator == true)
+      if (game.levels[player_1.current_level % 8].elevator == true)
          draw_elevator (renderer, &game);
+
+      if (dump_sandbox == true)
+      {
+         for (int i = OFFSET_Y_MAX - 1; i >= 0; i--)
+         {
+            for (int j = 0; j < OFFSET_X_MAX; j++)
+               printf ("%2x ", game.players_context->sandbox[i][j]);
+            printf ("\n");
+         }
+         dump_sandbox = false;
+      }
 
       // show it in the window
       SDL_RenderPresent (renderer);
@@ -4401,9 +4402,10 @@ int main (void)
                break;
             case SDL_KEYDOWN:
                player_1.current_level++;
-               if (player_1.current_level >= 8)
-                  player_1.current_level = 0;
+               //if (player_1.current_level >= 8)
+               // player_1.current_level = 0;
                init_game_context (&game, player_1.current_level);
+               dump_sandbox = true;
                break;
          }
       }
