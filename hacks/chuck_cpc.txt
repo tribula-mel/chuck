@@ -998,3 +998,7 @@
    9a76: 7e          ld   a,(hl)
    9a77: e1          pop  hl
    9a78: c9          ret
+
+-| table $7b76 (array of seeds for current level)
+   if seed is available then marked with $0
+   if not available then marked with $ff

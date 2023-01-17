@@ -4152,6 +4152,7 @@ static uint8_t adjust_duck_speed (uint8_t level, uint8_t speed)
 {
    if (level >= 32)
       return 5;
+
    return speed;
 }
 
@@ -4192,6 +4193,7 @@ static int init_game_context (game_context_t *game, uint8_t level)
 
    // clear the sandbox
    memset (game->players_context->sandbox, 0, OFFSET_X_MAX * OFFSET_Y_MAX);
+
    return 0;
 }
 
@@ -4236,26 +4238,39 @@ static int move_duck (game_context_t *game)
    }
 
    // can move left (either platform or ladder over platform) ?
-   if ((game->players_context->sandbox[y - 1][x - 1] == 0x01) ||
-       (game->players_context->sandbox[y - 1][x - 1] == 0x03))
-      moves |= left;
+   if ((y >= 1) && (x >= 1))
+   {
+      if ((game->players_context->sandbox[y - 1][x - 1] == 0x01) ||
+          (game->players_context->sandbox[y - 1][x - 1] == 0x03))
+         moves |= left;
+   }
    // can move right (either platform or ladder over platform) ?
-   if ((game->players_context->sandbox[y - 1][x + 1] == 0x01) ||
-       (game->players_context->sandbox[y - 1][x + 1] == 0x03))
-      moves |= right;
+   if ((y >= 1) && (x < 0x13))
+   {
+      if ((game->players_context->sandbox[y - 1][x + 1] == 0x01) ||
+          (game->players_context->sandbox[y - 1][x + 1] == 0x03))
+         moves |= right;
+   }
    // can move up (either ladder or ladder over platform) ?
-   if ((game->players_context->sandbox[y + 2][x] == 0x02) ||
-       (game->players_context->sandbox[y + 2][x] == 0x03))
-      moves |= up;
+   if (x < 0x14)
+   {
+      if ((game->players_context->sandbox[y + 2][x] == 0x02) ||
+          (game->players_context->sandbox[y + 2][x] == 0x03))
+         moves |= up;
+   }
    // can move down (either ladder or ladder over platform) ?
-   if ((game->players_context->sandbox[y - 1][x] == 0x02) ||
-       (game->players_context->sandbox[y - 1][x] == 0x03))
-      moves |= down;
+   if ((y >= 1) && (x < 0x14))
+   {
+      if ((game->players_context->sandbox[y - 1][x] == 0x02) ||
+          (game->players_context->sandbox[y - 1][x] == 0x03))
+         moves |= down;
+   }
 
    printf ("moves %x duck (%x,%x)\n", moves, x, y);
    if (number_of_moves (moves) == 1)
       goto one_move;
 
+   // filter out impossible moves
    direction = game->ducks_state.ducks_state[index].direction;
    if (direction >= 4)
       direction ^= 0xf3;
@@ -4263,7 +4278,7 @@ static int move_duck (game_context_t *game)
       direction ^= 0xfc;
    moves &= direction;
 
-   //assert (moves != 0);
+   assert (moves != 0);
 
    if (number_of_moves (moves) > 1)
    {
@@ -4278,7 +4293,7 @@ static int move_duck (game_context_t *game)
       moves = random;
    }
 
-   //assert (moves != 0);
+   assert (moves != 0);
 one_move:
    switch (moves)
    {
