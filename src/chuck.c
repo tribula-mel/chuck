@@ -3675,12 +3675,24 @@ typedef struct __element_state
    uint8_t sprite_state;
 } element_state_t;
 
+typedef enum {
+   duck_half_stoop_start = 0x4,
+   duck_stoop            = 0x8,
+   duck_half_stoop_end   = 0x10,
+} duck_stoop_t;
+
 typedef struct __ducks_state
 {
    element_state_t ducks_state[MAX_N_DUCKS];
    uint8_t duck_to_move;
    uint8_t n_ducks;
 } ducks_state_t;
+
+typedef struct __seed_state
+{
+   offset_t tile_offset;
+   bool present;
+} seed_state_t;
 
 typedef union rand
 {
@@ -3721,6 +3733,7 @@ typedef struct __game_context
    // flying duck position
    element_state_t flying_duck_state;
    element_state_t elevator_state[N_PADDLES];
+   seed_state_t seed_state[MAX_N_SEED];
    rand_t random;
 } game_context_t;
 
@@ -3913,13 +3926,16 @@ static int draw_level (SDL_Renderer *renderer, game_context_t *game)
    // next draw seeds
    for (i = 0; i < game->levels[game->players_context->current_level % 8].n_seeds; i++)
    {
-      off_x = game->levels[game->players_context->current_level % 8].seed_offsets[i].x;
-      off_y = game->levels[game->players_context->current_level % 8].seed_offsets[i].y;
-      x = tile_x_convert_to_sdl (off_x);
-      y = tile_y_convert_to_sdl (off_y);
-      set_colour (renderer, seed.colour);
-      draw_element (renderer, &seed, x, y);
-      game->players_context->sandbox[off_y][off_x] = 0x08 + i * 0x10;
+      if (game->seed_state[i].present == true)
+      {
+         off_x = game->seed_state[i].tile_offset.x;
+         off_y = game->seed_state[i].tile_offset.y;
+         x = tile_x_convert_to_sdl (off_x);
+         y = tile_y_convert_to_sdl (off_y);
+         set_colour (renderer, seed.colour);
+         draw_element (renderer, &seed, x, y);
+         game->players_context->sandbox[off_y][off_x] = 0x08 + i * 0x10;
+      }
    }
 
    // next draw cage
@@ -3956,12 +3972,24 @@ static int draw_ducks (SDL_Renderer *renderer, game_context_t *game)
                draw_element (renderer, &duck_r, x, y);
             else if (game->ducks_state.ducks_state[i].sprite_state == 1)
                draw_element (renderer, &duck_rs, x, y);
+            else if (game->ducks_state.ducks_state[i].sprite_state == duck_half_stoop_start)
+               draw_element (renderer, &duck_rbs, x, y);
+            else if (game->ducks_state.ducks_state[i].sprite_state == duck_stoop)
+               draw_element (renderer, &duck_res, x, y);
+            else if (game->ducks_state.ducks_state[i].sprite_state == duck_half_stoop_end)
+               draw_element (renderer, &duck_rbs, x, y);
             break;
          case left:
             if (game->ducks_state.ducks_state[i].sprite_state == 0)
                draw_element (renderer, &duck_l, x, y);
             else if (game->ducks_state.ducks_state[i].sprite_state == 1)
                draw_element (renderer, &duck_ls, x, y);
+            else if (game->ducks_state.ducks_state[i].sprite_state == duck_half_stoop_start)
+               draw_element (renderer, &duck_lbs, x - x_convert_to_sdl (8), y);
+            else if (game->ducks_state.ducks_state[i].sprite_state == duck_stoop)
+               draw_element (renderer, &duck_les, x - x_convert_to_sdl (8), y);
+            else if (game->ducks_state.ducks_state[i].sprite_state == duck_half_stoop_end)
+               draw_element (renderer, &duck_lbs, x - x_convert_to_sdl (8), y);
             break;
          case up:
             if (game->ducks_state.ducks_state[i].sprite_state == 0)
@@ -4087,7 +4115,6 @@ static uint8_t randomizer (game_context_t *game)
    uint8_t c = 0;
    uint8_t cp = 0;
 
-   printf ("random %x%x%x%x\n", game->random.byte[0], game->random.byte[1], game->random.byte[2], game->random.byte[3]);
    a = game->random.byte[0];
    a &= 0x48;
    a += 0x38;
@@ -4188,6 +4215,14 @@ static int init_game_context (game_context_t *game, uint8_t level)
       game->elevator_state[i].tile_offset.y = game->levels[level % 8].elevator_offset[i].y;
    }
 
+   // initialize seed state
+   for (i = 0; i < game->levels[level % 8].n_seeds; i++)
+   {
+      game->seed_state[i].tile_offset.x = game->levels[level % 8].seed_offsets[i].x;
+      game->seed_state[i].tile_offset.y = game->levels[level % 8].seed_offsets[i].y;
+      game->seed_state[i].present = true;
+   }
+
    // radnom number for duck movements
    game->random.number = 0x76767676;
 
@@ -4230,11 +4265,35 @@ static int move_duck (game_context_t *game)
    x = game->ducks_state.ducks_state[index].tile_offset.x;
    y = game->ducks_state.ducks_state[index].tile_offset.y;
 
+   // is duck with spread legs ?
    if (game->ducks_state.ducks_state[index].sprite_state == 0x01)
    {
       // just move in the same direction as previous move
       moves = game->ducks_state.ducks_state[index].direction;
       goto one_move;
+   }
+   // is seed collection animation over ?
+   if (game->ducks_state.ducks_state[index].sprite_state == duck_half_stoop_end)
+   {
+      // the seed is collected and animation is over, reset to upstraight position
+      game->ducks_state.ducks_state[index].sprite_state = 0;
+      if (game->ducks_state.ducks_state[index].direction == right)
+      {
+         game->seed_state[game->players_context->sandbox[y][x + 1] >> 4].present = false;
+         game->players_context->sandbox[y][x + 1] = 0;
+      }
+      else
+      {
+         game->seed_state[game->players_context->sandbox[y][x - 1] >> 4].present = false;
+         game->players_context->sandbox[y][x - 1] = 0;
+      }
+      return 0;
+   }
+   // is duck collecting seed ?
+   if (game->ducks_state.ducks_state[index].sprite_state >= duck_half_stoop_start)
+   {
+      game->ducks_state.ducks_state[index].sprite_state <<= 1;
+      return 0;
    }
 
    // can move left (either platform or ladder over platform) ?
@@ -4266,7 +4325,6 @@ static int move_duck (game_context_t *game)
          moves |= down;
    }
 
-   printf ("moves %x duck (%x,%x)\n", moves, x, y);
    if (number_of_moves (moves) == 1)
       goto one_move;
 
@@ -4286,9 +4344,7 @@ static int move_duck (game_context_t *game)
       do
       {
          random = randomizer (game);
-         printf ("radnom %x moves %x\n", random, moves);
          random &= moves;
-         printf ("radnom %x\n", random);
       } while (number_of_moves (random) != 1);
       moves = random;
    }
@@ -4298,30 +4354,45 @@ one_move:
    switch (moves)
    {
       case up:
+         game->ducks_state.ducks_state[index].sprite_state ^= 1;
          game->ducks_state.ducks_state[index].gfx_offset.y += 4;
          if (game->ducks_state.ducks_state[index].direction != up)
             game->ducks_state.ducks_state[index].direction = up;
          break;
       case down:
+         game->ducks_state.ducks_state[index].sprite_state ^= 1;
          game->ducks_state.ducks_state[index].gfx_offset.y -= 4;
          if (game->ducks_state.ducks_state[index].direction != down)
             game->ducks_state.ducks_state[index].direction = down;
          break;
       case right:
-         game->ducks_state.ducks_state[index].gfx_offset.x += 4;
          if (game->ducks_state.ducks_state[index].direction != right)
             game->ducks_state.ducks_state[index].direction = right;
+         // check if a seed is in the way
+         if ((game->players_context->sandbox[y][x + 1] & 0x08))
+            game->ducks_state.ducks_state[index].sprite_state = duck_half_stoop_start;
+         else
+         {
+            game->ducks_state.ducks_state[index].sprite_state ^= 1;
+            game->ducks_state.ducks_state[index].gfx_offset.x += 4;
+         }
          break;
       case left:
-         game->ducks_state.ducks_state[index].gfx_offset.x -= 4;
          if (game->ducks_state.ducks_state[index].direction != left)
             game->ducks_state.ducks_state[index].direction = left;
+         // check if a seed is in the way
+         if ((game->players_context->sandbox[y][x - 1] & 0x08) && (game->ducks_state.ducks_state[index].sprite_state == 0))
+            game->ducks_state.ducks_state[index].sprite_state = duck_half_stoop_start;
+         else
+         {
+            game->ducks_state.ducks_state[index].sprite_state ^= 1;
+            game->ducks_state.ducks_state[index].gfx_offset.x -= 4;
+         }
          break;
       default:
-         printf ("Hmm, moves %x\n", moves);
+         fprintf (stderr, "Hmm, moves %x\n", moves);
    }
 
-   game->ducks_state.ducks_state[index].sprite_state ^= 1;
    game->ducks_state.ducks_state[index].tile_offset.x = game->ducks_state.ducks_state[index].gfx_offset.x / 8;
    game->ducks_state.ducks_state[index].tile_offset.y = (game->ducks_state.ducks_state[index].gfx_offset.y - 0x14) / 8;
 
@@ -4417,8 +4488,6 @@ int main (void)
                break;
             case SDL_KEYDOWN:
                player_1.current_level++;
-               //if (player_1.current_level >= 8)
-               // player_1.current_level = 0;
                init_game_context (&game, player_1.current_level);
                dump_sandbox = true;
                break;
