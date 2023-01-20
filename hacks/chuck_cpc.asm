@@ -2965,43 +2965,43 @@
 9055: 3A 02 7B    ld   a,($7B02)
 9058: FE 01       cp   $01
 905A: 20 08       jr   nz,$9064
-905C: 3E 00       ld   a,$00
+905C: 3E 00       ld   a,$00        # second cycle so no ducks
 905E: 32 07 7B    ld   ($7B07),a
 9061: C3 6D 90    jp   $906D
 9064: FE 03       cp   $03
 9066: 38 05       jr   c,$906D
-9068: 3E 05       ld   a,$05
+9068: 3E 05       ld   a,$05        # fourth cycle so ducks are 5
 906A: 32 07 7B    ld   ($7B07),a
 906D: 3A 07 7B    ld   a,($7B07)
 9070: B7          or   a
 9071: 28 32       jr   z,$90A5
-9073: 3E 00       ld   a,$00
+9073: 3E 00       ld   a,$00        # let's start with duck 0
 9075: F5          push af
-9076: CD 91 8F    call $8F91
-9079: FD 7E 02    ld   a,(iy+$02)
+9076: CD 91 8F    call $8F91        # returns the table for the duck in iy
+9079: FD 7E 02    ld   a,(iy+$02)   # x tile
 907C: 87          add  a,a
 907D: 87          add  a,a
-907E: 87          add  a,a
-907F: FD 77 00    ld   (iy+$00),a
-9082: FD 7E 03    ld   a,(iy+$03)
+907E: 87          add  a,a          # *8
+907F: FD 77 00    ld   (iy+$00),a   # x gfx (0 .. 159)
+9082: FD 7E 03    ld   a,(iy+$03)   # y tile
 9085: 87          add  a,a
 9086: 87          add  a,a
 9087: 87          add  a,a
-9088: C6 14       add  a,$14
-908A: FD 77 01    ld   (iy+$01),a
-908D: FD 36 04 00 ld   (iy+$04),$00
+9088: C6 14       add  a,$14        # *8 + $14 (height of the duck sprite)
+908A: FD 77 01    ld   (iy+$01),a   # y gfx (0 .. 199)
+908D: FD 36 04 00 ld   (iy+$04),$00 # duck sprite state (legs straight)
 9091: FD 36 05 00 ld   (iy+$05),$00
-9095: FD 36 06 02 ld   (iy+$06),$02
+9095: FD 36 06 02 ld   (iy+$06),$02 # duck facing right
 9099: CD E2 8F    call $8FE2
 909C: 3A 07 7B    ld   a,($7B07)
 909F: 47          ld   b,a
 90A0: F1          pop  af
 90A1: 3C          inc  a
 90A2: B8          cp   b
-90A3: 38 D0       jr   c,$9075
-90A5: FD 21 4E 7B ld   iy,$7B4E
-90A9: FD 36 00 04 ld   (iy+$00),$04
-90AD: FD 36 01 9E ld   (iy+$01),$9E
+90A3: 38 D0       jr   c,$9075      # handle next duck
+90A5: FD 21 4E 7B ld   iy,$7B4E     # flying duck table
+90A9: FD 36 00 04 ld   (iy+$00),$04 # x gfx
+90AD: FD 36 01 9E ld   (iy+$01),$9E # y gfx
 90B1: FD 36 02 00 ld   (iy+$02),$00
 90B5: FD 36 03 00 ld   (iy+$03),$00
 90B9: FD 36 05 00 ld   (iy+$05),$00
@@ -3009,7 +3009,7 @@
 90C0: 3A 05 7B    ld   a,($7B05)
 90C3: B7          or   a
 90C4: 28 27       jr   z,$90ED
-90C6: 3E 00       ld   a,$00
+90C6: 3E 00       ld   a,$00        # elevator present
 90C8: 32 0B 7B    ld   ($7B0B),a
 90CB: 3A 08 7B    ld   a,($7B08)
 90CE: 57          ld   d,a
@@ -3030,9 +3030,9 @@
 90ED: 06 32       ld   b,$32
 90EF: CD 19 BD    call $BD19
 90F2: 10 FB       djnz $90EF
-90F4: FD 21 36 7B ld   iy,$7B36
-90F8: FD 36 00 3C ld   (iy+$00),$3C
-90FC: FD 36 01 18 ld   (iy+$01),$18
+90F4: FD 21 36 7B ld   iy,$7B36     # chuck table
+90F8: FD 36 00 3C ld   (iy+$00),$3C # x gfx
+90FC: FD 36 01 18 ld   (iy+$01),$18 # y gfx
 9100: FD 36 05 00 ld   (iy+$05),$00
 9104: FD 36 02 07 ld   (iy+$02),$07
 9108: FD 36 08 07 ld   (iy+$08),$07
@@ -3042,7 +3042,7 @@
 9118: FD 36 0C 01 ld   (iy+$0c),$01
 911C: FD 56 00    ld   d,(iy+$00)
 911F: FD 5E 01    ld   e,(iy+$01)
-9122: CD 0A 8C    call $8C0A
+9122: CD 0A 8C    call $8C0A        # calcs gfx address based on de
 9125: E5          push hl
 9126: 3E 08       ld   a,$08
 9128: CD 5B 8C    call $8C5B
@@ -3051,9 +3051,9 @@
 912F: C6 05       add  a,$05
 9131: CD 34 8C    call $8C34
 9134: ED 43 46 7B ld   ($7B46),bc
-9138: ED 53 48 7B ld   ($7B48),de
-913C: 22 4A 7B    ld   ($7B4A),hl
-913F: DD 22 4C 7B ld   ($7B4C),ix
+9138: ED 53 48 7B ld   ($7B48),de   # direction
+913C: 22 4A 7B    ld   ($7B4A),hl   # screen address
+913F: DD 22 4C 7B ld   ($7B4C),ix   # sprite address
 9143: CD 76 8C    call $8C76
 9146: CD 4A 91    call $914A
 9149: C9          ret
@@ -3095,15 +3095,15 @@
 918E: C3 6D 91    jp   $916D
 9191: 16 00       ld   d,$00
 9193: 1E 01       ld   e,$01
-9195: 3A 57 7B    ld   a,($7B57)
+9195: 3A 57 7B    ld   a,($7B57)       # 0x1 for right
 9198: CD B8 91    call $91B8
-919B: 3A 58 7B    ld   a,($7B58)
+919B: 3A 58 7B    ld   a,($7B58)       # 0x2 for left
 919E: CD B8 91    call $91B8
-91A1: 3A 59 7B    ld   a,($7B59)
+91A1: 3A 59 7B    ld   a,($7B59)       # 0x4 for down
 91A4: CD B8 91    call $91B8
-91A7: 3A 5A 7B    ld   a,($7B5A)
+91A7: 3A 5A 7B    ld   a,($7B5A)       # 0x8 for up
 91AA: CD B8 91    call $91B8
-91AD: 3A 5B 7B    ld   a,($7B5B)
+91AD: 3A 5B 7B    ld   a,($7B5B)       # 0x10 for jump
 91B0: CD B8 91    call $91B8
 91B3: 7A          ld   a,d
 91B4: 32 56 7B    ld   ($7B56),a
@@ -3115,10 +3115,10 @@
 91BF: 57          ld   d,a
 91C0: CB 23       sla  e
 91C2: C9          ret
-91C3: FD 21 36 7B ld   iy,$7B36
+91C3: FD 21 36 7B ld   iy,$7B36     # chuck table
 91C7: 06 00       ld   b,$00
 91C9: 0E 00       ld   c,$00
-91CB: 3A 56 7B    ld   a,($7B56)
+91CB: 3A 56 7B    ld   a,($7B56)    # key presses status
 91CE: 1F          rra
 91CF: 30 01       jr   nc,$91D2
 91D1: 04          inc  b
@@ -3133,7 +3133,7 @@
 91DC: 30 02       jr   nc,$91E0
 91DE: 0C          inc  c
 91DF: 0C          inc  c
-91E0: FD 70 06    ld   (iy+$06),b
+91E0: FD 70 06    ld   (iy+$06),b   # store the status in the table
 91E3: FD 71 07    ld   (iy+$07),c
 91E6: FD 56 02    ld   d,(iy+$02)
 91E9: FD 5E 03    ld   e,(iy+$03)
@@ -4029,7 +4029,7 @@
 98D5: 7D          ld   a,l
 98D6: 83          add  a,e
 98D7: 6F          ld   l,a
-98D8: FD 74 00    ld   (iy+$00),h
+98D8: FD 74 00    ld   (iy+$00),h      # updates $7b4e flying duck table
 98DB: FD 75 01    ld   (iy+$01),l
 98DE: FD 72 02    ld   (iy+$02),d
 98E1: FD 73 03    ld   (iy+$03),e
@@ -4038,7 +4038,7 @@
 98E9: EE 01       xor  $01
 98EB: B1          or   c
 98EC: FD 77 05    ld   (iy+$05),a
-98EF: CD E6 8B    call $8BE6
+98EF: CD E6 8B    call $8BE6           # updates flying duck on the screen ?
 98F2: C9          ret
 98F3: 3A 9E 7B    ld   a,($7B9E)
 98F6: B7          or   a

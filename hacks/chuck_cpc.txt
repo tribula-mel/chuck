@@ -22,7 +22,7 @@
    7b00 current player data (copied to this location for a current player)
       7b00 player number (0 .. 3)
       7b01 current level (0 .. 7)
-      7b02 ?
+      7b02 starts at 0, then increases by 1 every 8 levels passed
       7b03 number of levels on which platforms are drawn
       7b04 number of ladders
       7b05 elevator presence
@@ -1002,3 +1002,5 @@
 -| table $7b76 (array of seeds for current level)
    if seed is available then marked with $0
    if not available then marked with $ff
+
+-| code at $9560 updates chuck position among other things
