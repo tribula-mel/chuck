@@ -3700,6 +3700,22 @@ typedef union rand
    uint8_t  byte[4];
 } rand_t;
 
+typedef enum {
+   chuck_standing_one = 0x1,
+   chuck_standing_two,
+   chuck_running_right_arm_one,
+   chuck_standing_three,
+   chuck_running_right_arm_two,
+   chuck_standing_four,
+   chuck_standing_five,
+   chuck_standing_six,
+   chuck_running_left_arm_one,
+   chuck_standing_seven,
+   chuck_running_left_arm_two,
+   chuck_standing_eight,
+   chuck_max = chuck_standing_eight,
+} chuck_sprite_t;
+
 #define OFFSET_X_MAX (0x14)
 #define OFFSET_Y_MAX (0x16)
 
@@ -4045,9 +4061,45 @@ static int draw_chuck (SDL_Renderer *renderer, game_context_t *game)
    uint16_t x = 0;
    uint16_t y = 0;
 
-   x = x_convert_to_sdl (0x3c);
-   y = y_convert_to_sdl (0x18);
-   draw_element (renderer, &chuck_r, x, y);
+   x = x_convert_to_sdl (game->chuck_state.gfx_offset.x);
+   y = y_convert_to_sdl (game->chuck_state.gfx_offset.y);
+
+   switch (game->chuck_state.sprite_state)
+   {
+      case chuck_standing_one:
+      case chuck_standing_two:
+      case chuck_standing_three:
+      case chuck_standing_four:
+      case chuck_standing_five:
+      case chuck_standing_six:
+      case chuck_standing_seven:
+      case chuck_standing_eight:
+         if (game->chuck_state.direction == right)
+            draw_element (renderer, &chuck_r, x, y);
+         else if (game->chuck_state.direction == left)
+            draw_element (renderer, &chuck_l, x, y);
+         break;
+      case chuck_running_right_arm_one:
+      case chuck_running_right_arm_two:
+         if (game->chuck_state.direction == right)
+            draw_element (renderer, &chuck_rslar, x, y);
+         else if (game->chuck_state.direction == left)
+            draw_element (renderer, &chuck_lslar, x, y);
+         break;
+      case chuck_running_left_arm_one:
+      case chuck_running_left_arm_two:
+         if (game->chuck_state.direction == right)
+            draw_element (renderer, &chuck_rslal, x, y);
+         else if (game->chuck_state.direction == left)
+            draw_element (renderer, &chuck_lslal, x, y);
+         break;
+   }
+
+   if ((game->chuck_state.sprite_state == chuck_running_right_arm_one) ||
+       (game->chuck_state.sprite_state == chuck_running_right_arm_two) ||
+       (game->chuck_state.sprite_state == chuck_running_left_arm_one)  ||
+       (game->chuck_state.sprite_state == chuck_running_left_arm_two))
+      game->chuck_state.sprite_state += 1;
 
    return 0;
 }
@@ -4223,6 +4275,12 @@ static int init_game_context (game_context_t *game, uint8_t level)
       game->seed_state[i].present = true;
    }
 
+   // initialize chuck state
+   game->chuck_state.gfx_offset.x = 0x3c;
+   game->chuck_state.gfx_offset.y = 0x18;
+   game->chuck_state.direction = right;
+   game->chuck_state.sprite_state = chuck_standing_one;
+
    // radnom number for duck movements
    game->random.number = 0x76767676;
 
@@ -4262,6 +4320,10 @@ static int move_duck (game_context_t *game)
    }
 
    index = game->ducks_state.duck_to_move - 1;
+   game->ducks_state.duck_to_move--;
+   if (game->ducks_state.duck_to_move == 0)
+      game->ducks_state.duck_to_move = adjust_duck_speed (game->players_context->current_level, 8);
+
    x = game->ducks_state.ducks_state[index].tile_offset.x;
    y = game->ducks_state.ducks_state[index].tile_offset.y;
 
@@ -4272,11 +4334,10 @@ static int move_duck (game_context_t *game)
       moves = game->ducks_state.ducks_state[index].direction;
       goto one_move;
    }
-   // is seed collection animation over ?
-   if (game->ducks_state.ducks_state[index].sprite_state == duck_half_stoop_end)
+
+   // clear the seed
+   if (game->ducks_state.ducks_state[index].sprite_state == duck_stoop)
    {
-      // the seed is collected and animation is over, reset to upstraight position
-      game->ducks_state.ducks_state[index].sprite_state = 0;
       if (game->ducks_state.ducks_state[index].direction == right)
       {
          game->seed_state[game->players_context->sandbox[y][x + 1] >> 4].present = false;
@@ -4287,6 +4348,13 @@ static int move_duck (game_context_t *game)
          game->seed_state[game->players_context->sandbox[y][x - 1] >> 4].present = false;
          game->players_context->sandbox[y][x - 1] = 0;
       }
+   }
+
+   // is seed collection animation over ?
+   if (game->ducks_state.ducks_state[index].sprite_state == duck_half_stoop_end)
+   {
+      // the seed is collected and animation is over, reset to upstraight position
+      game->ducks_state.ducks_state[index].sprite_state = 0;
       return 0;
    }
    // is duck collecting seed ?
@@ -4396,9 +4464,52 @@ one_move:
    game->ducks_state.ducks_state[index].tile_offset.x = game->ducks_state.ducks_state[index].gfx_offset.x / 8;
    game->ducks_state.ducks_state[index].tile_offset.y = (game->ducks_state.ducks_state[index].gfx_offset.y - 0x14) / 8;
 
-   game->ducks_state.duck_to_move--;
-   if (game->ducks_state.duck_to_move == 0)
-      game->ducks_state.duck_to_move = adjust_duck_speed (game->players_context->current_level, 8);
+   return 0;
+}
+
+static int move_chuck (game_context_t *game, direction_t dir)
+{
+   if (dir == left)
+   {
+      game->chuck_state.gfx_offset.x -= 1;
+      if (game->chuck_state.gfx_offset.x == 0xff)
+         game->chuck_state.gfx_offset.x = 0;
+
+      if (game->chuck_state.direction == left)
+      {
+         game->chuck_state.sprite_state += 1;
+         if (game->chuck_state.sprite_state > chuck_max)
+            game->chuck_state.sprite_state = chuck_standing_one;
+      }
+      else
+      {
+         game->chuck_state.sprite_state = chuck_standing_one;
+         game->chuck_state.direction = left;
+      }
+
+      return 0;
+   }
+
+   if (dir == right)
+   {
+      game->chuck_state.gfx_offset.x += 1;
+      if (game->chuck_state.gfx_offset.x > 152)
+         game->chuck_state.gfx_offset.x = 152;
+
+      if (game->chuck_state.direction == right)
+      {
+         game->chuck_state.sprite_state += 1;
+         if (game->chuck_state.sprite_state > chuck_max)
+            game->chuck_state.sprite_state = chuck_standing_one;
+      }
+      else
+      {
+         game->chuck_state.sprite_state = chuck_standing_one;
+         game->chuck_state.direction = right;
+      }
+
+      return 0;
+   }
 
    return 0;
 }
@@ -4487,9 +4598,19 @@ int main (void)
                loopShouldStop = SDL_TRUE;
                break;
             case SDL_KEYDOWN:
-               player_1.current_level++;
-               init_game_context (&game, player_1.current_level);
-               dump_sandbox = true;
+               //if (event.key.repeat == 0)
+               {
+                  if (event.key.keysym.scancode == SDL_SCANCODE_LEFT)
+                     move_chuck (&game, left);
+                  if (event.key.keysym.scancode == SDL_SCANCODE_RIGHT)
+                     move_chuck (&game, right);
+               }
+               if (event.key.keysym.scancode == SDL_SCANCODE_SPACE)
+               {
+                  player_1.current_level++;
+                  init_game_context (&game, player_1.current_level);
+                  dump_sandbox = true;
+               }
                break;
          }
       }
