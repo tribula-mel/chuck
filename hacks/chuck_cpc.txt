@@ -538,11 +538,11 @@
       tests for left, right, up, down and jump key presses
       $7b56 is updated accordingly (low significant bits are set
          if the key press is detected); $80 is for "H+ESC"
-      $7b57 right key
-      $7b58 left key
-      $7b59 down key
-      $7b5a up key
-      $7b5b jump key
+      $7b57 right key (sets bit 0 in $7b56)
+      $7b58 left key  (sets bit 1)
+      $7b59 down key  (sets bit 2)
+      $7b5a up key    (sets bit 3)
+      $7b5b jump key  (sets bit 4)
       call $91b8
          inputs: 'a' (key to test), 'e' (mask to set if the key is pressed)
          output: 'd' (set to mask in 'e' if the key is pressed)
@@ -1004,3 +1004,50 @@
    if not available then marked with $ff
 
 -| code at $9560 updates chuck position among other things
+
+-| code at $9522
+   updates chuck's position x/y, tile offsets, and other table enties
+
+-| chuck table $7b36
+   offset $0 x
+   offset $1 y
+   offset $2 tile x
+   offset $3 tile y
+   offset $4 up/down status
+             $0 not moving up/down
+             $1 on the ladder
+             $2 jump key pressed
+             $3 falling
+             $4 on the elevator
+   offset $5 add $5 to this value and use it as an index into
+             the chuck sprite table
+   offset $6 left/right key press status ($1 for left/$ff for right/$0 for none)
+             it seems this translates into dx
+   offset $7 up/down key press status ($2 for up/$fe for down/$0 for none)
+             it seems this translates into dy
+   offset $8 used in calculating tile x position
+             0..7 in +1/-1 increments depending on the direction (right/left)
+             0 is the left edge of the tile
+             7 is the right edge of the tile
+             3 is the middle position
+             if this offset is bigger than 7 then tile x is increased
+                and this offset is reset to 0
+             if this offset is smaller than 0 then tile x is decreased
+                and this offset is reset to 7
+             x = 8 * (tile x) + (offset $8) - 3
+   offset $9 used in calculating tile y position
+             0..7 in +2/-2 increments depending on the direction (up/down)
+             0 is the bottom edge of the tile
+             7 is the top edge of the tile
+             if this offset is bigger than 7 then tile y is increased
+                and this offset is reset to 0
+             if this offset is smaller than 0 then tile y is decreased
+                and this offset is reset to 6
+             y = 8 * (tile y) + (offset $9) + 0x10 (chuck height)
+   offset $a jump sprite sequence $1, $2 .. $14
+   offset $b ?
+   offset $c ?
+
+-| call $8fa3
+   checks chuck's tile position for limits
+   then loads a register with a byte from the sandbox by using tile positions

@@ -2935,32 +2935,32 @@
 900D: C9          ret
 900E: FD 56 00    ld   d,(iy+$00)
 9011: FD 5E 01    ld   e,(iy+$01)
-9014: CD 0A 8C    call $8C0A
+9014: CD 0A 8C    call $8C0A           # calculated screen address for x,y
 9017: E5          push hl
 9018: 3E 08       ld   a,$08
-901A: CD 5B 8C    call $8C5B
+901A: CD 5B 8C    call $8C5B           # returns colour in reg e
 901D: E1          pop  hl
 901E: FD 7E 05    ld   a,(iy+$05)
 9021: C6 05       add  a,$05
-9023: CD 34 8C    call $8C34
+9023: CD 34 8C    call $8C34           # returns sprite address in ix
 9026: C5          push bc
 9027: D5          push de
 9028: E5          push hl
 9029: DD E5       push ix
-902B: ED 4B 46 7B ld   bc,($7B46)
-902F: ED 5B 48 7B ld   de,($7B48)
-9033: 2A 4A 7B    ld   hl,($7B4A)
-9036: DD 2A 4C 7B ld   ix,($7B4C)
-903A: CD 76 8C    call $8C76
+902B: ED 4B 46 7B ld   bc,($7B46)      # current sprite width and height
+902F: ED 5B 48 7B ld   de,($7B48)      # current sprite colour
+9033: 2A 4A 7B    ld   hl,($7B4A)      # current screen address
+9036: DD 2A 4C 7B ld   ix,($7B4C)      # current sprite
+903A: CD 76 8C    call $8C76           # clear chuck
 903D: DD E1       pop  ix
 903F: E1          pop  hl
 9040: D1          pop  de
 9041: C1          pop  bc
-9042: ED 43 46 7B ld   ($7B46),bc
-9046: ED 53 48 7B ld   ($7B48),de
-904A: 22 4A 7B    ld   ($7B4A),hl
-904D: DD 22 4C 7B ld   ($7B4C),ix
-9051: CD 76 8C    call $8C76
+9042: ED 43 46 7B ld   ($7B46),bc      # new sprite width and height
+9046: ED 53 48 7B ld   ($7B48),de      # new colour
+904A: 22 4A 7B    ld   ($7B4A),hl      # new screen address
+904D: DD 22 4C 7B ld   ($7B4C),ix      # new sprite
+9051: CD 76 8C    call $8C76           # move chuck
 9054: C9          ret
 9055: 3A 02 7B    ld   a,($7B02)
 9058: FE 01       cp   $01
@@ -3121,17 +3121,17 @@
 91CB: 3A 56 7B    ld   a,($7B56)    # key presses status
 91CE: 1F          rra
 91CF: 30 01       jr   nc,$91D2
-91D1: 04          inc  b
+91D1: 04          inc  b            # right pressed
 91D2: 1F          rra
 91D3: 30 01       jr   nc,$91D6
-91D5: 05          dec  b
+91D5: 05          dec  b            # left pressed
 91D6: 1F          rra
 91D7: 30 02       jr   nc,$91DB
-91D9: 0D          dec  c
+91D9: 0D          dec  c            # down pressed
 91DA: 0D          dec  c
 91DB: 1F          rra
 91DC: 30 02       jr   nc,$91E0
-91DE: 0C          inc  c
+91DE: 0C          inc  c            # up pressed
 91DF: 0C          inc  c
 91E0: FD 70 06    ld   (iy+$06),b   # store the status in the table
 91E3: FD 71 07    ld   (iy+$07),c
@@ -3149,25 +3149,25 @@
 9203: CA 45 94    jp   z,$9445
 9206: C3 8E 94    jp   $948E
 9209: 3A 56 7B    ld   a,($7B56)
-920C: E6 10       and  $10
+920C: E6 10       and  $10          # check for jump press
 920E: C2 FA 92    jp   nz,$92FA
 9211: 79          ld   a,c
 9212: B7          or   a
 9213: 28 2D       jr   z,$9242
 9215: 7C          ld   a,h
-9216: FE 03       cp   $03
+9216: FE 03       cp   $03          # are we aligned with the ladder ?
 9218: 20 28       jr   nz,$9242
 921A: 79          ld   a,c
 921B: B7          or   a
 921C: FA 2D 92    jp   m,$922D
 921F: D5          push de
-9220: 1C          inc  e
+9220: 1C          inc  e            # chuck moves up by 2 so test for ladder
 9221: 1C          inc  e
 9222: CD A3 8F    call $8FA3
 9225: D1          pop  de
 9226: E6 02       and  $02
 9228: 28 18       jr   z,$9242
-922A: C3 37 92    jp   $9237
+922A: C3 37 92    jp   $9237        # there is ladder
 922D: D5          push de
 922E: 1D          dec  e
 922F: CD A3 8F    call $8FA3
@@ -3260,7 +3260,7 @@
 92EF: FD 36 07 00 ld   (iy+$07),$00
 92F3: FD 36 0C 00 ld   (iy+$0c),$00
 92F7: C3 22 95    jp   $9522
-92FA: FD 36 0A 00 ld   (iy+$0a),$00
+92FA: FD 36 0A 00 ld   (iy+$0a),$00       # jump key pressed
 92FE: FD 36 04 02 ld   (iy+$04),$02
 9302: 78          ld   a,b
 9303: FD 77 0B    ld   (iy+$0b),a
@@ -3458,7 +3458,7 @@
 9486: ED 44       neg
 9488: FD 77 07    ld   (iy+$07),a
 948B: C3 22 95    jp   $9522
-948E: 3A 56 7B    ld   a,($7B56)
+948E: 3A 56 7B    ld   a,($7B56)          # chuck is on the elevator
 9491: E6 10       and  $10
 9493: C2 FA 92    jp   nz,$92FA
 9496: 3A 08 7B    ld   a,($7B08)
