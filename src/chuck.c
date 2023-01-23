@@ -3714,10 +3714,36 @@ typedef enum {
    chuck_running_left_arm_two,
    chuck_standing_eight,
    chuck_max = chuck_standing_eight,
+   chuck_back_one,
+   chuck_back_left_arm,
+   chuck_back_two,
+   chuck_back_three,
+   chuck_back_right_arm,
+   chuck_back_four,
+   chuck_back_five,
+   chuck_back_max = chuck_back_five,
 } chuck_sprite_t;
+
+typedef enum {
+   on_the_left_edge  = 0x0,
+   in_the_middle     = 0x3,
+   on_the_right_edge = 0x7,
+} chuck_relative_x_tile_t;
+
+typedef enum {
+   on_the_bottom_edge = 0x0,
+   on_the_top_edge    = 0x6,
+} chuck_relative_y_tile_t;
 
 #define OFFSET_X_MAX (0x14)
 #define OFFSET_Y_MAX (0x16)
+
+typedef struct __chuck_state
+{
+   element_state_t el;
+   uint8_t tile_rel_off_x;
+   uint8_t tile_rel_off_y;
+} chuck_state_t;
 
 typedef struct __player_context
 {
@@ -3743,7 +3769,7 @@ typedef struct __game_context
    player_context_t *players_context;
    level_t levels[8];
    // chuck position
-   element_state_t chuck_state;
+   chuck_state_t chuck_state;
    // duck positions
    ducks_state_t ducks_state;
    // flying duck position
@@ -4061,10 +4087,10 @@ static int draw_chuck (SDL_Renderer *renderer, game_context_t *game)
    uint16_t x = 0;
    uint16_t y = 0;
 
-   x = x_convert_to_sdl (game->chuck_state.gfx_offset.x);
-   y = y_convert_to_sdl (game->chuck_state.gfx_offset.y);
+   x = x_convert_to_sdl (game->chuck_state.el.gfx_offset.x);
+   y = y_convert_to_sdl (game->chuck_state.el.gfx_offset.y);
 
-   switch (game->chuck_state.sprite_state)
+   switch (game->chuck_state.el.sprite_state)
    {
       case chuck_standing_one:
       case chuck_standing_two:
@@ -4074,32 +4100,49 @@ static int draw_chuck (SDL_Renderer *renderer, game_context_t *game)
       case chuck_standing_six:
       case chuck_standing_seven:
       case chuck_standing_eight:
-         if (game->chuck_state.direction == right)
+         if (game->chuck_state.el.direction == right)
             draw_element (renderer, &chuck_r, x, y);
-         else if (game->chuck_state.direction == left)
+         else if (game->chuck_state.el.direction == left)
             draw_element (renderer, &chuck_l, x, y);
          break;
       case chuck_running_right_arm_one:
       case chuck_running_right_arm_two:
-         if (game->chuck_state.direction == right)
+         if (game->chuck_state.el.direction == right)
             draw_element (renderer, &chuck_rslar, x, y);
-         else if (game->chuck_state.direction == left)
+         else if (game->chuck_state.el.direction == left)
             draw_element (renderer, &chuck_lslar, x, y);
          break;
       case chuck_running_left_arm_one:
       case chuck_running_left_arm_two:
-         if (game->chuck_state.direction == right)
+         if (game->chuck_state.el.direction == right)
             draw_element (renderer, &chuck_rslal, x, y);
-         else if (game->chuck_state.direction == left)
+         else if (game->chuck_state.el.direction == left)
             draw_element (renderer, &chuck_lslal, x, y);
+         break;
+      case chuck_back_one:
+      case chuck_back_two:
+      case chuck_back_three:
+      case chuck_back_four:
+      case chuck_back_five:
+         draw_element (renderer, &chuck_b, x, y);
+         break;
+      case chuck_back_left_arm:
+         draw_element (renderer, &chuck_blurd, x, y);
+         break;
+      case chuck_back_right_arm:
+         draw_element (renderer, &chuck_bldru, x, y);
          break;
    }
 
-   if ((game->chuck_state.sprite_state == chuck_running_right_arm_one) ||
-       (game->chuck_state.sprite_state == chuck_running_right_arm_two) ||
-       (game->chuck_state.sprite_state == chuck_running_left_arm_one)  ||
-       (game->chuck_state.sprite_state == chuck_running_left_arm_two))
-      game->chuck_state.sprite_state += 1;
+   if ((game->chuck_state.el.sprite_state == chuck_running_right_arm_one) ||
+       (game->chuck_state.el.sprite_state == chuck_running_right_arm_two) ||
+       (game->chuck_state.el.sprite_state == chuck_running_left_arm_one)  ||
+       (game->chuck_state.el.sprite_state == chuck_running_left_arm_two))
+      game->chuck_state.el.sprite_state += 1;
+
+   if ((game->chuck_state.el.sprite_state == chuck_back_left_arm) ||
+       (game->chuck_state.el.sprite_state == chuck_back_right_arm))
+      game->chuck_state.el.sprite_state += 1;
 
    return 0;
 }
@@ -4219,6 +4262,7 @@ static uint8_t adjust_n_ducks (uint8_t n_ducks, uint8_t level)
    return n_ducks;
 }
 
+#if 0 // todo enable when time is ripe
 static bool flying_duck_out_of_cage (uint8_t level)
 {
    if (level >= 8)
@@ -4226,6 +4270,7 @@ static bool flying_duck_out_of_cage (uint8_t level)
 
    return false;
 }
+#endif
 
 static uint8_t adjust_duck_speed (uint8_t level, uint8_t speed)
 {
@@ -4276,10 +4321,14 @@ static int init_game_context (game_context_t *game, uint8_t level)
    }
 
    // initialize chuck state
-   game->chuck_state.gfx_offset.x = 0x3c;
-   game->chuck_state.gfx_offset.y = 0x18;
-   game->chuck_state.direction = right;
-   game->chuck_state.sprite_state = chuck_standing_one;
+   game->chuck_state.el.gfx_offset.x = 0x3c;
+   game->chuck_state.el.gfx_offset.y = 0x18;
+   game->chuck_state.el.tile_offset.x = 0x7;
+   game->chuck_state.el.tile_offset.y = 0x1;
+   game->chuck_state.el.direction = right;
+   game->chuck_state.el.sprite_state = chuck_standing_one;
+   game->chuck_state.tile_rel_off_x = on_the_right_edge;
+   game->chuck_state.tile_rel_off_y = on_the_bottom_edge;
 
    // radnom number for duck movements
    game->random.number = 0x76767676;
@@ -4471,20 +4520,29 @@ static int move_chuck (game_context_t *game, direction_t dir)
 {
    if (dir == left)
    {
-      game->chuck_state.gfx_offset.x -= 1;
-      if (game->chuck_state.gfx_offset.x == 0xff)
-         game->chuck_state.gfx_offset.x = 0;
-
-      if (game->chuck_state.direction == left)
+      game->chuck_state.el.gfx_offset.x -= 1;
+      game->chuck_state.tile_rel_off_x -= 1;
+      if (game->chuck_state.el.gfx_offset.x == 0xff)
       {
-         game->chuck_state.sprite_state += 1;
-         if (game->chuck_state.sprite_state > chuck_max)
-            game->chuck_state.sprite_state = chuck_standing_one;
+         game->chuck_state.el.gfx_offset.x = 0;
+         game->chuck_state.tile_rel_off_x = in_the_middle;
+      }
+      if (game->chuck_state.tile_rel_off_x == 0xff)
+      {
+         game->chuck_state.el.tile_offset.x -= 1;
+         game->chuck_state.tile_rel_off_x = on_the_right_edge;
+      }
+
+      if (game->chuck_state.el.direction == left)
+      {
+         game->chuck_state.el.sprite_state += 1;
+         if (game->chuck_state.el.sprite_state > chuck_max)
+            game->chuck_state.el.sprite_state = chuck_standing_one;
       }
       else
       {
-         game->chuck_state.sprite_state = chuck_standing_one;
-         game->chuck_state.direction = left;
+         game->chuck_state.el.sprite_state = chuck_standing_one;
+         game->chuck_state.el.direction = left;
       }
 
       return 0;
@@ -4492,20 +4550,95 @@ static int move_chuck (game_context_t *game, direction_t dir)
 
    if (dir == right)
    {
-      game->chuck_state.gfx_offset.x += 1;
-      if (game->chuck_state.gfx_offset.x > 152)
-         game->chuck_state.gfx_offset.x = 152;
-
-      if (game->chuck_state.direction == right)
+      game->chuck_state.el.gfx_offset.x += 1;
+      game->chuck_state.tile_rel_off_x += 1;
+      if (game->chuck_state.el.gfx_offset.x > 152)
       {
-         game->chuck_state.sprite_state += 1;
-         if (game->chuck_state.sprite_state > chuck_max)
-            game->chuck_state.sprite_state = chuck_standing_one;
+         game->chuck_state.el.gfx_offset.x = 152;
+         game->chuck_state.tile_rel_off_x = in_the_middle;
+      }
+      if (game->chuck_state.tile_rel_off_x == 8)
+      {
+         game->chuck_state.el.tile_offset.x += 1;
+         game->chuck_state.tile_rel_off_x = on_the_left_edge;
+      }
+
+      if (game->chuck_state.el.direction == right)
+      {
+         game->chuck_state.el.sprite_state += 1;
+         if (game->chuck_state.el.sprite_state > chuck_max)
+            game->chuck_state.el.sprite_state = chuck_standing_one;
       }
       else
       {
-         game->chuck_state.sprite_state = chuck_standing_one;
-         game->chuck_state.direction = right;
+         game->chuck_state.el.sprite_state = chuck_standing_one;
+         game->chuck_state.el.direction = right;
+      }
+
+      return 0;
+   }
+
+   if (dir == up)
+   {
+      // first check if we are in the middle of the tile
+      if (game->chuck_state.tile_rel_off_x == in_the_middle)
+      {
+         // is there ladder
+         if (game->players_context->sandbox[game->chuck_state.el.tile_offset.y + 1][game->chuck_state.el.tile_offset.x] & 0x2)
+         {
+            game->chuck_state.el.gfx_offset.y += 2;
+            game->chuck_state.tile_rel_off_y += 2;
+            if (game->chuck_state.tile_rel_off_y > on_the_top_edge)
+            {
+               game->chuck_state.el.tile_offset.y += 1;
+               game->chuck_state.tile_rel_off_y = on_the_bottom_edge;
+            }
+
+            if (game->chuck_state.el.direction == up)
+            {
+               game->chuck_state.el.sprite_state += 1;
+               if (game->chuck_state.el.sprite_state > chuck_back_max)
+                  game->chuck_state.el.sprite_state = chuck_back_one;
+            }
+            else
+            {
+               game->chuck_state.el.sprite_state = chuck_back_one;
+               game->chuck_state.el.direction = up;
+            }
+         }
+      }
+
+      return 0;
+   }
+
+   if (dir == down)
+   {
+      // first check if we are in the middle of the tile
+      if (game->chuck_state.tile_rel_off_x == in_the_middle)
+      {
+         // is there ladder
+         if (game->players_context->sandbox[game->chuck_state.el.tile_offset.y][game->chuck_state.el.tile_offset.x] & 0x2)
+         {
+            game->chuck_state.el.gfx_offset.y -= 2;
+            game->chuck_state.tile_rel_off_y -= 2;
+            if (game->chuck_state.tile_rel_off_y == 0xfe)
+            {
+               game->chuck_state.el.tile_offset.y -= 1;
+               game->chuck_state.tile_rel_off_y = on_the_top_edge;
+            }
+
+            if (game->chuck_state.el.direction == down)
+            {
+               game->chuck_state.el.sprite_state += 1;
+               if (game->chuck_state.el.sprite_state > chuck_back_max)
+                  game->chuck_state.el.sprite_state = chuck_back_one;
+            }
+            else
+            {
+               game->chuck_state.el.sprite_state = chuck_back_one;
+               game->chuck_state.el.direction = down;
+            }
+         }
       }
 
       return 0;
@@ -4604,6 +4737,10 @@ int main (void)
                      move_chuck (&game, left);
                   if (event.key.keysym.scancode == SDL_SCANCODE_RIGHT)
                      move_chuck (&game, right);
+                  if (event.key.keysym.scancode == SDL_SCANCODE_UP)
+                     move_chuck (&game, up);
+                  if (event.key.keysym.scancode == SDL_SCANCODE_DOWN)
+                     move_chuck (&game, down);
                }
                if (event.key.keysym.scancode == SDL_SCANCODE_SPACE)
                {
