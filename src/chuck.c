@@ -3735,6 +3735,14 @@ typedef enum {
    on_the_top_edge    = 0x6,
 } chuck_relative_y_tile_t;
 
+typedef enum {
+   horizontal  = 0x0,
+   on_ladder   = 0x1,
+   in_jump     = 0x2,
+   falling     = 0x3,
+   on_elevator = 0x4,
+} chuck_vertical_t;
+
 #define OFFSET_X_MAX (0x14)
 #define OFFSET_Y_MAX (0x16)
 
@@ -3743,6 +3751,7 @@ typedef struct __chuck_state
    element_state_t el;
    uint8_t tile_rel_off_x;
    uint8_t tile_rel_off_y;
+   uint8_t vertical_state;
 } chuck_state_t;
 
 typedef struct __player_context
@@ -4520,8 +4529,17 @@ static int move_chuck (game_context_t *game, direction_t dir)
 {
    if (dir == left)
    {
+      if (game->chuck_state.vertical_state == on_ladder)
+      {
+         if (game->chuck_state.tile_rel_off_y != 0)
+            return 0;
+         if (game->players_context->sandbox[game->chuck_state.el.tile_offset.y - 1][game->chuck_state.el.tile_offset.x - 1] != 0x1)
+            return 0;
+      }
+
       game->chuck_state.el.gfx_offset.x -= 1;
       game->chuck_state.tile_rel_off_x -= 1;
+      game->chuck_state.vertical_state = horizontal;
       if (game->chuck_state.el.gfx_offset.x == 0xff)
       {
          game->chuck_state.el.gfx_offset.x = 0;
@@ -4550,8 +4568,17 @@ static int move_chuck (game_context_t *game, direction_t dir)
 
    if (dir == right)
    {
+      if (game->chuck_state.vertical_state == on_ladder)
+      {
+         if (game->chuck_state.tile_rel_off_y != 0)
+            return 0;
+         if (game->players_context->sandbox[game->chuck_state.el.tile_offset.y - 1][game->chuck_state.el.tile_offset.x + 1] != 0x1)
+            return 0;
+      }
+
       game->chuck_state.el.gfx_offset.x += 1;
       game->chuck_state.tile_rel_off_x += 1;
+      game->chuck_state.vertical_state = horizontal;
       if (game->chuck_state.el.gfx_offset.x > 152)
       {
          game->chuck_state.el.gfx_offset.x = 152;
@@ -4588,6 +4615,7 @@ static int move_chuck (game_context_t *game, direction_t dir)
          {
             game->chuck_state.el.gfx_offset.y += 2;
             game->chuck_state.tile_rel_off_y += 2;
+            game->chuck_state.vertical_state = on_ladder;
             if (game->chuck_state.tile_rel_off_y > on_the_top_edge)
             {
                game->chuck_state.el.tile_offset.y += 1;
@@ -4621,6 +4649,7 @@ static int move_chuck (game_context_t *game, direction_t dir)
          {
             game->chuck_state.el.gfx_offset.y -= 2;
             game->chuck_state.tile_rel_off_y -= 2;
+            game->chuck_state.vertical_state = on_ladder;
             if (game->chuck_state.tile_rel_off_y == 0xfe)
             {
                game->chuck_state.el.tile_offset.y -= 1;
