@@ -7,20 +7,26 @@
 
 #include <SDL2/SDL.h>
 
-// number of eggs is 0xc (design by original game)
-#define MAX_N_EGGS   (0xc)
-// number of ducks is 0x5 (design by original game)
-#define MAX_N_DUCKS  (0x5)
+#include "game_types.h"
 
-// the below by necessity (c language thingy)
-// number of platforms
-#define MAX_N_PLATFORMS  (0x1a)
-// number of ladders
-#define MAX_N_LADDERS    (0x09)
-// number of seed
-#define MAX_N_SEED       (0x10)
-// two paddles for elevator
-#define N_PADDLES        (0x02)
+static void set_chuck_gfx_off_x (game_context_t *game, uint8_t off);
+static uint8_t get_chuck_gfx_off_x (game_context_t *game);
+static void set_chuck_gfx_off_y (game_context_t *game, uint8_t off);
+static uint8_t get_chuck_gfx_off_y (game_context_t *game);
+static void set_chuck_tile_rel_off_x (game_context_t *game, uint8_t off);
+static uint8_t get_chuck_tile_rel_off_x (game_context_t *game);
+static void set_chuck_tile_rel_off_y (game_context_t *game, uint8_t off);
+static uint8_t get_chuck_tile_rel_off_y (game_context_t *game);
+static void set_chuck_tile_off_x (game_context_t *game, uint8_t off);
+static uint8_t get_chuck_tile_off_x (game_context_t *game);
+static void set_chuck_tile_off_y (game_context_t *game, uint8_t off);
+static uint8_t get_chuck_tile_off_y (game_context_t *game);
+static void set_chuck_dvx (game_context_t *game, uint8_t off);
+static uint8_t get_chuck_dvx (game_context_t *game);
+static void set_chuck_dvy (game_context_t *game, uint8_t off);
+static uint8_t get_chuck_dvy (game_context_t *game);
+static void calc_chuck_dv (game_context_t *game);
+static void adjust_chuck_dvy (game_context_t *game, uint8_t tile_rel_y);
 
 // running the game in original resolution would result in tiny graphics
 // for now this will be hard coded
@@ -32,52 +38,6 @@ static const uint8_t scale = 2;
 // original game on cpc464 ran in mode 0
 static const uint16_t x_res = DOTS_PER_PIXEL_X * 160;
 static const uint16_t y_res = DOTS_PER_PIXEL_Y * 200;
-
-typedef enum {
-   pastel_yellow = 0x02,
-   bright_magenta = 0x08,
-   bright_cyan = 0x20,
-   green = 0x80,
-   bright_white = 0x88,
-   bright_red = 0xa0,
-} colour_t;
-
-// tile based offsets for tiles 8x8
-// these include platforms, ladders, eggs, and seeds
-typedef struct __offset
-{
-   uint8_t x;
-   uint8_t y;
-} offset_t, elevator_offset_t, egg_offset_t, seed_offset_t, duck_offset_t;
-
-typedef struct __platform_offset
-{
-   offset_t offset;
-   uint8_t offset_x_end;
-} platform_offset_t;
-
-typedef struct __ladder_offset
-{
-   offset_t offset;
-   uint8_t offset_y_end;
-} ladder_offset_t;
-
-typedef struct __level
-{
-   uint8_t n_platforms;
-   uint8_t n_ladders;
-   bool elevator;
-   uint8_t n_eggs;
-   uint8_t n_seeds;
-   uint8_t n_ducks;
-   platform_offset_t platform_offsets[MAX_N_PLATFORMS];
-   ladder_offset_t ladder_offsets[MAX_N_LADDERS];
-   elevator_offset_t elevator_offset[N_PADDLES];
-   egg_offset_t egg_offsets[MAX_N_EGGS];
-   seed_offset_t seed_offsets[MAX_N_SEED];
-   duck_offset_t duck_offsets[MAX_N_DUCKS];
-   uint16_t max_bonus;
-} level_t;
 
 static level_t level_classic_one =
 {
@@ -2778,14 +2738,6 @@ static level_t level_classic_eight =
    .max_bonus = 8000,
 };
 
-typedef struct __sprite
-{
-   uint8_t width;
-   uint8_t height;
-   uint8_t colour;
-   uint8_t sprite[];
-} sprite_t;
-
 static sprite_t platform =
 {
    .width  = 0x01,
@@ -3660,134 +3612,6 @@ static sprite_t elevator =
       }
 };
 
-typedef enum {
-   right = 1,
-   left  = 2,
-   up    = 4,
-   down  = 8,
-} direction_t;
-
-typedef struct __element_state
-{
-   offset_t tile_offset;
-   offset_t gfx_offset;
-   uint8_t direction;
-   uint8_t sprite_state;
-} element_state_t;
-
-typedef enum {
-   duck_half_stoop_start = 0x4,
-   duck_stoop            = 0x8,
-   duck_half_stoop_end   = 0x10,
-} duck_stoop_t;
-
-typedef struct __ducks_state
-{
-   element_state_t ducks_state[MAX_N_DUCKS];
-   uint8_t duck_to_move;
-   uint8_t n_ducks;
-} ducks_state_t;
-
-typedef struct __seed_state
-{
-   offset_t tile_offset;
-   bool present;
-} seed_state_t;
-
-typedef union rand
-{
-   uint32_t number;
-   uint8_t  byte[4];
-} rand_t;
-
-typedef enum {
-   chuck_standing_one = 0x1,
-   chuck_standing_two,
-   chuck_running_right_arm_one,
-   chuck_standing_three,
-   chuck_running_right_arm_two,
-   chuck_standing_four,
-   chuck_standing_five,
-   chuck_standing_six,
-   chuck_running_left_arm_one,
-   chuck_standing_seven,
-   chuck_running_left_arm_two,
-   chuck_standing_eight,
-   chuck_max = chuck_standing_eight,
-   chuck_back_one,
-   chuck_back_left_arm,
-   chuck_back_two,
-   chuck_back_three,
-   chuck_back_right_arm,
-   chuck_back_four,
-   chuck_back_five,
-   chuck_back_max = chuck_back_five,
-} chuck_sprite_t;
-
-typedef enum {
-   on_the_left_edge  = 0x0,
-   in_the_middle     = 0x3,
-   on_the_right_edge = 0x7,
-} chuck_relative_x_tile_t;
-
-typedef enum {
-   on_the_bottom_edge = 0x0,
-   on_the_top_edge    = 0x6,
-} chuck_relative_y_tile_t;
-
-typedef enum {
-   horizontal  = 0x0,
-   on_ladder   = 0x1,
-   in_jump     = 0x2,
-   falling     = 0x3,
-   on_elevator = 0x4,
-} chuck_vertical_t;
-
-#define OFFSET_X_MAX (0x14)
-#define OFFSET_Y_MAX (0x16)
-
-typedef struct __chuck_state
-{
-   element_state_t el;
-   uint8_t tile_rel_off_x;
-   uint8_t tile_rel_off_y;
-   uint8_t vertical_state;
-} chuck_state_t;
-
-typedef struct __player_context
-{
-   // player number 1 .. 4
-   uint8_t current_player;
-   // current level
-   uint8_t current_level;
-   // score 0 .. 999999 inclusive
-   uint32_t score;
-   // time 0 .. 900 inclusive
-   uint16_t time;
-   // bonus 0 .. 9000
-   uint16_t bonus;
-   // lives; new life every 10000 score points; max 255
-   uint8_t lives;
-   // movement context
-   uint8_t sandbox[OFFSET_Y_MAX][OFFSET_X_MAX];
-} player_context_t;
-
-typedef struct __game_context
-{
-   uint8_t number_of_players;
-   player_context_t *players_context;
-   level_t levels[8];
-   // chuck position
-   chuck_state_t chuck_state;
-   // duck positions
-   ducks_state_t ducks_state;
-   // flying duck position
-   element_state_t flying_duck_state;
-   element_state_t elevator_state[N_PADDLES];
-   seed_state_t seed_state[MAX_N_SEED];
-   rand_t random;
-} game_context_t;
-
 /* chuck tile x offset to sdl */
 static uint16_t tile_x_convert_to_sdl (uint8_t offset)
 {
@@ -4091,6 +3915,193 @@ static int draw_flying_duck (SDL_Renderer *renderer, game_context_t *game)
    return 0;
 }
 
+static void set_chuck_gfx_off_x (game_context_t *game, uint8_t off)
+{
+   game->chuck_state.el.gfx_offset.x = off;
+}
+
+static uint8_t get_chuck_gfx_off_x (game_context_t *game)
+{
+   return game->chuck_state.el.gfx_offset.x;
+}
+
+static void set_chuck_gfx_off_y (game_context_t *game, uint8_t off)
+{
+   game->chuck_state.el.gfx_offset.y = off;
+}
+
+static uint8_t get_chuck_gfx_off_y (game_context_t *game)
+{
+   return game->chuck_state.el.gfx_offset.y;
+}
+
+static void set_chuck_tile_rel_off_x (game_context_t *game, uint8_t off)
+{
+   game->chuck_state.tile_rel_off_x = off;
+}
+
+static uint8_t get_chuck_tile_rel_off_x (game_context_t *game)
+{
+   return game->chuck_state.tile_rel_off_x;
+}
+
+static void set_chuck_tile_rel_off_y (game_context_t *game, uint8_t off)
+{
+   game->chuck_state.tile_rel_off_y = off;
+}
+
+static uint8_t get_chuck_tile_rel_off_y (game_context_t *game)
+{
+   return game->chuck_state.tile_rel_off_y;
+}
+
+static void set_chuck_tile_off_x (game_context_t *game, uint8_t off)
+{
+   game->chuck_state.el.tile_offset.x = off;
+}
+
+static uint8_t get_chuck_tile_off_x (game_context_t *game)
+{
+   return game->chuck_state.el.tile_offset.x;
+}
+
+static void set_chuck_tile_off_y (game_context_t *game, uint8_t off)
+{
+   game->chuck_state.el.tile_offset.y = off;
+}
+
+static uint8_t get_chuck_tile_off_y (game_context_t *game)
+{
+   return game->chuck_state.el.tile_offset.y;
+}
+
+static void set_chuck_dvx (game_context_t *game, uint8_t off)
+{
+   game->chuck_state.dvx = off;
+}
+
+static uint8_t get_chuck_dvx (game_context_t *game)
+{
+   return game->chuck_state.dvx;
+}
+
+static void set_chuck_dvy (game_context_t *game, uint8_t off)
+{
+   game->chuck_state.dvy = off;
+}
+
+static uint8_t get_chuck_dvy (game_context_t *game)
+{
+   return game->chuck_state.dvy;
+}
+
+static void calc_chuck_dv (game_context_t *game)
+{
+   if (game->chuck_state.vertical_counter < 4)
+   {
+      set_chuck_dvx (game, 1);
+      set_chuck_dvy (game, 1);
+   }
+   else if ((game->chuck_state.vertical_counter >= 4) &&
+            (game->chuck_state.vertical_counter < 8))
+   {
+      set_chuck_dvx (game, 0);
+      set_chuck_dvy (game, 2);
+   }
+   else if ((game->chuck_state.vertical_counter >= 8) &&
+            (game->chuck_state.vertical_counter < 12))
+   {
+      set_chuck_dvx (game, 0);
+      set_chuck_dvy (game, 3);
+   }
+   else if (game->chuck_state.vertical_counter >= 12)
+   {
+      set_chuck_dvx (game, 0);
+      set_chuck_dvy (game, 4);
+   }
+}
+
+static void adjust_chuck_dvy (game_context_t *game, uint8_t tile_rel_y)
+{
+   set_chuck_dvy (game, tile_rel_y);
+}
+
+static int animate_chuck_fall (SDL_Renderer *renderer, game_context_t *game)
+{
+   uint16_t x = 0;
+   uint16_t y = 0;
+   int8_t gfx_x = 0;
+   int8_t gfx_y = 0;
+   int8_t tile_rel_x = 0;
+   int8_t tile_rel_y = 0;
+
+   if (game->chuck_state.vertical_state != falling)
+      return 0;
+ 
+   gfx_x = get_chuck_gfx_off_x (game);
+   gfx_y = get_chuck_gfx_off_y (game);
+   tile_rel_x = get_chuck_tile_rel_off_x (game);
+   tile_rel_y = get_chuck_tile_rel_off_y (game);
+
+   gfx_y -= get_chuck_dvy (game);
+   tile_rel_y -= get_chuck_dvy (game);
+   if (game->chuck_state.el.direction == left)
+   {
+      gfx_x -= get_chuck_dvx (game);
+      tile_rel_x -= get_chuck_dvx (game);
+   }
+   else if (game->chuck_state.el.direction == right)
+   {
+      gfx_x += get_chuck_dvx (game);
+      tile_rel_x += get_chuck_dvx (game);
+   }
+
+   if (gfx_y < 0)
+      gfx_y = 0;
+   if (tile_rel_x < 0)
+   {
+      tile_rel_x = 7;
+      set_chuck_tile_off_x (game, get_chuck_tile_off_x (game) - 1);
+   }
+   if (tile_rel_x > 7)
+   {
+      tile_rel_x = 0;
+      set_chuck_tile_off_x (game, get_chuck_tile_off_x (game) + 1);
+   }
+   if (tile_rel_y < 0)
+   {
+      tile_rel_y = 8 + tile_rel_y;
+      set_chuck_tile_off_y (game, get_chuck_tile_off_y (game) - 1);
+   }
+
+   x = x_convert_to_sdl (gfx_x);
+   y = y_convert_to_sdl (gfx_y);
+   if (game->chuck_state.el.direction == left)
+      draw_element (renderer, &chuck_l, x, y);
+   else if (game->chuck_state.el.direction == right)
+      draw_element (renderer, &chuck_r, x, y);
+
+   set_chuck_gfx_off_x (game, gfx_x);
+   set_chuck_gfx_off_y (game, gfx_y);
+   set_chuck_tile_rel_off_x (game, tile_rel_x);
+   set_chuck_tile_rel_off_y (game, tile_rel_y);
+   game->chuck_state.vertical_counter++; 
+   calc_chuck_dv (game);
+   printf ("tile_rel x,y %x,%x tile x,y %x,%x sandbox %x\n", tile_rel_x, tile_rel_y,
+           get_chuck_tile_off_y (game) - 1, get_chuck_tile_off_x (game),
+           game->players_context->sandbox[get_chuck_tile_off_y (game) - 1][get_chuck_tile_off_x (game)]);
+   if (game->players_context->sandbox[get_chuck_tile_off_y (game) - 1][get_chuck_tile_off_x (game)] & 0x1)
+      if (tile_rel_y < 4)
+         adjust_chuck_dvy (game, tile_rel_y);
+   printf ("dvy %d\n", get_chuck_dvy (game));
+
+   // check if the fall should stop or life lost
+   if ((tile_rel_y == 0) && (game->players_context->sandbox[get_chuck_tile_off_y (game) - 1][get_chuck_tile_off_x (game)] & 0x1))
+      game->chuck_state.vertical_state = 0;
+
+   return 0;
+}
+
 static int draw_chuck (SDL_Renderer *renderer, game_context_t *game)
 {
    uint16_t x = 0;
@@ -4098,6 +4109,9 @@ static int draw_chuck (SDL_Renderer *renderer, game_context_t *game)
 
    x = x_convert_to_sdl (game->chuck_state.el.gfx_offset.x);
    y = y_convert_to_sdl (game->chuck_state.el.gfx_offset.y);
+
+   if (game->chuck_state.vertical_state == falling)
+      return 0;
 
    switch (game->chuck_state.el.sprite_state)
    {
@@ -4338,6 +4352,8 @@ static int init_game_context (game_context_t *game, uint8_t level)
    game->chuck_state.el.sprite_state = chuck_standing_one;
    game->chuck_state.tile_rel_off_x = on_the_right_edge;
    game->chuck_state.tile_rel_off_y = on_the_bottom_edge;
+   game->chuck_state.vertical_state = 0;
+   game->chuck_state.vertical_counter = 0;
 
    // radnom number for duck movements
    game->random.number = 0x76767676;
@@ -4527,6 +4543,10 @@ one_move:
 
 static int move_chuck (game_context_t *game, direction_t dir)
 {
+   // if falling then chuck can't move
+   if (game->chuck_state.vertical_state == falling)
+      return 0;
+
    if (dir == left)
    {
       if (game->chuck_state.vertical_state == on_ladder)
@@ -4549,6 +4569,14 @@ static int move_chuck (game_context_t *game, direction_t dir)
       {
          game->chuck_state.el.tile_offset.x -= 1;
          game->chuck_state.tile_rel_off_x = on_the_right_edge;
+         if (game->players_context->sandbox[game->chuck_state.el.tile_offset.y - 1][game->chuck_state.el.tile_offset.x] == 0)
+         {
+            // we are entering the fall
+            game->chuck_state.vertical_state = falling;
+            game->chuck_state.vertical_counter = 1;
+            calc_chuck_dv (game);
+            return 0;
+         }
       }
 
       if (game->chuck_state.el.direction == left)
@@ -4588,6 +4616,14 @@ static int move_chuck (game_context_t *game, direction_t dir)
       {
          game->chuck_state.el.tile_offset.x += 1;
          game->chuck_state.tile_rel_off_x = on_the_left_edge;
+         if (game->players_context->sandbox[game->chuck_state.el.tile_offset.y - 1][game->chuck_state.el.tile_offset.x] == 0)
+         {
+            // we are entering the fall
+            game->chuck_state.vertical_state = falling;
+            game->chuck_state.vertical_counter = 1;
+            calc_chuck_dv (game);
+            return 0;
+         }
       }
 
       if (game->chuck_state.el.direction == right)
@@ -4734,6 +4770,7 @@ int main (void)
       draw_ducks (renderer, &game);
       draw_flying_duck (renderer, &game);
       draw_chuck (renderer, &game);
+      animate_chuck_fall (renderer, &game);
       if (game.levels[player_1.current_level % 8].elevator == true)
          draw_elevator (renderer, &game);
 
