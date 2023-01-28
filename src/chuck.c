@@ -27,6 +27,8 @@ static void set_chuck_dvy (game_context_t *game, uint8_t off);
 static uint8_t get_chuck_dvy (game_context_t *game);
 static void calc_chuck_dv (game_context_t *game);
 static void adjust_chuck_dvy (game_context_t *game, uint8_t tile_rel_y);
+static uint8_t get_sandbox (game_context_t *game, uint8_t x, uint8_t y);
+static void reset_chuck_vertical_state (game_context_t *game);
 
 // running the game in original resolution would result in tiny graphics
 // for now this will be hard coded
@@ -4056,8 +4058,10 @@ static int animate_chuck_fall (SDL_Renderer *renderer, game_context_t *game)
       tile_rel_x += get_chuck_dvx (game);
    }
 
-   if (gfx_y < 0)
-      gfx_y = 0;
+   if (gfx_y < 0x10)
+      // height of the chuck sprite
+      // this would also be condition for lost life
+      gfx_y = 0x10;
    if (tile_rel_x < 0)
    {
       tile_rel_x = 7;
@@ -4537,6 +4541,29 @@ one_move:
    return 0;
 }
 
+static uint8_t get_sandbox (game_context_t *game, uint8_t x, uint8_t y)
+{
+   return (game->players_context->sandbox[y][x]);
+}
+
+static void reset_chuck_vertical_state (game_context_t *game)
+{
+   game->chuck_state.vertical_state = falling;
+
+   // these checks are needed due to the fact that the platform is 8
+   //    pixels long, which means there is no middle
+   // so in the case of left fall we lend on tile relative offset 4,
+   //    while in the case or right fall we lend on the offset 3
+   // this offset should really be 2, so then we have simmetry in both
+   //    the falls
+   if (game->chuck_state.el.direction == left)
+      game->chuck_state.vertical_counter = 1;
+   else if (game->chuck_state.el.direction == right)
+      game->chuck_state.vertical_counter = 2;
+
+   calc_chuck_dv (game);
+}
+
 static int move_chuck (game_context_t *game, direction_t dir)
 {
    // if falling then chuck can't move
@@ -4549,7 +4576,8 @@ static int move_chuck (game_context_t *game, direction_t dir)
       {
          if (game->chuck_state.tile_rel_off_y != 0)
             return 0;
-         if (game->players_context->sandbox[game->chuck_state.el.tile_offset.y - 1][game->chuck_state.el.tile_offset.x - 1] != 0x1)
+         if ((get_sandbox (game, get_chuck_tile_off_x (game),
+                           get_chuck_tile_off_y (game) - 1) & 0x1) != 1)
             return 0;
       }
 
@@ -4565,12 +4593,11 @@ static int move_chuck (game_context_t *game, direction_t dir)
       {
          game->chuck_state.el.tile_offset.x -= 1;
          game->chuck_state.tile_rel_off_x = on_the_right_edge;
-         if (game->players_context->sandbox[game->chuck_state.el.tile_offset.y - 1][game->chuck_state.el.tile_offset.x] == 0)
+         if ((get_sandbox (game, get_chuck_tile_off_x (game),
+                           get_chuck_tile_off_y (game) - 1) & 0x1) == 0)
          {
             // we are entering the fall
-            game->chuck_state.vertical_state = falling;
-            game->chuck_state.vertical_counter = 1;
-            calc_chuck_dv (game);
+            reset_chuck_vertical_state (game);
             return 0;
          }
       }
@@ -4596,7 +4623,8 @@ static int move_chuck (game_context_t *game, direction_t dir)
       {
          if (game->chuck_state.tile_rel_off_y != 0)
             return 0;
-         if (game->players_context->sandbox[game->chuck_state.el.tile_offset.y - 1][game->chuck_state.el.tile_offset.x + 1] != 0x1)
+         if ((get_sandbox (game, get_chuck_tile_off_x (game),
+                           get_chuck_tile_off_y (game) - 1) & 0x1) != 1)
             return 0;
       }
 
@@ -4612,12 +4640,11 @@ static int move_chuck (game_context_t *game, direction_t dir)
       {
          game->chuck_state.el.tile_offset.x += 1;
          game->chuck_state.tile_rel_off_x = on_the_left_edge;
-         if (game->players_context->sandbox[game->chuck_state.el.tile_offset.y - 1][game->chuck_state.el.tile_offset.x] == 0)
+         if ((get_sandbox (game, get_chuck_tile_off_x (game),
+                           get_chuck_tile_off_y (game) - 1) & 0x1) == 0)
          {
             // we are entering the fall
-            game->chuck_state.vertical_state = falling;
-            game->chuck_state.vertical_counter = 1;
-            calc_chuck_dv (game);
+            reset_chuck_vertical_state (game);
             return 0;
          }
       }
@@ -4643,7 +4670,8 @@ static int move_chuck (game_context_t *game, direction_t dir)
       if (game->chuck_state.tile_rel_off_x == in_the_middle)
       {
          // is there ladder
-         if (game->players_context->sandbox[game->chuck_state.el.tile_offset.y + 1][game->chuck_state.el.tile_offset.x] & 0x2)
+         if (get_sandbox (game, get_chuck_tile_off_x (game),
+                          get_chuck_tile_off_y (game) + 2) & 0x2)
          {
             game->chuck_state.el.gfx_offset.y += 2;
             game->chuck_state.tile_rel_off_y += 2;
@@ -4677,7 +4705,12 @@ static int move_chuck (game_context_t *game, direction_t dir)
       if (game->chuck_state.tile_rel_off_x == in_the_middle)
       {
          // is there ladder
-         if (game->players_context->sandbox[game->chuck_state.el.tile_offset.y][game->chuck_state.el.tile_offset.x] & 0x2)
+         if (((get_sandbox (game, get_chuck_tile_off_x (game),
+                            get_chuck_tile_off_y (game) - 1) & 0x2) &&
+              (get_chuck_tile_rel_off_y (game) == on_the_bottom_edge))
+             ||
+             ((game->chuck_state.vertical_state == on_ladder) &&
+              (get_chuck_tile_rel_off_y (game) != on_the_bottom_edge)))
          {
             game->chuck_state.el.gfx_offset.y -= 2;
             game->chuck_state.tile_rel_off_y -= 2;
