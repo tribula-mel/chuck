@@ -27,6 +27,8 @@ static void set_chuck_dvy (game_context_t *game, uint8_t off);
 static uint8_t get_chuck_dvy (game_context_t *game);
 static void calc_chuck_dv (game_context_t *game);
 static void adjust_chuck_dvy (game_context_t *game, uint8_t tile_rel_y);
+static void set_sandbox (game_context_t *game, uint8_t x,
+                            uint8_t y, uint8_t content);
 static uint8_t get_sandbox (game_context_t *game, uint8_t x, uint8_t y);
 static void reset_chuck_vertical_state (game_context_t *game);
 
@@ -3766,7 +3768,7 @@ static int draw_level (SDL_Renderer *renderer, game_context_t *game)
           off_x + 1;
       draw_platform (renderer, x, y, n);
       for (int j = 0; j < n; j++)
-         game->players_context->sandbox[off_y][off_x + j] = 0x01;
+         set_sandbox (game, off_x + j, off_y, 0x01);
    }
 
    // next draw ladders
@@ -3781,10 +3783,10 @@ static int draw_level (SDL_Renderer *renderer, game_context_t *game)
       draw_ladder (renderer, x, y, n);
       for (int j = 0; j < n; j++)
       {
-         if (game->players_context->sandbox[off_y+j][off_x] == 0x01)
-            game->players_context->sandbox[off_y+j][off_x] = 0x03;
+         if (get_sandbox (game, off_x, off_y + j) == 0x01)
+            set_sandbox (game, off_x, off_y + j, 0x03);
          else
-            game->players_context->sandbox[off_y+j][off_x] = 0x02;
+            set_sandbox (game, off_x, off_y + j, 0x02);
       }
    }
 
@@ -3797,7 +3799,7 @@ static int draw_level (SDL_Renderer *renderer, game_context_t *game)
       y = tile_y_convert_to_sdl (off_y);
       set_colour (renderer, egg.colour);
       draw_element (renderer, &egg, x, y);
-      game->players_context->sandbox[off_y][off_x] = 0x04 + i * 0x10;
+      set_sandbox (game, off_x, off_y, 0x04 + i * 0x10);
    }
 
    // next draw seeds
@@ -3811,7 +3813,7 @@ static int draw_level (SDL_Renderer *renderer, game_context_t *game)
          y = tile_y_convert_to_sdl (off_y);
          set_colour (renderer, seed.colour);
          draw_element (renderer, &seed, x, y);
-         game->players_context->sandbox[off_y][off_x] = 0x08 + i * 0x10;
+         set_sandbox (game, off_x, off_y, 0x08 + i * 0x10);
       }
    }
 
@@ -4091,12 +4093,15 @@ static int animate_chuck_fall (SDL_Renderer *renderer, game_context_t *game)
    set_chuck_tile_rel_off_y (game, tile_rel_y);
    game->chuck_state.vertical_counter++; 
    calc_chuck_dv (game);
-   if (game->players_context->sandbox[get_chuck_tile_off_y (game) - 1][get_chuck_tile_off_x (game)] & 0x1)
+   if (get_sandbox (game, get_chuck_tile_off_x (game),
+                    get_chuck_tile_off_y (game) - 1) & 0x1)
       if (tile_rel_y < 4)
          adjust_chuck_dvy (game, tile_rel_y);
 
    // check if the fall should stop or life lost
-   if ((tile_rel_y == 0) && (game->players_context->sandbox[get_chuck_tile_off_y (game) - 1][get_chuck_tile_off_x (game)] & 0x1))
+   if ((tile_rel_y == 0) &&
+       (get_sandbox (game, get_chuck_tile_off_x (game),
+                     get_chuck_tile_off_y (game) - 1) & 0x1))
       game->chuck_state.vertical_state = 0;
 
    return 0;
@@ -4414,13 +4419,13 @@ static int move_duck (game_context_t *game)
    {
       if (game->ducks_state.ducks_state[index].direction == right)
       {
-         game->seed_state[game->players_context->sandbox[y][x + 1] >> 4].present = false;
-         game->players_context->sandbox[y][x + 1] = 0;
+         game->seed_state[get_sandbox (game, x + 1, y) >> 4].present = false;
+         set_sandbox (game, x + 1, y, 0);
       }
       else
       {
-         game->seed_state[game->players_context->sandbox[y][x - 1] >> 4].present = false;
-         game->players_context->sandbox[y][x - 1] = 0;
+         game->seed_state[get_sandbox (game, x - 1, y) >> 4].present = false;
+         set_sandbox (game, x - 1, y, 0);
       }
    }
 
@@ -4441,29 +4446,29 @@ static int move_duck (game_context_t *game)
    // can move left (either platform or ladder over platform) ?
    if ((y >= 1) && (x >= 1))
    {
-      if ((game->players_context->sandbox[y - 1][x - 1] == 0x01) ||
-          (game->players_context->sandbox[y - 1][x - 1] == 0x03))
+      if ((get_sandbox (game, x - 1, y - 1) == 0x01) ||
+          (get_sandbox (game, x - 1, y - 1) == 0x03))
          moves |= left;
    }
    // can move right (either platform or ladder over platform) ?
    if ((y >= 1) && (x < 0x13))
    {
-      if ((game->players_context->sandbox[y - 1][x + 1] == 0x01) ||
-          (game->players_context->sandbox[y - 1][x + 1] == 0x03))
+      if ((get_sandbox (game, x + 1, y - 1) == 0x01) ||
+          (get_sandbox (game, x + 1, y - 1) == 0x03))
          moves |= right;
    }
    // can move up (either ladder or ladder over platform) ?
    if (x < 0x14)
    {
-      if ((game->players_context->sandbox[y + 2][x] == 0x02) ||
-          (game->players_context->sandbox[y + 2][x] == 0x03))
+      if ((get_sandbox (game, x, y + 2) == 0x02) ||
+          (get_sandbox (game, x, y + 2) == 0x03))
          moves |= up;
    }
    // can move down (either ladder or ladder over platform) ?
    if ((y >= 1) && (x < 0x14))
    {
-      if ((game->players_context->sandbox[y - 1][x] == 0x02) ||
-          (game->players_context->sandbox[y - 1][x] == 0x03))
+      if ((get_sandbox (game, x, y - 1) == 0x02) ||
+          (get_sandbox (game, x, y - 1) == 0x03))
          moves |= down;
    }
 
@@ -4511,7 +4516,7 @@ one_move:
          if (game->ducks_state.ducks_state[index].direction != right)
             game->ducks_state.ducks_state[index].direction = right;
          // check if a seed is in the way
-         if ((game->players_context->sandbox[y][x + 1] & 0x08))
+         if (get_sandbox (game, x + 1, y) & 0x08)
             game->ducks_state.ducks_state[index].sprite_state = duck_half_stoop_start;
          else
          {
@@ -4523,7 +4528,8 @@ one_move:
          if (game->ducks_state.ducks_state[index].direction != left)
             game->ducks_state.ducks_state[index].direction = left;
          // check if a seed is in the way
-         if ((game->players_context->sandbox[y][x - 1] & 0x08) && (game->ducks_state.ducks_state[index].sprite_state == 0))
+         if ((get_sandbox (game, x - 1, y) & 0x08) &&
+             (game->ducks_state.ducks_state[index].sprite_state == 0))
             game->ducks_state.ducks_state[index].sprite_state = duck_half_stoop_start;
          else
          {
@@ -4544,6 +4550,12 @@ one_move:
 static uint8_t get_sandbox (game_context_t *game, uint8_t x, uint8_t y)
 {
    return (game->players_context->sandbox[y][x]);
+}
+
+static void set_sandbox (game_context_t *game, uint8_t x,
+                            uint8_t y, uint8_t content)
+{
+   game->players_context->sandbox[y][x] = content;
 }
 
 static void reset_chuck_vertical_state (game_context_t *game)
@@ -4808,7 +4820,7 @@ int main (void)
          for (int i = OFFSET_Y_MAX - 1; i >= 0; i--)
          {
             for (int j = 0; j < OFFSET_X_MAX; j++)
-               printf ("%2x ", game.players_context->sandbox[i][j]);
+               printf ("%2x ", get_sandbox (&game, j, i));
             printf ("\n");
          }
          dump_sandbox = false;
