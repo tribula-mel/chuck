@@ -4030,6 +4030,20 @@ static void adjust_chuck_dvy (game_context_t *game, uint8_t tile_rel_y)
    set_chuck_dvy (game, tile_rel_y);
 }
 
+static void chuck_collect_seed (game_context_t *game)
+{
+   uint8_t x = get_chuck_tile_off_x (game);
+   uint8_t y = get_chuck_tile_off_y (game);
+
+   // clear the seed
+   game->seed_state[get_sandbox (game, x, y) >> 4].present = false;
+   set_sandbox (game, x, y, 0);
+
+   // do other seed logic in here (in time)
+   //    stop the level timer
+   //    assign points to the score
+}
+
 static int animate_chuck_fall (SDL_Renderer *renderer, game_context_t *game)
 {
    uint16_t x = 0;
@@ -4097,6 +4111,12 @@ static int animate_chuck_fall (SDL_Renderer *renderer, game_context_t *game)
                     get_chuck_tile_off_y (game) - 1) & 0x1)
       if (tile_rel_y < 4)
          adjust_chuck_dvy (game, tile_rel_y);
+
+   // check if should collect a seed
+   if ((get_sandbox (game, get_chuck_tile_off_x (game),
+                     get_chuck_tile_off_y (game)) & 0x8) &&
+       (get_chuck_tile_rel_off_y (game) <= collect))
+      chuck_collect_seed (game);
 
    // check if the fall should stop or life lost
    if ((tile_rel_y == 0) &&

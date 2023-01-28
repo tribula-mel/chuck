@@ -142,6 +142,7 @@ typedef enum {
 
 typedef enum {
    on_the_bottom_edge = 0x0,
+   collect            = 0x2,
    on_the_top_edge    = 0x6,
 } chuck_relative_y_tile_t;
 
