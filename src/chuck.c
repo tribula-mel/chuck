@@ -4031,7 +4031,7 @@ static int animate_chuck_fall (SDL_Renderer *renderer, game_context_t *game)
    uint16_t x = 0;
    uint16_t y = 0;
    int8_t gfx_x = 0;
-   int8_t gfx_y = 0;
+   int16_t gfx_y = 0;
    int8_t tile_rel_x = 0;
    int8_t tile_rel_y = 0;
 
@@ -4087,13 +4087,9 @@ static int animate_chuck_fall (SDL_Renderer *renderer, game_context_t *game)
    set_chuck_tile_rel_off_y (game, tile_rel_y);
    game->chuck_state.vertical_counter++; 
    calc_chuck_dv (game);
-   printf ("tile_rel x,y %x,%x tile x,y %x,%x sandbox %x\n", tile_rel_x, tile_rel_y,
-           get_chuck_tile_off_y (game) - 1, get_chuck_tile_off_x (game),
-           game->players_context->sandbox[get_chuck_tile_off_y (game) - 1][get_chuck_tile_off_x (game)]);
    if (game->players_context->sandbox[get_chuck_tile_off_y (game) - 1][get_chuck_tile_off_x (game)] & 0x1)
       if (tile_rel_y < 4)
          adjust_chuck_dvy (game, tile_rel_y);
-   printf ("dvy %d\n", get_chuck_dvy (game));
 
    // check if the fall should stop or life lost
    if ((tile_rel_y == 0) && (game->players_context->sandbox[get_chuck_tile_off_y (game) - 1][get_chuck_tile_off_x (game)] & 0x1))
@@ -4107,11 +4103,11 @@ static int draw_chuck (SDL_Renderer *renderer, game_context_t *game)
    uint16_t x = 0;
    uint16_t y = 0;
 
-   x = x_convert_to_sdl (game->chuck_state.el.gfx_offset.x);
-   y = y_convert_to_sdl (game->chuck_state.el.gfx_offset.y);
-
    if (game->chuck_state.vertical_state == falling)
       return 0;
+
+   x = x_convert_to_sdl (game->chuck_state.el.gfx_offset.x);
+   y = y_convert_to_sdl (game->chuck_state.el.gfx_offset.y);
 
    switch (game->chuck_state.el.sprite_state)
    {
