@@ -1021,7 +1021,7 @@
              $4 on the elevator
    offset $5 add $5 to this value and use it as an index into
              the chuck sprite table
-   offset $6 left/right key press status ($1 for left/$ff for right/$0 for none)
+   offset $6 left/right key press status ($ff for left/$1 for right/$0 for none)
              it seems this translates into dx
    offset $7 up/down key press status ($2 for up/$fe for down/$0 for none)
              it seems this translates into dy
@@ -1045,7 +1045,7 @@
                 and this offset is reset to 6
              y = 8 * (tile y) + (offset $9) + 0x10 (chuck height)
    offset $a jump sprite sequence $1, $2 .. $14
-   offset $b ?
+   offset $b dx for jump (copy of $6 at the start of the jump)
    offset $c ?
 
 -| call $8fa3

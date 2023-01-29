@@ -3260,24 +3260,24 @@
 92EF: FD 36 07 00 ld   (iy+$07),$00
 92F3: FD 36 0C 00 ld   (iy+$0c),$00
 92F7: C3 22 95    jp   $9522
-92FA: FD 36 0A 00 ld   (iy+$0a),$00       # jump key pressed
+92FA: FD 36 0A 00 ld   (iy+$0a),$00    # jump key pressed
 92FE: FD 36 04 02 ld   (iy+$04),$02
 9302: 78          ld   a,b
-9303: FD 77 0B    ld   (iy+$0b),a
+9303: FD 77 0B    ld   (iy+$0b),a      # copy offset $6 in here
 9306: B7          or   a
 9307: 28 03       jr   z,$930C
 9309: FD 77 0C    ld   (iy+$0c),a
-930C: FD 46 0B    ld   b,(iy+$0b)
-930F: FD 7E 0A    ld   a,(iy+$0a)
+930C: FD 46 0B    ld   b,(iy+$0b)      # offset $b carries dx
+930F: FD 7E 0A    ld   a,(iy+$0a)      # jump sequence number
 9312: CB 3F       srl  a
-9314: CB 3F       srl  a
-9316: FE 06       cp   $06
+9314: CB 3F       srl  a               # divide seq num by 4
+9316: FE 06       cp   $06             # if seq num equal to $18
 9318: 38 02       jr   c,$931C
-931A: 3E 06       ld   a,$06
+931A: 3E 06       ld   a,$06           # limit the result to 6 (dy = -4)
 931C: ED 44       neg
-931E: C6 02       add  a,$02
-9320: 4F          ld   c,a
-9321: FD 34 0A    inc  (iy+$0a)
+931E: C6 02       add  a,$02           # -(seq/4) + 2
+9320: 4F          ld   c,a             # dy is set
+9321: FD 34 0A    inc  (iy+$0a)        # increament sequence number
 9324: B7          or   a
 9325: 28 26       jr   z,$934D
 9327: FA 4D 93    jp   m,$934D
@@ -3288,13 +3288,13 @@
 9331: 20 0A       jr   nz,$933D
 9333: D5          push de
 9334: 1C          inc  e
-9335: CD A3 8F    call $8FA3
+9335: CD A3 8F    call $8FA3           # de carries chuck's tile offsets
 9338: D1          pop  de
 9339: FE 01       cp   $01
 933B: 28 07       jr   z,$9344
-933D: FD 7E 01    ld   a,(iy+$01)
-9340: FE AE       cp   $AE
-9342: 38 09       jr   c,$934D
+933D: FD 7E 01    ld   a,(iy+$01)      # gfx y
+9340: FE AE       cp   $AE             # compare with 174
+9342: 38 09       jr   c,$934D         # if less jump
 9344: 0E FF       ld   c,$FF
 9346: FD 36 0A 0C ld   (iy+$0a),$0C
 934A: C3 D0 93    jp   $93D0
@@ -3365,11 +3365,11 @@
 93C5: CD A3 8F    call $8FA3
 93C8: E6 01       and  $01
 93CA: 28 04       jr   z,$93D0
-93CC: FD 36 04 00 ld   (iy+$04),$00
-93D0: 3A 05 7B    ld   a,($7B05)
+93CC: FD 36 04 00 ld   (iy+$04),$00    # clear up/down state
+93D0: 3A 05 7B    ld   a,($7B05)       # is elevator working
 93D3: B7          or   a
-93D4: 28 5A       jr   z,$9430
-93D6: 3A 08 7B    ld   a,($7B08)
+93D4: 28 5A       jr   z,$9430         # if not jump to $9430
+93D6: 3A 08 7B    ld   a,($7B08)       # elevator related code
 93D9: D6 01       sub  $01
 93DB: FD BE 00    cp   (iy+$00)
 93DE: 30 50       jr   nc,$9430
@@ -3411,12 +3411,12 @@
 941F: 92          sub  d
 9420: C6 01       add  a,$01
 9422: 4F          ld   c,a
-9423: FD 36 0A 00 ld   (iy+$0a),$00
-9427: FD 36 04 04 ld   (iy+$04),$04
+9423: FD 36 0A 00 ld   (iy+$0a),$00       # jump sequence
+9427: FD 36 04 04 ld   (iy+$04),$04       # elevator state
 942B: D1          pop  de
 942C: C3 3C 94    jp   $943C
 942F: D1          pop  de
-9430: CD CA 94    call $94CA
+9430: CD CA 94    call $94CA              # could this be jump function ?
 9433: 30 07       jr   nc,$943C
 9435: 78          ld   a,b
 9436: ED 44       neg
