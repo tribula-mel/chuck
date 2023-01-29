@@ -3797,13 +3797,16 @@ static int draw_level (SDL_Renderer *renderer, game_context_t *game)
    // next draw eggs
    for (i = 0; i < game->levels[game->players_context->current_level % 8].n_eggs; i++)
    {
-      off_x = game->levels[game->players_context->current_level % 8].egg_offsets[i].x;
-      off_y = game->levels[game->players_context->current_level % 8].egg_offsets[i].y;
-      x = tile_x_convert_to_sdl (off_x);
-      y = tile_y_convert_to_sdl (off_y);
-      set_colour (renderer, egg.colour);
-      draw_element (renderer, &egg, x, y);
-      set_sandbox (game, off_x, off_y, 0x04 + i * 0x10);
+      if (game->egg_state[i].present == true)
+      {
+         off_x = game->levels[game->players_context->current_level % 8].egg_offsets[i].x;
+         off_y = game->levels[game->players_context->current_level % 8].egg_offsets[i].y;
+         x = tile_x_convert_to_sdl (off_x);
+         y = tile_y_convert_to_sdl (off_y);
+         set_colour (renderer, egg.colour);
+         draw_element (renderer, &egg, x, y);
+         set_sandbox (game, off_x, off_y, 0x04 + i * 0x10);
+      }
    }
 
    // next draw seeds
@@ -4039,13 +4042,27 @@ static void chuck_collect_seed (game_context_t *game)
    uint8_t x = get_chuck_tile_off_x (game);
    uint8_t y = get_chuck_tile_off_y (game);
 
-   // clear the seed
+   // clear a seed
    game->seed_state[get_sandbox (game, x, y) >> 4].present = false;
    set_sandbox (game, x, y, 0);
 
    // do other seed logic in here (in time)
    //    stop the level timer
    //    assign points to the score
+}
+
+static void chuck_collect_egg (game_context_t *game)
+{
+   uint8_t x = get_chuck_tile_off_x (game);
+   uint8_t y = get_chuck_tile_off_y (game);
+
+   // clear an egg
+   game->egg_state[get_sandbox (game, x, y) >> 4].present = false;
+   set_sandbox (game, x, y, 0);
+
+   // do other seed logic in here (in time)
+   //    assign points to the score
+   //    move to next level when all eggs collected
 }
 
 static int animate_chuck_fall (SDL_Renderer *renderer, game_context_t *game)
@@ -4121,6 +4138,12 @@ static int animate_chuck_fall (SDL_Renderer *renderer, game_context_t *game)
                      get_chuck_tile_off_y (game)) & 0x8) &&
        (get_chuck_tile_rel_off_y (game) <= collect))
       chuck_collect_seed (game);
+
+   // check if should collect a seed
+   if ((get_sandbox (game, get_chuck_tile_off_x (game),
+                     get_chuck_tile_off_y (game)) & 0x4) &&
+       (get_chuck_tile_rel_off_y (game) <= collect))
+      chuck_collect_egg (game);
 
    // check if the fall should stop or life lost
    if ((tile_rel_y == 0) &&
@@ -4370,6 +4393,14 @@ static int init_game_context (game_context_t *game, uint8_t level)
       game->seed_state[i].tile_offset.x = game->levels[level % 8].seed_offsets[i].x;
       game->seed_state[i].tile_offset.y = game->levels[level % 8].seed_offsets[i].y;
       game->seed_state[i].present = true;
+   }
+
+   // initialize eggs state
+   for (i = 0; i < game->levels[level % 8].n_eggs; i++)
+   {
+      game->egg_state[i].tile_offset.x = game->levels[level % 8].egg_offsets[i].x;
+      game->egg_state[i].tile_offset.y = game->levels[level % 8].egg_offsets[i].y;
+      game->egg_state[i].present = true;
    }
 
    // initialize chuck state
@@ -4643,6 +4674,13 @@ static int move_chuck (game_context_t *game, direction_t dir)
             chuck_collect_seed (game);
             return 0;
          }
+         if ((get_sandbox (game, get_chuck_tile_off_x (game),
+                           get_chuck_tile_off_y (game)) & 0x4))
+         {
+            // collect a egg
+            chuck_collect_egg (game);
+            return 0;
+         }
       }
 
       if (game->chuck_state.el.direction == left)
@@ -4695,6 +4733,13 @@ static int move_chuck (game_context_t *game, direction_t dir)
          {
             // collect a seed
             chuck_collect_seed (game);
+            return 0;
+         }
+         if ((get_sandbox (game, get_chuck_tile_off_x (game),
+                           get_chuck_tile_off_y (game)) & 0x4))
+         {
+            // collect a egg
+            chuck_collect_egg (game);
             return 0;
          }
       }

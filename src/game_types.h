@@ -105,6 +105,12 @@ typedef struct __seed_state
    bool present;
 } seed_state_t;
 
+typedef struct __egg_state
+{
+   offset_t tile_offset;
+   bool present;
+} egg_state_t;
+
 typedef union rand
 {
    uint32_t number;
@@ -200,6 +206,7 @@ typedef struct __game_context
    element_state_t flying_duck_state;
    element_state_t elevator_state[N_PADDLES];
    seed_state_t seed_state[MAX_N_SEED];
+   egg_state_t egg_state[MAX_N_EGGS];
    rand_t random;
 } game_context_t;
 
