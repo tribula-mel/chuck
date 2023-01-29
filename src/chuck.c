@@ -2803,7 +2803,8 @@ static sprite_t cage =
 {
    .width  = 0x03,
    .height = 0x30,
-   .colour = 0x02,
+   .colour = 0xa1,
+   //.colour = 0x02, original
    // 24x48 pixels
    .sprite =
       {
@@ -3667,6 +3668,9 @@ static int set_colour (SDL_Renderer *renderer, colour_t colour)
          break;
       case bright_red:
          SDL_SetRenderDrawColor (renderer, 0xff, 0x00, 0x00, 0x00);
+         break;
+      case pastel_blue:
+         SDL_SetRenderDrawColor (renderer, 0x80, 0x80, 0xff, 0x00);
          break;
       default:
          // black

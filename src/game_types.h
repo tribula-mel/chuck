@@ -17,12 +17,13 @@
 #define N_PADDLES        (0x02)
 
 typedef enum {
-   pastel_yellow = 0x02,
+   pastel_yellow  = 0x02,
    bright_magenta = 0x08,
-   bright_cyan = 0x20,
-   green = 0x80,
-   bright_white = 0x88,
-   bright_red = 0xa0,
+   bright_cyan    = 0x20,
+   green          = 0x80,
+   bright_white   = 0x88,
+   bright_red     = 0xa0,
+   pastel_blue    = 0xa1,
 } colour_t;
 
 // tile based offsets for tiles 8x8
