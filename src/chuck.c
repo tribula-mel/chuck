@@ -4636,6 +4636,13 @@ static int move_chuck (game_context_t *game, direction_t dir)
             reset_chuck_vertical_state (game);
             return 0;
          }
+         if ((get_sandbox (game, get_chuck_tile_off_x (game),
+                           get_chuck_tile_off_y (game)) & 0x8))
+         {
+            // collect a seed
+            chuck_collect_seed (game);
+            return 0;
+         }
       }
 
       if (game->chuck_state.el.direction == left)
@@ -4681,6 +4688,13 @@ static int move_chuck (game_context_t *game, direction_t dir)
          {
             // we are entering the fall
             reset_chuck_vertical_state (game);
+            return 0;
+         }
+         if ((get_sandbox (game, get_chuck_tile_off_x (game),
+                           get_chuck_tile_off_y (game)) & 0x8))
+         {
+            // collect a seed
+            chuck_collect_seed (game);
             return 0;
          }
       }
