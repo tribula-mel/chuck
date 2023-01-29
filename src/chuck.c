@@ -3875,15 +3875,15 @@ static int draw_ducks (SDL_Renderer *renderer, game_context_t *game)
                draw_element (renderer, &duck_lbs, x - x_convert_to_sdl (8), y);
             break;
          case up:
-            if (game->ducks_state.ducks_state[i].sprite_state == 0)
+            if (game->ducks_state.ducks_state[i].sprite_state == 1)
                draw_element (renderer, &duck_brl, x, y);
-            else if (game->ducks_state.ducks_state[i].sprite_state == 1)
+            else if (game->ducks_state.ducks_state[i].sprite_state == 0)
                draw_element (renderer, &duck_bll, x, y);
             break;
          case down:
-            if (game->ducks_state.ducks_state[i].sprite_state == 0)
+            if (game->ducks_state.ducks_state[i].sprite_state == 1)
                draw_element (renderer, &duck_brl, x, y);
-            else if (game->ducks_state.ducks_state[i].sprite_state == 1)
+            else if (game->ducks_state.ducks_state[i].sprite_state == 0)
                draw_element (renderer, &duck_bll, x, y);
             break;
       }
