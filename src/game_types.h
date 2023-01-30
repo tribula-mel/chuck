@@ -72,10 +72,11 @@ typedef struct __sprite
 } sprite_t;
 
 typedef enum {
-   right = 1,
-   left  = 2,
-   up    = 4,
-   down  = 8,
+   right = 0x1,
+   left  = 0x2,
+   up    = 0x4,
+   down  = 0x8,
+   jump  = 0x10,
 } direction_t;
 
 typedef struct __element_state

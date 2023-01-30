@@ -5,7 +5,8 @@
 #include <string.h>
 #include <time.h>
 
-#include <SDL2/SDL.h>
+#include <allegro5/allegro5.h>
+#include <allegro5/allegro_primitives.h>
 
 #include "game_types.h"
 
@@ -28,9 +29,14 @@ static uint8_t get_chuck_dvy (game_context_t *game);
 static void calc_chuck_dv (game_context_t *game);
 static void adjust_chuck_dvy (game_context_t *game, uint8_t tile_rel_y);
 static void set_sandbox (game_context_t *game, uint8_t x,
-                            uint8_t y, uint8_t content);
+                         uint8_t y, uint8_t content);
 static uint8_t get_sandbox (game_context_t *game, uint8_t x, uint8_t y);
 static void reset_chuck_vertical_state (game_context_t *game);
+static void set_chuck_vertical_state (game_context_t *game,
+                                      chuck_vertical_t v_state);
+static int8_t calc_chuck_jump_dy (game_context_t *game,
+                                  uint8_t count);
+static uint8_t get_chuck_vertical_count (game_context_t *game);
 
 // running the game in original resolution would result in tiny graphics
 // for now this will be hard coded
@@ -3647,44 +3653,45 @@ static uint16_t y_convert_to_sdl (uint8_t y)
    return (scale * y_res - (DOTS_PER_PIXEL_Y * scale * (y + 1)) + 1);
 }
 
-static int set_colour (SDL_Renderer *renderer, colour_t colour)
+static ALLEGRO_COLOR set_colour (colour_t colour)
 {
+   ALLEGRO_COLOR output;
+
    switch (colour)
    {
       case pastel_yellow:
-         SDL_SetRenderDrawColor (renderer, 0xff, 0xff, 0x80, 0x00);
+         output = al_map_rgb (0xff, 0xff, 0x80);
          break;
       case bright_magenta:
-         SDL_SetRenderDrawColor (renderer, 0xff, 0x00, 0xff, 0x00);
+         output = al_map_rgb (0xff, 0x00, 0xff);
          break;
       case bright_cyan:
-         SDL_SetRenderDrawColor (renderer, 0x00, 0xff, 0xff, 0x00);
+         output = al_map_rgb (0x00, 0xff, 0xff);
          break;
       case green:
-         SDL_SetRenderDrawColor (renderer, 0x00, 0x80, 0x00, 0x00);
+         output = al_map_rgb (0x00, 0x80, 0x00);
          break;
       case bright_white:
-         SDL_SetRenderDrawColor (renderer, 0xff, 0xff, 0xff, 0x00);
+         output = al_map_rgb (0xff, 0xff, 0xff);
          break;
       case bright_red:
-         SDL_SetRenderDrawColor (renderer, 0xff, 0x00, 0x00, 0x00);
+         output = al_map_rgb (0xff, 0x00, 0x00);
          break;
       case pastel_blue:
-         SDL_SetRenderDrawColor (renderer, 0x80, 0x80, 0xff, 0x00);
+         output = al_map_rgb (0x80, 0x80, 0xff);
          break;
       default:
          // black
-         SDL_SetRenderDrawColor (renderer, 0x00, 0x00, 0x00, 0x00);
+         output = al_map_rgb (0x00, 0x00, 0x00);
    }
 
-   return 0;
+   return output;
 }
 
-static int draw_element (SDL_Renderer *renderer,
-                         sprite_t *element,
-                         uint16_t x, uint16_t y)
+static int draw_element (sprite_t *element,
+                         uint16_t x, uint16_t y,
+                         ALLEGRO_COLOR colour)
 {
-   SDL_Rect rect;
    uint16_t i = 0, j = 0, k = 0;
    uint16_t index = 0;
    uint16_t x_backup = x;
@@ -3698,11 +3705,9 @@ static int draw_element (SDL_Renderer *renderer,
          {
             if (element->sprite[index] & mask)
             {
-               rect.x = x;
-               rect.y = y;
-               rect.w = DOTS_PER_PIXEL_X * scale;
-               rect.h = DOTS_PER_PIXEL_Y * scale;
-               SDL_RenderFillRect (renderer, &rect);
+               uint16_t w = DOTS_PER_PIXEL_X * scale;
+               uint16_t h = DOTS_PER_PIXEL_Y * scale;
+               al_draw_filled_rectangle(x, y, x + w, y + h, colour);
             }
 
             x += DOTS_PER_PIXEL_X * scale;
@@ -3720,39 +3725,33 @@ static int draw_element (SDL_Renderer *renderer,
    return 0;
 }
 
-static int draw_platform (SDL_Renderer *renderer,
-                          uint16_t x, uint16_t y, uint8_t w)
+static int draw_platform (uint16_t x, uint16_t y, uint8_t w)
 {
    int i = 0;
 
-   set_colour (renderer, platform.colour);
-
    for (i = 0; i < w; i++)
    {
-      draw_element (renderer, &platform, x, y);
+      draw_element (&platform, x, y, set_colour (platform.colour));
       x += (DOTS_PER_PIXEL_X * 8 * scale);
    }
 
    return 0;
 }
 
-static int draw_ladder (SDL_Renderer *renderer,
-                        uint16_t x, uint16_t y, uint8_t h)
+static int draw_ladder (uint16_t x, uint16_t y, uint8_t h)
 {
    int i = 0;
 
-   set_colour (renderer, ladder.colour);
-
    for (i = 0; i < h; i++)
    {
-      draw_element (renderer, &ladder, x, y);
+      draw_element (&ladder, x, y, set_colour (ladder.colour));
       y -= (DOTS_PER_PIXEL_Y * 8 * scale);
    }
 
    return 0;
 }
 
-static int draw_level (SDL_Renderer *renderer, game_context_t *game)
+static int draw_level (game_context_t *game)
 {
    uint16_t x = 0;
    uint16_t y = 0;
@@ -3770,7 +3769,7 @@ static int draw_level (SDL_Renderer *renderer, game_context_t *game)
       y = tile_y_convert_to_sdl (off_y);
       n = game->levels[game->players_context->current_level % 8].platform_offsets[i].offset_x_end -
           off_x + 1;
-      draw_platform (renderer, x, y, n);
+      draw_platform (x, y, n);
       for (int j = 0; j < n; j++)
          set_sandbox (game, off_x + j, off_y, 0x01);
    }
@@ -3784,7 +3783,7 @@ static int draw_level (SDL_Renderer *renderer, game_context_t *game)
       y = tile_y_convert_to_sdl (off_y);
       n = game->levels[game->players_context->current_level % 8].ladder_offsets[i].offset_y_end -
           off_y + 1;
-      draw_ladder (renderer, x, y, n);
+      draw_ladder (x, y, n);
       for (int j = 0; j < n; j++)
       {
          if (get_sandbox (game, off_x, off_y + j) == 0x01)
@@ -3803,8 +3802,7 @@ static int draw_level (SDL_Renderer *renderer, game_context_t *game)
          off_y = game->levels[game->players_context->current_level % 8].egg_offsets[i].y;
          x = tile_x_convert_to_sdl (off_x);
          y = tile_y_convert_to_sdl (off_y);
-         set_colour (renderer, egg.colour);
-         draw_element (renderer, &egg, x, y);
+         draw_element (&egg, x, y, set_colour (egg.colour));
          set_sandbox (game, off_x, off_y, 0x04 + i * 0x10);
       }
    }
@@ -3818,8 +3816,7 @@ static int draw_level (SDL_Renderer *renderer, game_context_t *game)
          off_y = game->seed_state[i].tile_offset.y;
          x = tile_x_convert_to_sdl (off_x);
          y = tile_y_convert_to_sdl (off_y);
-         set_colour (renderer, seed.colour);
-         draw_element (renderer, &seed, x, y);
+         draw_element (&seed, x, y, set_colour (seed.colour));
          set_sandbox (game, off_x, off_y, 0x08 + i * 0x10);
       }
    }
@@ -3827,13 +3824,12 @@ static int draw_level (SDL_Renderer *renderer, game_context_t *game)
    // next draw cage
    x = x_convert_to_sdl (0x00);
    y = y_convert_to_sdl (0xae);
-   set_colour (renderer, cage.colour);
-   draw_element (renderer, &cage, x, y);
+   draw_element (&cage, x, y, set_colour (cage.colour));
 
    return 0;
 }
 
-static int draw_ducks (SDL_Renderer *renderer, game_context_t *game)
+static int draw_ducks (game_context_t *game)
 {
    uint16_t x = 0;
    uint16_t y = 0;
@@ -3841,8 +3837,6 @@ static int draw_ducks (SDL_Renderer *renderer, game_context_t *game)
    uint8_t n_ducks = 0;
    uint8_t off_x = 0;
    uint8_t off_y = 0;
-
-   set_colour (renderer, duck_r.colour);
 
    n_ducks = game->ducks_state.n_ducks;
    for (i = 0; i < n_ducks; i++)
@@ -3855,39 +3849,39 @@ static int draw_ducks (SDL_Renderer *renderer, game_context_t *game)
       {
          case right:
             if (game->ducks_state.ducks_state[i].sprite_state == 0)
-               draw_element (renderer, &duck_r, x, y);
+               draw_element (&duck_r, x, y, set_colour (duck_r.colour));
             else if (game->ducks_state.ducks_state[i].sprite_state == 1)
-               draw_element (renderer, &duck_rs, x, y);
+               draw_element (&duck_rs, x, y, set_colour (duck_r.colour));
             else if (game->ducks_state.ducks_state[i].sprite_state == duck_half_stoop_start)
-               draw_element (renderer, &duck_rbs, x, y);
+               draw_element (&duck_rbs, x, y, set_colour (duck_r.colour));
             else if (game->ducks_state.ducks_state[i].sprite_state == duck_stoop)
-               draw_element (renderer, &duck_res, x, y);
+               draw_element (&duck_res, x, y, set_colour (duck_r.colour));
             else if (game->ducks_state.ducks_state[i].sprite_state == duck_half_stoop_end)
-               draw_element (renderer, &duck_rbs, x, y);
+               draw_element (&duck_rbs, x, y, set_colour (duck_r.colour));
             break;
          case left:
             if (game->ducks_state.ducks_state[i].sprite_state == 0)
-               draw_element (renderer, &duck_l, x, y);
+               draw_element (&duck_l, x, y, set_colour (duck_r.colour));
             else if (game->ducks_state.ducks_state[i].sprite_state == 1)
-               draw_element (renderer, &duck_ls, x, y);
+               draw_element (&duck_ls, x, y, set_colour (duck_r.colour));
             else if (game->ducks_state.ducks_state[i].sprite_state == duck_half_stoop_start)
-               draw_element (renderer, &duck_lbs, x - x_convert_to_sdl (8), y);
+               draw_element (&duck_lbs, x - x_convert_to_sdl (8), y, set_colour (duck_r.colour));
             else if (game->ducks_state.ducks_state[i].sprite_state == duck_stoop)
-               draw_element (renderer, &duck_les, x - x_convert_to_sdl (8), y);
+               draw_element (&duck_les, x - x_convert_to_sdl (8), y, set_colour (duck_r.colour));
             else if (game->ducks_state.ducks_state[i].sprite_state == duck_half_stoop_end)
-               draw_element (renderer, &duck_lbs, x - x_convert_to_sdl (8), y);
+               draw_element (&duck_lbs, x - x_convert_to_sdl (8), y, set_colour (duck_r.colour));
             break;
          case up:
             if (game->ducks_state.ducks_state[i].sprite_state == 1)
-               draw_element (renderer, &duck_brl, x, y);
+               draw_element (&duck_brl, x, y, set_colour (duck_r.colour));
             else if (game->ducks_state.ducks_state[i].sprite_state == 0)
-               draw_element (renderer, &duck_bll, x, y);
+               draw_element (&duck_bll, x, y, set_colour (duck_r.colour));
             break;
          case down:
             if (game->ducks_state.ducks_state[i].sprite_state == 1)
-               draw_element (renderer, &duck_brl, x, y);
+               draw_element (&duck_brl, x, y, set_colour (duck_r.colour));
             else if (game->ducks_state.ducks_state[i].sprite_state == 0)
-               draw_element (renderer, &duck_bll, x, y);
+               draw_element (&duck_bll, x, y, set_colour (duck_r.colour));
             break;
       }
    }
@@ -3895,14 +3889,13 @@ static int draw_ducks (SDL_Renderer *renderer, game_context_t *game)
    return 0;
 }
 
-static int draw_flying_duck (SDL_Renderer *renderer, game_context_t *game)
+static int draw_flying_duck (game_context_t *game)
 {
    uint16_t x = 0;
    uint16_t y = 0;
    uint8_t off_x = 0;
    uint8_t off_y = 0;
 
-   set_colour (renderer, flying_duck_rcbwd.colour);
    off_x = game->flying_duck_state.tile_offset.x;
    off_y = game->flying_duck_state.tile_offset.y;
    x = x_convert_to_sdl (off_x);
@@ -3911,15 +3904,15 @@ static int draw_flying_duck (SDL_Renderer *renderer, game_context_t *game)
    {
       case right:
          if (game->flying_duck_state.sprite_state == 0)
-            draw_element (renderer, &flying_duck_rcbwd, x, y);
+            draw_element (&flying_duck_rcbwd, x, y, set_colour (flying_duck_rcbwd.colour));
          else if (game->flying_duck_state.sprite_state == 1)
-            draw_element (renderer, &flying_duck_rsbwu, x, y);
+            draw_element (&flying_duck_rsbwu, x, y, set_colour (flying_duck_rcbwd.colour));
          break;
       case left:
          if (game->flying_duck_state.sprite_state == 0)
-            draw_element (renderer, &flying_duck_lcbwd, x, y);
+            draw_element (&flying_duck_lcbwd, x, y, set_colour (flying_duck_rcbwd.colour));
          else if (game->flying_duck_state.sprite_state == 1)
-            draw_element (renderer, &flying_duck_lsbwu, x, y);
+            draw_element (&flying_duck_lsbwu, x, y, set_colour (flying_duck_rcbwd.colour));
          break;
    }
 
@@ -4065,7 +4058,7 @@ static void chuck_collect_egg (game_context_t *game)
    //    move to next level when all eggs collected
 }
 
-static int animate_chuck_fall (SDL_Renderer *renderer, game_context_t *game)
+static int animate_chuck_fall (game_context_t *game)
 {
    uint16_t x = 0;
    uint16_t y = 0;
@@ -4118,9 +4111,9 @@ static int animate_chuck_fall (SDL_Renderer *renderer, game_context_t *game)
    x = x_convert_to_sdl (gfx_x);
    y = y_convert_to_sdl (gfx_y);
    if (game->chuck_state.el.direction == left)
-      draw_element (renderer, &chuck_l, x, y);
+      draw_element (&chuck_l, x, y, set_colour (chuck_r.colour));
    else if (game->chuck_state.el.direction == right)
-      draw_element (renderer, &chuck_r, x, y);
+      draw_element (&chuck_r, x, y, set_colour (chuck_r.colour));
 
    set_chuck_gfx_off_x (game, gfx_x);
    set_chuck_gfx_off_y (game, gfx_y);
@@ -4154,7 +4147,7 @@ static int animate_chuck_fall (SDL_Renderer *renderer, game_context_t *game)
    return 0;
 }
 
-static int draw_chuck (SDL_Renderer *renderer, game_context_t *game)
+static int draw_chuck (game_context_t *game)
 {
    uint16_t x = 0;
    uint16_t y = 0;
@@ -4176,36 +4169,36 @@ static int draw_chuck (SDL_Renderer *renderer, game_context_t *game)
       case chuck_standing_seven:
       case chuck_standing_eight:
          if (game->chuck_state.el.direction == right)
-            draw_element (renderer, &chuck_r, x, y);
+            draw_element (&chuck_r, x, y, set_colour (chuck_r.colour));
          else if (game->chuck_state.el.direction == left)
-            draw_element (renderer, &chuck_l, x, y);
+            draw_element (&chuck_l, x, y, set_colour (chuck_r.colour));
          break;
       case chuck_running_right_arm_one:
       case chuck_running_right_arm_two:
          if (game->chuck_state.el.direction == right)
-            draw_element (renderer, &chuck_rslar, x, y);
+            draw_element (&chuck_rslar, x, y, set_colour (chuck_r.colour));
          else if (game->chuck_state.el.direction == left)
-            draw_element (renderer, &chuck_lslar, x, y);
+            draw_element (&chuck_lslar, x, y, set_colour (chuck_r.colour));
          break;
       case chuck_running_left_arm_one:
       case chuck_running_left_arm_two:
          if (game->chuck_state.el.direction == right)
-            draw_element (renderer, &chuck_rslal, x, y);
+            draw_element (&chuck_rslal, x, y, set_colour (chuck_r.colour));
          else if (game->chuck_state.el.direction == left)
-            draw_element (renderer, &chuck_lslal, x, y);
+            draw_element (&chuck_lslal, x, y, set_colour (chuck_r.colour));
          break;
       case chuck_back_one:
       case chuck_back_two:
       case chuck_back_three:
       case chuck_back_four:
       case chuck_back_five:
-         draw_element (renderer, &chuck_b, x, y);
+         draw_element (&chuck_b, x, y, set_colour (chuck_r.colour));
          break;
       case chuck_back_left_arm:
-         draw_element (renderer, &chuck_blurd, x, y);
+         draw_element (&chuck_blurd, x, y, set_colour (chuck_r.colour));
          break;
       case chuck_back_right_arm:
-         draw_element (renderer, &chuck_bldru, x, y);
+         draw_element (&chuck_bldru, x, y, set_colour (chuck_r.colour));
          break;
    }
 
@@ -4222,7 +4215,7 @@ static int draw_chuck (SDL_Renderer *renderer, game_context_t *game)
    return 0;
 }
 
-static int draw_elevator (SDL_Renderer *renderer, game_context_t *game)
+static int draw_elevator (game_context_t *game)
 {
    uint16_t x = 0;
    uint16_t y = 0;
@@ -4230,15 +4223,13 @@ static int draw_elevator (SDL_Renderer *renderer, game_context_t *game)
    uint8_t off_y = 0;
    uint8_t i = 0;
 
-   set_colour (renderer, elevator.colour);
-
    for (i = 0; i < N_PADDLES; i++)
    {
       off_x = game->elevator_state[i].tile_offset.x;
       off_y = game->elevator_state[i].tile_offset.y;
       x = x_convert_to_sdl (off_x);
       y = y_convert_to_sdl (off_y);
-      draw_element (renderer, &elevator, x, y);
+      draw_element (&elevator, x, y, set_colour (elevator.colour));
    }
 
    return 0;
@@ -4833,36 +4824,88 @@ static int move_chuck (game_context_t *game, direction_t dir)
       return 0;
    }
 
+   if (dir == jump)
+   {
+      int8_t dx = 0;
+      int8_t dy = calc_chuck_jump_dy (game, get_chuck_vertical_count (game));
+
+      game->chuck_state.el.gfx_offset.y += dy;
+      game->chuck_state.tile_rel_off_y += dy;
+      game->chuck_state.el.gfx_offset.x += dx;
+      game->chuck_state.tile_rel_off_x += dx;
+   }
+
    return 0;
+}
+
+static void set_chuck_vertical_state (game_context_t *game,
+                                      chuck_vertical_t v_state)
+{
+   game->chuck_state.vertical_state = v_state;
+   game->chuck_state.vertical_counter = 0;
+}
+
+// taken from the original chuck
+static int8_t calc_chuck_jump_dy (game_context_t *game,
+                                  uint8_t count)
+{
+   int8_t dy = count / 4;
+
+   // pratically limit the dy to -4 after count reaches 24
+   if (dy >= 6)
+      dy = 6;
+
+   dy = ~dy + 3;
+
+   return dy;
+}
+
+static uint8_t get_chuck_vertical_count (game_context_t *game)
+{
+   return (game->chuck_state.vertical_counter);
+}
+
+static void must_init(bool test, const char *description)
+{
+    if (test)
+      return;
+
+    fprintf (stderr, "couldn't initialize %s\n", description);
+
+    exit (EXIT_FAILURE);
 }
 
 int main (void)
 {
-   SDL_Window *win = NULL;
-   SDL_Renderer *renderer = NULL;
-   SDL_bool loopShouldStop = SDL_FALSE;
-   struct timespec delay =
-   {
-      .tv_sec = 0,
-      .tv_nsec = 50000000,
-   };
-
    player_context_t player_1;
    game_context_t game;
    bool dump_sandbox = true;
-
    int width = x_res * scale, height = y_res * scale;
+   bool done = false;
+   bool redraw = true;
+   ALLEGRO_EVENT event;
+ 
+   must_init(al_init(), "allegro");
+   must_init(al_install_keyboard(), "keyboard");
 
-   if (-1 == SDL_Init (SDL_INIT_VIDEO | SDL_INIT_AUDIO))
-   {
-      fprintf (stderr, "could not initialize SDL: %s\n", SDL_GetError ());
-		exit (EXIT_FAILURE);
-   }
+   ALLEGRO_TIMER* timer = al_create_timer(1.0 / 30.0);
+   must_init(timer, "timer");
 
-   win = SDL_CreateWindow ("Chuckie Egg", SDL_WINDOWPOS_UNDEFINED,
-                           SDL_WINDOWPOS_UNDEFINED, width, height, 0);
+   ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
+   must_init(queue, "queue");
 
-   renderer = SDL_CreateRenderer (win, -1, SDL_RENDERER_ACCELERATED);
+   al_set_new_display_option(ALLEGRO_SAMPLE_BUFFERS, 1, ALLEGRO_SUGGEST);
+   al_set_new_display_option(ALLEGRO_SAMPLES, 8, ALLEGRO_SUGGEST);
+   al_set_new_bitmap_flags(ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR);
+
+   ALLEGRO_DISPLAY* disp = al_create_display(width, height);
+   must_init(disp, "display");
+
+   must_init(al_init_primitives_addon(), "primitives");
+
+   al_register_event_source(queue, al_get_keyboard_event_source());
+   al_register_event_source(queue, al_get_display_event_source(disp));
+   al_register_event_source(queue, al_get_timer_event_source(timer));
 
    memset (&game, 0, sizeof (game));
    game.number_of_players = 1;
@@ -4886,17 +4929,32 @@ int main (void)
 
    init_game_context (&game, player_1.current_level);
 
-   while (!loopShouldStop)
+   #define KEY_SEEN     1
+   #define KEY_RELEASED 2
+
+   uint8_t key[ALLEGRO_KEY_MAX];
+   memset(key, 0, sizeof(key));
+
+   al_start_timer(timer);
+
+   while (true)
    {
-      SDL_SetRenderDrawColor (renderer, 0x0, 0x0, 0x0, 0x00);
-      SDL_RenderClear (renderer);
-      draw_level (renderer, &game);
-      draw_ducks (renderer, &game);
-      draw_flying_duck (renderer, &game);
-      draw_chuck (renderer, &game);
-      animate_chuck_fall (renderer, &game);
-      if (game.levels[player_1.current_level % 8].elevator == true)
-         draw_elevator (renderer, &game);
+      if ((redraw == true) && al_is_event_queue_empty (queue))
+      {
+         al_clear_to_color(al_map_rgb(0, 0, 0));
+         draw_level (&game);
+         draw_ducks (&game);
+         draw_flying_duck (&game);
+         draw_chuck (&game);
+         animate_chuck_fall (&game);
+         if (game.levels[player_1.current_level % 8].elevator == true)
+            draw_elevator (&game);
+
+         // show it in the window
+         al_flip_display();
+
+         redraw = false;
+      }
 
       if (dump_sandbox == true)
       {
@@ -4909,47 +4967,64 @@ int main (void)
          dump_sandbox = false;
       }
 
-      // show it in the window
-      SDL_RenderPresent (renderer);
+      al_wait_for_event(queue, &event);
 
-      SDL_Event event;
-      while (SDL_PollEvent (&event))
+      switch (event.type)
       {
-         switch (event.type)
-         {
-            case SDL_QUIT:
-               loopShouldStop = SDL_TRUE;
-               break;
-            case SDL_KEYDOWN:
-               //if (event.key.repeat == 0)
-               {
-                  if (event.key.keysym.scancode == SDL_SCANCODE_LEFT)
-                     move_chuck (&game, left);
-                  if (event.key.keysym.scancode == SDL_SCANCODE_RIGHT)
-                     move_chuck (&game, right);
-                  if (event.key.keysym.scancode == SDL_SCANCODE_UP)
-                     move_chuck (&game, up);
-                  if (event.key.keysym.scancode == SDL_SCANCODE_DOWN)
-                     move_chuck (&game, down);
-               }
-               if (event.key.keysym.scancode == SDL_SCANCODE_SPACE)
-               {
-                  player_1.current_level++;
-                  init_game_context (&game, player_1.current_level);
-                  dump_sandbox = true;
-               }
-               break;
-         }
+         case ALLEGRO_EVENT_TIMER:
+            if (key[ALLEGRO_KEY_UP])
+               move_chuck (&game, up);
+            if (key[ALLEGRO_KEY_DOWN])
+               move_chuck (&game, down);
+            if (key[ALLEGRO_KEY_LEFT])
+               move_chuck (&game, left);
+            if (key[ALLEGRO_KEY_RIGHT])
+               move_chuck (&game, right);
+            if (key[ALLEGRO_KEY_LCTRL])
+            {
+               // jump
+               set_chuck_vertical_state (&game, in_jump);
+               move_chuck (&game, jump);
+            }
+
+            if (key[ALLEGRO_KEY_SPACE])
+            {
+               player_1.current_level++;
+               init_game_context (&game, player_1.current_level);
+               dump_sandbox = true;
+            }
+            if (key[ALLEGRO_KEY_ESCAPE])
+               done = true;
+
+            for(int i = 0; i < ALLEGRO_KEY_MAX; i++)
+               key[i] &= KEY_SEEN;
+
+            redraw = true;
+            break;
+
+         case ALLEGRO_EVENT_KEY_DOWN:
+            key[event.keyboard.keycode] = KEY_SEEN | KEY_RELEASED;
+            break;
+         case ALLEGRO_EVENT_KEY_UP:
+            key[event.keyboard.keycode] &= KEY_RELEASED;
+            break;
+
+         case ALLEGRO_EVENT_DISPLAY_CLOSE:
+            done = true;
+            break;
       }
+
+      if(done)
+         break;
+
       move_duck (&game);
       move_flying_duck (&game);
       move_elevator (&game);
-      nanosleep (&delay, NULL);
    }
 
-   SDL_DestroyRenderer (renderer);
-   SDL_DestroyWindow (win);
-   SDL_Quit ();
+   al_destroy_display(disp);
+   al_destroy_timer(timer);
+   al_destroy_event_queue(queue);
 
    return (EXIT_SUCCESS);
 }
