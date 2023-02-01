@@ -174,6 +174,7 @@ typedef struct __chuck_state
    uint8_t vertical_counter;
    uint8_t dvx;
    uint8_t dvy;
+   int8_t jump_dx;
 } chuck_state_t;
 
 typedef struct __player_context

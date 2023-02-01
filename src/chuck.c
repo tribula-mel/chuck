@@ -43,6 +43,8 @@ static uint8_t get_chuck_vertical_count (game_context_t *game);
 static void set_chuck_vertical_count (game_context_t *game, uint8_t count);
 static bool adj_chuck_all_off_x (game_context_t *game, int8_t change);
 static bool adj_chuck_all_off_y (game_context_t *game, int8_t change);
+static void set_chuck_jump_dx (game_context_t *game, int8_t jump_dx);
+static int8_t get_chuck_jump_dx (game_context_t *game);
 
 // running the game in original resolution would result in tiny graphics
 // for now this will be hard coded
@@ -579,6 +581,64 @@ static int animate_chuck_fall (game_context_t *game)
    return 0;
 }
 
+static void set_chuck_jump_dx (game_context_t *game, int8_t jump_dx)
+{
+   game->chuck_state.jump_dx = jump_dx;
+}
+
+static int8_t get_chuck_jump_dx (game_context_t *game)
+{
+   return (game->chuck_state.jump_dx);
+}
+
+static int animate_chuck_jump (game_context_t *game)
+{
+   if (game->chuck_state.vertical_state == in_jump)
+   {
+      int8_t dx = get_chuck_jump_dx (game);
+      int8_t dy = calc_chuck_jump_dy (game, get_chuck_vertical_count (game));
+
+      // platform to our left or right ?
+      if ((get_sandbox (game, get_chuck_tile_off_x (game) + dx,
+                       get_chuck_tile_off_y (game)) & 0x1) == 0x1)
+      {
+         // if so change direction
+         dx = -1 * dx;
+         set_chuck_jump_dx (game, dx);
+      }
+
+      // platform above our head ?
+      if (get_sandbox (game, get_chuck_tile_off_x (game),
+                       get_chuck_tile_off_y (game) + 1) == 0x1)
+         // if so change direction
+         dy = -1 * dy;
+
+      adj_chuck_all_off_y (game, dy);
+      adj_chuck_all_off_x (game, dx);
+      set_chuck_vertical_count (game, get_chuck_vertical_count (game) + 1);
+
+      // check if should collect a seed
+      if ((get_sandbox (game, get_chuck_tile_off_x (game),
+                        get_chuck_tile_off_y (game)) & 0x8) &&
+          (get_chuck_tile_rel_off_y (game) <= collect))
+         chuck_collect_seed (game);
+
+      // collect an egg if applicable
+      if ((get_sandbox (game, get_chuck_tile_off_x (game),
+                        get_chuck_tile_off_y (game)) & 0x4) &&
+          (get_chuck_tile_rel_off_y (game) <= collect))
+         chuck_collect_egg (game);
+
+      // end of jump ?
+      if (((get_sandbox (game, get_chuck_tile_off_x (game),
+                         get_chuck_tile_off_y (game) - 1)) & 0x1) == 0x1)
+         if (get_chuck_tile_rel_off_y (game) == 0)
+            set_chuck_vertical_state (game, horizontal);
+   }
+
+   return 0;
+}
+
 static int draw_chuck (game_context_t *game)
 {
    uint16_t x = 0;
@@ -1109,6 +1169,184 @@ static bool adj_chuck_all_off_y (game_context_t *game, int8_t change)
    return change_in_tile_y;
 }
 
+static void move_chuck_left (game_context_t *game)
+{
+   if (game->chuck_state.vertical_state == in_jump)
+      return;
+
+   if (game->chuck_state.vertical_state == on_ladder)
+   {
+      if (game->chuck_state.tile_rel_off_y != 0)
+         return;
+      if ((get_sandbox (game, get_chuck_tile_off_x (game),
+                        get_chuck_tile_off_y (game) - 1) & 0x1) != 1)
+         return;
+      }
+
+      set_chuck_vertical_state (game, horizontal);
+
+      if (adj_chuck_all_off_x (game, -1))
+      {
+         if ((get_sandbox (game, get_chuck_tile_off_x (game),
+                           get_chuck_tile_off_y (game) - 1) & 0x1) == 0)
+      {
+         // we are entering the fall
+         reset_chuck_vertical_state (game);
+         return;
+      }
+      if ((get_sandbox (game, get_chuck_tile_off_x (game),
+                        get_chuck_tile_off_y (game)) & 0x8))
+      {
+         // collect a seed
+         chuck_collect_seed (game);
+         return;
+      }
+      if ((get_sandbox (game, get_chuck_tile_off_x (game),
+                        get_chuck_tile_off_y (game)) & 0x4))
+      {
+         // collect a egg
+         chuck_collect_egg (game);
+         return;
+      }
+   }
+
+   if (game->chuck_state.el.direction == left)
+   {
+      game->chuck_state.el.sprite_state += 1;
+      if (game->chuck_state.el.sprite_state > chuck_max)
+         game->chuck_state.el.sprite_state = chuck_standing_one;
+   }
+   else
+   {
+      game->chuck_state.el.sprite_state = chuck_standing_one;
+      game->chuck_state.el.direction = left;
+   }
+}
+
+static void move_chuck_right (game_context_t *game)
+{
+   if (game->chuck_state.vertical_state == in_jump)
+      return;
+
+   if (game->chuck_state.vertical_state == on_ladder)
+   {
+      if (game->chuck_state.tile_rel_off_y != 0)
+         return;
+      if ((get_sandbox (game, get_chuck_tile_off_x (game),
+                        get_chuck_tile_off_y (game) - 1) & 0x1) != 1)
+         return;
+   }
+
+   set_chuck_vertical_state (game, horizontal);
+
+   if (adj_chuck_all_off_x (game, 1))
+   {
+      if ((get_sandbox (game, get_chuck_tile_off_x (game),
+                        get_chuck_tile_off_y (game) - 1) & 0x1) == 0)
+      {
+         // we are entering the fall
+         reset_chuck_vertical_state (game);
+         return;
+      }
+      if ((get_sandbox (game, get_chuck_tile_off_x (game),
+                        get_chuck_tile_off_y (game)) & 0x8))
+      {
+         // collect a seed
+         chuck_collect_seed (game);
+         return;
+      }
+      if ((get_sandbox (game, get_chuck_tile_off_x (game),
+                        get_chuck_tile_off_y (game)) & 0x4))
+      {
+         // collect a egg
+         chuck_collect_egg (game);
+         return;
+      }
+   }
+
+   if (game->chuck_state.el.direction == right)
+   {
+      game->chuck_state.el.sprite_state += 1;
+      if (game->chuck_state.el.sprite_state > chuck_max)
+         game->chuck_state.el.sprite_state = chuck_standing_one;
+   }
+   else
+   {
+      game->chuck_state.el.sprite_state = chuck_standing_one;
+      game->chuck_state.el.direction = right;
+   }
+}
+
+static void move_chuck_up (game_context_t *game)
+{
+   // first check if we are in the middle of the tile
+   if (game->chuck_state.tile_rel_off_x == in_the_middle)
+   {
+      // is there ladder
+      if (get_sandbox (game, get_chuck_tile_off_x (game),
+                       get_chuck_tile_off_y (game) + 2) & 0x2)
+      {
+         game->chuck_state.el.gfx_offset.y += 2;
+         game->chuck_state.tile_rel_off_y += 2;
+         game->chuck_state.vertical_state = on_ladder;
+         if (game->chuck_state.tile_rel_off_y > on_the_top_edge)
+         {
+            game->chuck_state.el.tile_offset.y += 1;
+            game->chuck_state.tile_rel_off_y = on_the_bottom_edge;
+         }
+
+         if (game->chuck_state.el.direction == up)
+         {
+            game->chuck_state.el.sprite_state += 1;
+            if (game->chuck_state.el.sprite_state > chuck_back_max)
+               game->chuck_state.el.sprite_state = chuck_back_one;
+         }
+         else
+         {
+            game->chuck_state.el.sprite_state = chuck_back_one;
+            game->chuck_state.el.direction = up;
+         }
+      }
+   }
+}
+
+static void move_chuck_down (game_context_t *game)
+{
+   // first check if we are in the middle of the tile
+   if (game->chuck_state.tile_rel_off_x == in_the_middle)
+   {
+      // is there ladder
+      if (((get_sandbox (game, get_chuck_tile_off_x (game),
+                         get_chuck_tile_off_y (game) - 1) & 0x2) &&
+           (get_chuck_tile_rel_off_y (game) == on_the_bottom_edge))
+          ||
+           ((game->chuck_state.vertical_state == on_ladder) &&
+            (get_chuck_tile_rel_off_y (game) != on_the_bottom_edge)))
+      {
+         game->chuck_state.el.gfx_offset.y -= 2;
+         game->chuck_state.tile_rel_off_y -= 2;
+         game->chuck_state.vertical_state = on_ladder;
+         if (game->chuck_state.tile_rel_off_y == 0xfe)
+         {
+            game->chuck_state.el.tile_offset.y -= 1;
+            game->chuck_state.tile_rel_off_y = on_the_top_edge;
+         }
+
+         if (game->chuck_state.el.direction == down)
+         {
+            game->chuck_state.el.sprite_state += 1;
+            if (game->chuck_state.el.sprite_state > chuck_back_max)
+               game->chuck_state.el.sprite_state = chuck_back_one;
+         }
+         else
+         {
+            game->chuck_state.el.sprite_state = chuck_back_one;
+            game->chuck_state.el.direction = down;
+         }
+      }
+   }
+}
+
 static int move_chuck (game_context_t *game,
                        int8_t hor, int8_t ver)
 {
@@ -1116,204 +1354,21 @@ static int move_chuck (game_context_t *game,
    if (game->chuck_state.vertical_state == falling)
       return 0;
 
-   if (game->chuck_state.vertical_state == in_jump)
-   {
-      int8_t dx = hor;
-      int8_t dy = calc_chuck_jump_dy (game, get_chuck_vertical_count (game));
-
-      adj_chuck_all_off_y (game, dy);
-      adj_chuck_all_off_x (game, dx);
-      set_chuck_vertical_count (game, get_chuck_vertical_count (game) + 1);
-
-      if (get_sandbox (game, get_chuck_tile_off_x (game),
-                        get_chuck_tile_off_y (game) - 1) == 1)
-         if (get_chuck_tile_rel_off_y (game) == 0)
-            set_chuck_vertical_state (game, horizontal);
-
-      return 0;
-   }
-
    // left
    if (hor == -1)
-   {
-      if (game->chuck_state.vertical_state == on_ladder)
-      {
-         if (game->chuck_state.tile_rel_off_y != 0)
-            return 0;
-         if ((get_sandbox (game, get_chuck_tile_off_x (game),
-                           get_chuck_tile_off_y (game) - 1) & 0x1) != 1)
-            return 0;
-      }
-
-      set_chuck_vertical_state (game, horizontal);
-      if (adj_chuck_all_off_x (game, -1))
-      {
-         if ((get_sandbox (game, get_chuck_tile_off_x (game),
-                           get_chuck_tile_off_y (game) - 1) & 0x1) == 0)
-         {
-            // we are entering the fall
-            reset_chuck_vertical_state (game);
-            return 0;
-         }
-         if ((get_sandbox (game, get_chuck_tile_off_x (game),
-                           get_chuck_tile_off_y (game)) & 0x8))
-         {
-            // collect a seed
-            chuck_collect_seed (game);
-            return 0;
-         }
-         if ((get_sandbox (game, get_chuck_tile_off_x (game),
-                           get_chuck_tile_off_y (game)) & 0x4))
-         {
-            // collect a egg
-            chuck_collect_egg (game);
-            return 0;
-         }
-      }
-
-      if (game->chuck_state.el.direction == left)
-      {
-         game->chuck_state.el.sprite_state += 1;
-         if (game->chuck_state.el.sprite_state > chuck_max)
-            game->chuck_state.el.sprite_state = chuck_standing_one;
-      }
-      else
-      {
-         game->chuck_state.el.sprite_state = chuck_standing_one;
-         game->chuck_state.el.direction = left;
-      }
-
-      return 0;
-   }
+      move_chuck_left (game);
 
    // right
    if (hor == 1)
-   {
-      if (game->chuck_state.vertical_state == on_ladder)
-      {
-         if (game->chuck_state.tile_rel_off_y != 0)
-            return 0;
-         if ((get_sandbox (game, get_chuck_tile_off_x (game),
-                           get_chuck_tile_off_y (game) - 1) & 0x1) != 1)
-            return 0;
-      }
-
-      set_chuck_vertical_state (game, horizontal);
-      if (adj_chuck_all_off_x (game, 1))
-      {
-         if ((get_sandbox (game, get_chuck_tile_off_x (game),
-                           get_chuck_tile_off_y (game) - 1) & 0x1) == 0)
-         {
-            // we are entering the fall
-            reset_chuck_vertical_state (game);
-            return 0;
-         }
-         if ((get_sandbox (game, get_chuck_tile_off_x (game),
-                           get_chuck_tile_off_y (game)) & 0x8))
-         {
-            // collect a seed
-            chuck_collect_seed (game);
-            return 0;
-         }
-         if ((get_sandbox (game, get_chuck_tile_off_x (game),
-                           get_chuck_tile_off_y (game)) & 0x4))
-         {
-            // collect a egg
-            chuck_collect_egg (game);
-            return 0;
-         }
-      }
-
-      if (game->chuck_state.el.direction == right)
-      {
-         game->chuck_state.el.sprite_state += 1;
-         if (game->chuck_state.el.sprite_state > chuck_max)
-            game->chuck_state.el.sprite_state = chuck_standing_one;
-      }
-      else
-      {
-         game->chuck_state.el.sprite_state = chuck_standing_one;
-         game->chuck_state.el.direction = right;
-      }
-
-      return 0;
-   }
+      move_chuck_right (game);
 
    // up
    if (ver == 1)
-   {
-      // first check if we are in the middle of the tile
-      if (game->chuck_state.tile_rel_off_x == in_the_middle)
-      {
-         // is there ladder
-         if (get_sandbox (game, get_chuck_tile_off_x (game),
-                          get_chuck_tile_off_y (game) + 2) & 0x2)
-         {
-            game->chuck_state.el.gfx_offset.y += 2;
-            game->chuck_state.tile_rel_off_y += 2;
-            game->chuck_state.vertical_state = on_ladder;
-            if (game->chuck_state.tile_rel_off_y > on_the_top_edge)
-            {
-               game->chuck_state.el.tile_offset.y += 1;
-               game->chuck_state.tile_rel_off_y = on_the_bottom_edge;
-            }
-
-            if (game->chuck_state.el.direction == up)
-            {
-               game->chuck_state.el.sprite_state += 1;
-               if (game->chuck_state.el.sprite_state > chuck_back_max)
-                  game->chuck_state.el.sprite_state = chuck_back_one;
-            }
-            else
-            {
-               game->chuck_state.el.sprite_state = chuck_back_one;
-               game->chuck_state.el.direction = up;
-            }
-         }
-      }
-
-      return 0;
-   }
+      move_chuck_up (game);
 
    // down
    if (ver == -1)
-   {
-      // first check if we are in the middle of the tile
-      if (game->chuck_state.tile_rel_off_x == in_the_middle)
-      {
-         // is there ladder
-         if (((get_sandbox (game, get_chuck_tile_off_x (game),
-                            get_chuck_tile_off_y (game) - 1) & 0x2) &&
-              (get_chuck_tile_rel_off_y (game) == on_the_bottom_edge))
-             ||
-             ((game->chuck_state.vertical_state == on_ladder) &&
-              (get_chuck_tile_rel_off_y (game) != on_the_bottom_edge)))
-         {
-            game->chuck_state.el.gfx_offset.y -= 2;
-            game->chuck_state.tile_rel_off_y -= 2;
-            game->chuck_state.vertical_state = on_ladder;
-            if (game->chuck_state.tile_rel_off_y == 0xfe)
-            {
-               game->chuck_state.el.tile_offset.y -= 1;
-               game->chuck_state.tile_rel_off_y = on_the_top_edge;
-            }
-
-            if (game->chuck_state.el.direction == down)
-            {
-               game->chuck_state.el.sprite_state += 1;
-               if (game->chuck_state.el.sprite_state > chuck_back_max)
-                  game->chuck_state.el.sprite_state = chuck_back_one;
-            }
-            else
-            {
-               game->chuck_state.el.sprite_state = chuck_back_one;
-               game->chuck_state.el.direction = down;
-            }
-         }
-      }
-
-      return 0;
-   }
+      move_chuck_down (game);
 
    return 0;
 }
@@ -1439,6 +1494,7 @@ int main (void)
          draw_flying_duck (&game);
          draw_chuck (&game);
          animate_chuck_fall (&game);
+         animate_chuck_jump (&game);
          if (game.levels[player_1.current_level % 8].elevator == true)
             draw_elevator (&game);
 
@@ -1475,7 +1531,11 @@ int main (void)
             if (key[ALLEGRO_KEY_LCTRL])
                // jump
                if (get_chuck_vertical_state (&game) != in_jump)
+               {
                   set_chuck_vertical_state (&game, in_jump);
+                  set_chuck_jump_dx (&game, dx);
+                  printf ("dx = %d\n", dx);
+               }
             move_chuck (&game, dx, dy);
             dx = dy = 0;
 
