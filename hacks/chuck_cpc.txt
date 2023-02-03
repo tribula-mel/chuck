@@ -1051,3 +1051,7 @@
 -| call $8fa3
    checks chuck's tile position for limits
    then loads a register with a byte from the sandbox by using tile positions
+
+-| call $94ca
+   sets carry flag if chuck hits a platform during left or right jump
+   otherwise carry flag is reset

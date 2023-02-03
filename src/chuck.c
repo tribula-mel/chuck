@@ -2,6 +2,7 @@
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -20,9 +21,9 @@ static void set_chuck_tile_rel_off_x (game_context_t *game, uint8_t off);
 static uint8_t get_chuck_tile_rel_off_x (game_context_t *game);
 static void set_chuck_tile_rel_off_y (game_context_t *game, uint8_t off);
 static uint8_t get_chuck_tile_rel_off_y (game_context_t *game);
-static void set_chuck_tile_off_x (game_context_t *game, uint8_t off);
+static bool set_chuck_tile_off_x (game_context_t *game, uint8_t off);
 static uint8_t get_chuck_tile_off_x (game_context_t *game);
-static void set_chuck_tile_off_y (game_context_t *game, uint8_t off);
+static bool set_chuck_tile_off_y (game_context_t *game, uint8_t off);
 static uint8_t get_chuck_tile_off_y (game_context_t *game);
 static void set_chuck_dvx (game_context_t *game, uint8_t off);
 static uint8_t get_chuck_dvx (game_context_t *game);
@@ -375,7 +376,8 @@ static uint8_t get_chuck_gfx_off_y (game_context_t *game)
 
 static void set_chuck_tile_rel_off_x (game_context_t *game, uint8_t off)
 {
-   game->chuck_state.tile_rel_off_x = off;
+   game->chuck_state.tile_rel_off_x = off & 0x7;
+   printf ("chuck tile_rel_off_x %x\n", off & 0x7);
 }
 
 static uint8_t get_chuck_tile_rel_off_x (game_context_t *game)
@@ -386,6 +388,7 @@ static uint8_t get_chuck_tile_rel_off_x (game_context_t *game)
 static void set_chuck_tile_rel_off_y (game_context_t *game, uint8_t off)
 {
    game->chuck_state.tile_rel_off_y = (off & 0x7);
+   printf ("chuck tile_rel_off_y %x\n", off & 0x7);
 }
 
 static uint8_t get_chuck_tile_rel_off_y (game_context_t *game)
@@ -393,9 +396,14 @@ static uint8_t get_chuck_tile_rel_off_y (game_context_t *game)
    return game->chuck_state.tile_rel_off_y;
 }
 
-static void set_chuck_tile_off_x (game_context_t *game, uint8_t off)
+static bool set_chuck_tile_off_x (game_context_t *game, uint8_t off)
 {
+   uint8_t tile_off_x = game->chuck_state.el.tile_offset.x;
+
    game->chuck_state.el.tile_offset.x = off;
+   printf ("chuck tile_off_x %x\n", off);
+
+   return (tile_off_x == off);
 }
 
 static uint8_t get_chuck_tile_off_x (game_context_t *game)
@@ -403,9 +411,14 @@ static uint8_t get_chuck_tile_off_x (game_context_t *game)
    return game->chuck_state.el.tile_offset.x;
 }
 
-static void set_chuck_tile_off_y (game_context_t *game, uint8_t off)
+static bool set_chuck_tile_off_y (game_context_t *game, uint8_t off)
 {
+   uint8_t tile_off_y = game->chuck_state.el.tile_offset.y;
+
    game->chuck_state.el.tile_offset.y = off;
+   printf ("chuck tile_off_y %x\n", off);
+
+   return (tile_off_y == off);
 }
 
 static uint8_t get_chuck_tile_off_y (game_context_t *game)
@@ -598,20 +611,39 @@ static int animate_chuck_jump (game_context_t *game)
       int8_t dx = get_chuck_jump_dx (game);
       int8_t dy = calc_chuck_jump_dy (game, get_chuck_vertical_count (game));
 
+#if 1
       // platform to our left or right ?
       if ((get_sandbox (game, get_chuck_tile_off_x (game) + dx,
-                       get_chuck_tile_off_y (game)) & 0x1) == 0x1)
+                        get_chuck_tile_off_y (game)) == 0x1) &&
+          (get_chuck_tile_rel_off_x (game) == 0x6 || get_chuck_tile_rel_off_x (game) == 0x1))
       {
-         // if so change direction
-         dx = -1 * dx;
-         set_chuck_jump_dx (game, dx);
+         if (dy != 2)
+         {
+            // original game implementation at $94f8
+            // if so change direction
+            dx = -1 * dx;
+            set_chuck_jump_dx (game, dx);
+         }
       }
+#endif
+
+      // we are nearing the end of the jump, but there is a missmatch
+      //    in between dy and the height of chuck above the platform
+      //    so we must limit dy
+      if ((get_sandbox (game, get_chuck_tile_off_x (game),
+                        get_chuck_tile_off_y (game) - 1) & 0x1) && (dy < 0))
+         if (get_chuck_tile_rel_off_y (game) < abs(dy))
+            dy = (-1) * get_chuck_tile_rel_off_y (game);
 
       // platform above our head ?
-      if (get_sandbox (game, get_chuck_tile_off_x (game),
-                       get_chuck_tile_off_y (game) + 1) == 0x1)
+      if ((get_sandbox (game, get_chuck_tile_off_x (game),
+                        get_chuck_tile_off_y (game) + 1) == 0x1) &&
+          (get_chuck_tile_rel_off_y (game) == on_the_bottom_edge))
+      {
          // if so change direction
-         dy = -1 * dy;
+         set_chuck_vertical_count (game, 0xc);
+         dy = calc_chuck_jump_dy (game, get_chuck_vertical_count (game));
+      }
 
       adj_chuck_all_off_y (game, dy);
       adj_chuck_all_off_x (game, dx);
@@ -630,8 +662,8 @@ static int animate_chuck_jump (game_context_t *game)
          chuck_collect_egg (game);
 
       // end of jump ?
-      if (((get_sandbox (game, get_chuck_tile_off_x (game),
-                         get_chuck_tile_off_y (game) - 1)) & 0x1) == 0x1)
+      if ((get_sandbox (game, get_chuck_tile_off_x (game),
+                        get_chuck_tile_off_y (game) - 1) & 0x1) == 0x1)
          if (get_chuck_tile_rel_off_y (game) == 0)
             set_chuck_vertical_state (game, horizontal);
    }
@@ -893,8 +925,8 @@ static int init_game_context (game_context_t *game, uint8_t level)
    game->chuck_state.el.tile_offset.y = 0x1;
    game->chuck_state.el.direction = right;
    game->chuck_state.el.sprite_state = chuck_standing_one;
-   game->chuck_state.tile_rel_off_x = on_the_right_edge;
-   game->chuck_state.tile_rel_off_y = on_the_bottom_edge;
+   set_chuck_tile_rel_off_x (game, on_the_right_edge);
+   set_chuck_tile_rel_off_y (game, on_the_bottom_edge);
    game->chuck_state.vertical_state = 0;
    game->chuck_state.vertical_counter = 0;
 
@@ -1116,7 +1148,7 @@ static void reset_chuck_vertical_state (game_context_t *game)
 
 static bool adj_chuck_all_off_x (game_context_t *game, int8_t change)
 {
-   bool change_in_tile_x = false;
+   uint8_t tile_x = 0;
 
    set_chuck_gfx_off_x (game, get_chuck_gfx_off_x (game) + change);
    set_chuck_tile_rel_off_x (game, get_chuck_tile_rel_off_x (game) + change);
@@ -1133,27 +1165,14 @@ static bool adj_chuck_all_off_x (game_context_t *game, int8_t change)
       set_chuck_tile_rel_off_x (game, in_the_middle);
    }
 
-   if (get_chuck_tile_rel_off_x (game) == 8)
-   {
-      uint8_t tile_x = get_chuck_tile_off_x (game);
-      set_chuck_tile_off_x (game, tile_x + 1);
-      change_in_tile_x = true;
-      set_chuck_tile_rel_off_x (game, on_the_left_edge);
-   }
-   else if (get_chuck_tile_rel_off_x (game) == 0xff)
-   {
-      uint8_t tile_x = get_chuck_tile_off_x (game);
-      set_chuck_tile_off_x (game, tile_x - 1);
-      change_in_tile_x = true;
-      set_chuck_tile_rel_off_x (game, on_the_right_edge);
-   }
+   tile_x = get_chuck_gfx_off_x (game) + 0x3 - get_chuck_tile_rel_off_x (game);
+   tile_x /= 8;
 
-   return change_in_tile_x;
+   return (set_chuck_tile_off_x (game, tile_x));
 }
 
 static bool adj_chuck_all_off_y (game_context_t *game, int8_t change)
 {
-   bool change_in_tile_y = false;
    uint8_t tile_y = 0;
 
    set_chuck_gfx_off_y (game, get_chuck_gfx_off_y (game) + change);
@@ -1164,9 +1183,8 @@ static bool adj_chuck_all_off_y (game_context_t *game, int8_t change)
 
    tile_y = get_chuck_gfx_off_y (game) - 0x10 - get_chuck_tile_rel_off_y (game);
    tile_y /= 8;
-   set_chuck_tile_off_y (game, tile_y);
 
-   return change_in_tile_y;
+   return (set_chuck_tile_off_y (game, tile_y));
 }
 
 static void move_chuck_left (game_context_t *game)
@@ -1174,9 +1192,15 @@ static void move_chuck_left (game_context_t *game)
    if (game->chuck_state.vertical_state == in_jump)
       return;
 
+   // platform on the left ?
+   if ((get_sandbox (game, get_chuck_tile_off_x (game) - 1,
+                     get_chuck_tile_off_y (game)) == 0x1) &&
+       (get_chuck_tile_rel_off_x (game) == 0x1))
+      return;
+
    if (game->chuck_state.vertical_state == on_ladder)
    {
-      if (game->chuck_state.tile_rel_off_y != 0)
+      if (get_chuck_tile_rel_off_y (game) != 0)
          return;
       if ((get_sandbox (game, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game) - 1) & 0x1) != 1)
@@ -1228,9 +1252,15 @@ static void move_chuck_right (game_context_t *game)
    if (game->chuck_state.vertical_state == in_jump)
       return;
 
+   // platform on the right ?
+   if ((get_sandbox (game, get_chuck_tile_off_x (game) + 1,
+                     get_chuck_tile_off_y (game)) == 0x1) &&
+       (get_chuck_tile_rel_off_x (game) == 0x5))
+      return;
+
    if (game->chuck_state.vertical_state == on_ladder)
    {
-      if (game->chuck_state.tile_rel_off_y != 0)
+      if (get_chuck_tile_rel_off_y (game) != 0)
          return;
       if ((get_sandbox (game, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game) - 1) & 0x1) != 1)
@@ -1280,20 +1310,14 @@ static void move_chuck_right (game_context_t *game)
 static void move_chuck_up (game_context_t *game)
 {
    // first check if we are in the middle of the tile
-   if (game->chuck_state.tile_rel_off_x == in_the_middle)
+   if (get_chuck_tile_rel_off_x (game) == in_the_middle)
    {
       // is there ladder
       if (get_sandbox (game, get_chuck_tile_off_x (game),
                        get_chuck_tile_off_y (game) + 2) & 0x2)
       {
-         game->chuck_state.el.gfx_offset.y += 2;
-         game->chuck_state.tile_rel_off_y += 2;
+         adj_chuck_all_off_y (game, 2);
          game->chuck_state.vertical_state = on_ladder;
-         if (game->chuck_state.tile_rel_off_y > on_the_top_edge)
-         {
-            game->chuck_state.el.tile_offset.y += 1;
-            game->chuck_state.tile_rel_off_y = on_the_bottom_edge;
-         }
 
          if (game->chuck_state.el.direction == up)
          {
@@ -1313,7 +1337,7 @@ static void move_chuck_up (game_context_t *game)
 static void move_chuck_down (game_context_t *game)
 {
    // first check if we are in the middle of the tile
-   if (game->chuck_state.tile_rel_off_x == in_the_middle)
+   if (get_chuck_tile_rel_off_x (game) == in_the_middle)
    {
       // is there ladder
       if (((get_sandbox (game, get_chuck_tile_off_x (game),
@@ -1323,14 +1347,8 @@ static void move_chuck_down (game_context_t *game)
            ((game->chuck_state.vertical_state == on_ladder) &&
             (get_chuck_tile_rel_off_y (game) != on_the_bottom_edge)))
       {
-         game->chuck_state.el.gfx_offset.y -= 2;
-         game->chuck_state.tile_rel_off_y -= 2;
+         adj_chuck_all_off_y (game, -2);
          game->chuck_state.vertical_state = on_ladder;
-         if (game->chuck_state.tile_rel_off_y == 0xfe)
-         {
-            game->chuck_state.el.tile_offset.y -= 1;
-            game->chuck_state.tile_rel_off_y = on_the_top_edge;
-         }
 
          if (game->chuck_state.el.direction == down)
          {
@@ -1534,7 +1552,6 @@ int main (void)
                {
                   set_chuck_vertical_state (&game, in_jump);
                   set_chuck_jump_dx (&game, dx);
-                  printf ("dx = %d\n", dx);
                }
             move_chuck (&game, dx, dy);
             dx = dy = 0;
