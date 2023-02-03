@@ -5449,10 +5449,10 @@ A28E: C3 99 A2    jp   $A299
 A291: FD 7E 06    ld   a,(iy+$06)
 A294: B7          or   a
 A295: C8          ret  z
-A296: 11 E0 01    ld   de,$01E0
-A299: ED 53 A7 A2 ld   ($A2A7),de
-A29D: 21 A4 A2    ld   hl,$A2A4
-A2A0: CD AA BC    call $BCAA
+A296: 11 E0 01    ld   de,$01E0        # tone period
+A299: ED 53 A7 A2 ld   ($A2A7),de      # bytes 3..4 of sound program
+A29D: 21 A4 A2    ld   hl,$A2A4        # sound program address for $BCAA
+A2A0: CD AA BC    call $BCAA           # sound queue
 A2A3: C9          ret
 A2A4: 83          add  a,e
 A2A5: 00          nop
