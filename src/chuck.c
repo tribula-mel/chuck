@@ -491,11 +491,9 @@ static void chuck_collect_seed (game_context_t *game)
    //    assign points to the score
 }
 
-static void chuck_collect_egg (game_context_t *game)
+static void chuck_collect_egg (game_context_t *game,
+                               uint8_t x, uint8_t y)
 {
-   uint8_t x = get_chuck_tile_off_x (game);
-   uint8_t y = get_chuck_tile_off_y (game);
-
    // clear an egg
    game->egg_state[get_sandbox (game, x, y) >> 4].present = false;
    set_sandbox (game, x, y, 0);
@@ -583,7 +581,8 @@ static int animate_chuck_fall (game_context_t *game)
    if ((get_sandbox (game, get_chuck_tile_off_x (game),
                      get_chuck_tile_off_y (game)) & 0x4) &&
        (get_chuck_tile_rel_off_y (game) <= collect))
-      chuck_collect_egg (game);
+      chuck_collect_egg (game, get_chuck_tile_off_x (game),
+                         get_chuck_tile_off_y (game));
 
    // check if the fall should stop or life lost
    if ((tile_rel_y == 0) &&
@@ -604,6 +603,72 @@ static int8_t get_chuck_jump_dx (game_context_t *game)
    return (game->chuck_state.jump_dx);
 }
 
+static bool chuck_platform_collision (game_context_t *game,
+                                      int8_t dx, int8_t dy)
+{
+   uint8_t tile_rel_off_x = get_chuck_tile_rel_off_x (game);
+   uint8_t tile_rel_off_y = get_chuck_tile_rel_off_y (game);
+   uint8_t tile_off_x = get_chuck_tile_off_x (game);
+   uint8_t tile_off_y = get_chuck_tile_off_y (game);
+   int8_t backup = 0x0;
+
+   if (dx > 0x0)
+   {
+      // check the screen limit 152 (original chuck $94ee)
+      if (get_chuck_gfx_off_x (game) >= 0x98)
+         return true;
+
+      if (tile_rel_off_x < 0x5) // original chuck $94f3
+         return false;
+
+      tile_off_x += 0x1;
+   }
+   else if (dx < 0x0)
+   {
+      // check the screen limit 0 (original chuck $94da)
+      if (get_chuck_gfx_off_x (game) == 0x0)
+         return true;
+
+      if (tile_rel_off_x > 0x2) // original chuck $94de
+         return false;
+
+      tile_off_x -= 0x1;
+   }
+   else if (dx == 0x0)
+      return false;
+
+   if (dy == 0x02) // original chuck code $94e3 and $94f8
+      return false;
+
+   backup = tile_rel_off_y + dy;
+   if ((backup >= 0x0) && (backup < 0x8)) // original chuck $94ff
+   {
+      if (get_sandbox (game, tile_off_x, tile_off_y) == 0x1)
+         return true;
+   }
+   else if (backup >= 0x0)
+   {
+      tile_off_y += 0x1;
+      if (get_sandbox (game, tile_off_x, tile_off_y) == 0x1)
+         return true;
+   }
+   else if (backup < 0x0)
+   {
+      tile_off_y -= 0x1;
+      if (get_sandbox (game, tile_off_x, tile_off_y) == 0x1)
+         return true;
+   }
+
+   if (dy >= 0x0)
+      return false;
+
+   tile_off_y += 0x1;
+   if (get_sandbox (game, tile_off_x, tile_off_y) == 0x1)
+      return true;
+
+   return false;
+}
+
 static int animate_chuck_jump (game_context_t *game)
 {
    if (game->chuck_state.vertical_state == in_jump)
@@ -611,21 +676,14 @@ static int animate_chuck_jump (game_context_t *game)
       int8_t dx = get_chuck_jump_dx (game);
       int8_t dy = calc_chuck_jump_dy (game, get_chuck_vertical_count (game));
 
-#if 1
       // platform to our left or right ?
-      if ((get_sandbox (game, get_chuck_tile_off_x (game) + dx,
-                        get_chuck_tile_off_y (game)) == 0x1) &&
-          (get_chuck_tile_rel_off_x (game) == 0x6 || get_chuck_tile_rel_off_x (game) == 0x1))
+      if (chuck_platform_collision (game, dx, dy))
       {
-         if (dy != 2)
-         {
-            // original game implementation at $94f8
-            // if so change direction
-            dx = -1 * dx;
-            set_chuck_jump_dx (game, dx);
-         }
+         // original game implementation at $94f8
+         // if so change direction
+         dx = -1 * dx;
+         set_chuck_jump_dx (game, dx);
       }
-#endif
 
       // we are nearing the end of the jump, but there is a missmatch
       //    in between dy and the height of chuck above the platform
@@ -656,10 +714,18 @@ static int animate_chuck_jump (game_context_t *game)
          chuck_collect_seed (game);
 
       // collect an egg if applicable
-      if ((get_sandbox (game, get_chuck_tile_off_x (game),
-                        get_chuck_tile_off_y (game)) & 0x4) &&
-          (get_chuck_tile_rel_off_y (game) <= collect))
-         chuck_collect_egg (game);
+      if (get_chuck_tile_rel_off_y (game) < 0x4)
+      {
+         if ((get_sandbox (game, get_chuck_tile_off_x (game),
+                           get_chuck_tile_off_y (game)) & 0x4))
+            chuck_collect_egg (game, get_chuck_tile_off_x (game),
+                               get_chuck_tile_off_y (game));
+      }
+      else
+         if ((get_sandbox (game, get_chuck_tile_off_x (game),
+                           get_chuck_tile_off_y (game) + 1) & 0x4))
+            chuck_collect_egg (game, get_chuck_tile_off_x (game),
+                               get_chuck_tile_off_y (game) + 1);
 
       // end of jump ?
       if ((get_sandbox (game, get_chuck_tile_off_x (game),
@@ -1229,7 +1295,8 @@ static void move_chuck_left (game_context_t *game)
                         get_chuck_tile_off_y (game)) & 0x4))
       {
          // collect a egg
-         chuck_collect_egg (game);
+         chuck_collect_egg (game, get_chuck_tile_off_x (game),
+                            get_chuck_tile_off_y (game));
          return;
       }
    }
@@ -1289,7 +1356,8 @@ static void move_chuck_right (game_context_t *game)
                         get_chuck_tile_off_y (game)) & 0x4))
       {
          // collect a egg
-         chuck_collect_egg (game);
+         chuck_collect_egg (game, get_chuck_tile_off_x (game),
+                            get_chuck_tile_off_y (game));
          return;
       }
    }
@@ -1350,11 +1418,21 @@ static void move_chuck_down (game_context_t *game)
       // is there ladder
       if (((get_sandbox (game, get_chuck_tile_off_x (game),
                          get_chuck_tile_off_y (game) - 1) & 0x2) &&
-           (get_chuck_tile_rel_off_y (game) == on_the_bottom_edge))
+          (get_chuck_tile_rel_off_y (game) == on_the_bottom_edge))
           ||
-           ((game->chuck_state.vertical_state == on_ladder) &&
-            (get_chuck_tile_rel_off_y (game) != on_the_bottom_edge)))
+          ((game->chuck_state.vertical_state == on_ladder) &&
+            (get_chuck_tile_rel_off_y (game) != on_the_bottom_edge))
+          ||
+          (game->chuck_state.vertical_state == in_jump))
       {
+         // check to see if we are in the jump and if are catching the ladder
+         //    on the negative tile relative offset
+         // the tile relative offset y has to be positive since ladder is
+         //    is climbed in +/-2 increments
+         if (game->chuck_state.vertical_state == in_jump)
+            if ((get_chuck_tile_rel_off_y (game) % 2) == 1)
+               adj_chuck_all_off_y (game, -1);
+
          adj_chuck_all_off_y (game, -2);
          game->chuck_state.vertical_state = on_ladder;
 

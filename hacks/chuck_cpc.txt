@@ -552,6 +552,7 @@
    9ae7 call $a22e
       some to do with sound ?
    9aea call $95cb
+      egg and seed collection
    9aed call nz,$a2ad
    9af0 call $9c4b
    9af3 ld a,($7b69)
@@ -1001,6 +1002,10 @@
 
 -| table $7b76 (array of seeds for current level)
    if seed is available then marked with $0
+   if not available then marked with $ff
+
+-| table $7b6a ($c element array of eggs for current level)
+   if egg is available then marked with $0
    if not available then marked with $ff
 
 -| code at $9560 updates chuck position among other things

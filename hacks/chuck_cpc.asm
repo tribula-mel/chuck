@@ -3483,33 +3483,33 @@
 94CA: 78          ld   a,b
 94CB: B7          or   a
 94CC: D5          push de
-94CD: FA D7 94    jp   m,$94D7
-94D0: C2 EB 94    jp   nz,$94EB
-94D3: D1          pop  de
-94D4: 37          scf
+94CD: FA D7 94    jp   m,$94D7            # if dx is negative jump to 94d7
+94D0: C2 EB 94    jp   nz,$94EB           # if dx is not zero jump to 94eb
+94D3: D1          pop  de                 # dx is zero so reset c flag
+94D4: 37          scf                     # meaning no collision with platform
 94D5: 3F          ccf
 94D6: C9          ret
-94D7: FD 7E 00    ld   a,(iy+$00)
-94DA: B7          or   a
+94D7: FD 7E 00    ld   a,(iy+$00)         # chuck is jumping to the left
+94DA: B7          or   a                  # check the screen boundary
 94DB: 28 42       jr   z,$951F
 94DD: 7C          ld   a,h
-94DE: FE 02       cp   $02
-94E0: 30 F1       jr   nc,$94D3
+94DE: FE 02       cp   $02                # if tile_rel_x > 2
+94E0: 30 F1       jr   nc,$94D3           # exit with c_flag=0
 94E2: 79          ld   a,c
-94E3: FE 02       cp   $02
-94E5: 28 EC       jr   z,$94D3
-94E7: 15          dec  d
+94E3: FE 02       cp   $02                # test for dy == 2
+94E5: 28 EC       jr   z,$94D3            # if so exit with c_flag=0
+94E7: 15          dec  d                  # dec tile_y
 94E8: C3 FD 94    jp   $94FD
-94EB: FD 7E 00    ld   a,(iy+$00)
-94EE: FE 98       cp   $98
+94EB: FD 7E 00    ld   a,(iy+$00)         # chuck is jumping to the right
+94EE: FE 98       cp   $98                # check the screen boundary
 94F0: 30 2D       jr   nc,$951F
 94F2: 7C          ld   a,h
-94F3: FE 05       cp   $05
-94F5: 38 DC       jr   c,$94D3
+94F3: FE 05       cp   $05                # if below tile rel off 5
+94F5: 38 DC       jr   c,$94D3            # exit with c flag reset
 94F7: 79          ld   a,c
-94F8: FE 02       cp   $02
-94FA: 28 D7       jr   z,$94D3
-94FC: 14          inc  d
+94F8: FE 02       cp   $02                # test for dy equal to 2
+94FA: 28 D7       jr   z,$94D3            # if dy == 2 exit c_flag=0
+94FC: 14          inc  d                  # inc tile_x
 94FD: 7D          ld   a,l
 94FE: 81          add  a,c
 94FF: FE 08       cp   $08
