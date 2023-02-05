@@ -1,20 +1,8 @@
 #ifndef __GAME_TYPES__
 #define __GAME_TYPES__
 
-// number of eggs is 0xc (design by original game)
-#define MAX_N_EGGS   (0xc)
-// number of ducks is 0x5 (design by original game)
-#define MAX_N_DUCKS  (0x5)
-
-// the below by necessity (c language thingy)
-// number of platforms
-#define MAX_N_PLATFORMS  (0x1a)
-// number of ladders
-#define MAX_N_LADDERS    (0x09)
-// number of seed
-#define MAX_N_SEED       (0x10)
-// two paddles for elevator
-#define N_PADDLES        (0x02)
+#include "common_defines.h"
+#include "player_context_type.h"
 
 typedef enum {
    pastel_yellow  = 0x02,
@@ -162,9 +150,6 @@ typedef enum {
    on_elevator = 0x4,
 } chuck_vertical_t;
 
-#define OFFSET_X_MAX (0x14)
-#define OFFSET_Y_MAX (0x16)
-
 typedef struct __chuck_state
 {
    element_state_t el;
@@ -176,24 +161,6 @@ typedef struct __chuck_state
    uint8_t dvy;
    int8_t jump_dx;
 } chuck_state_t;
-
-typedef struct __player_context
-{
-   // player number 1 .. 4
-   uint8_t current_player;
-   // current level
-   uint8_t current_level;
-   // score 0 .. 999999 inclusive
-   uint32_t score;
-   // time 0 .. 900 inclusive
-   uint16_t time;
-   // bonus 0 .. 9000
-   uint16_t bonus;
-   // lives; new life every 10000 score points; max 255
-   uint8_t lives;
-   // movement context
-   uint8_t sandbox[OFFSET_Y_MAX][OFFSET_X_MAX];
-} player_context_t;
 
 typedef struct __game_context
 {
