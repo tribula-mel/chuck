@@ -26,7 +26,7 @@ void set_current_level (player_context_t *player, uint8_t num)
 
 uint8_t *get_current_level_gfx (player_context_t *player)
 {
-   return ((uint8_t *) &player->gfx_current_level);
+   return (&player->gfx_current_level[0]);
 }
 
 void convert_num_to_gfx (uint16_t num, uint8_t *gfx,
@@ -47,7 +47,7 @@ void convert_num_to_gfx (uint16_t num, uint8_t *gfx,
 void set_current_level_gfx (player_context_t *player)
 {
    convert_num_to_gfx (player->current_level,
-                       (uint8_t *) &player->gfx_current_level, 100, 3);
+                       &player->gfx_current_level[0], 100, 3);
 }
 
 // score related setters and getters
@@ -63,13 +63,12 @@ void set_score (player_context_t *player, uint32_t num)
 
 uint8_t *get_score_gfx (player_context_t *player)
 {
-   return ((uint8_t *) &player->gfx_score);
+   return (&player->gfx_score[0]);
 }
 
 void set_score_gfx (player_context_t *player)
 {
-   convert_num_to_gfx (player->score,
-                       (uint8_t *) &player->gfx_score, 100000, 6);
+   convert_num_to_gfx (player->score, &player->gfx_score[0], 100000, 6);
 }
 
 // time related setters and getters
@@ -85,13 +84,12 @@ void set_time (player_context_t *player, uint16_t num)
 
 uint8_t *get_time_gfx (player_context_t *player)
 {
-   return ((uint8_t *) &player->gfx_time);
+   return (&player->gfx_time[0]);
 }
 
 void set_time_gfx (player_context_t *player)
 {
-   convert_num_to_gfx (player->time,
-                       (uint8_t *) &player->gfx_time, 100, 3);
+   convert_num_to_gfx (player->time, &player->gfx_time[0], 100, 3);
 }
 
 // bonus related setters and getters
@@ -107,13 +105,12 @@ void set_bonus (player_context_t *player, uint16_t num)
 
 uint8_t *get_bonus_gfx (player_context_t *player)
 {
-   return ((uint8_t *) &player->gfx_bonus);
+   return (&player->gfx_bonus[0]);
 }
 
 void set_bonus_gfx (player_context_t *player)
 {
-   convert_num_to_gfx (player->bonus,
-                       (uint8_t *) &player->gfx_bonus, 1000, 4);
+   convert_num_to_gfx (player->bonus, &player->gfx_bonus[0], 1000, 4);
 }
 
 // lives related setters and getters

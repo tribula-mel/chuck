@@ -896,7 +896,7 @@ static sprite_t digit_0 =
 {
    .width  = 0x01,
    .height = 0x07,
-   .colour = 0x08,
+   .colour = 0x80,
    // 4x7 pixels
    .sprite =
       {

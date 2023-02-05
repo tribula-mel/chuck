@@ -186,10 +186,53 @@ static int draw_ladder (uint16_t x, uint16_t y, uint8_t h)
    return 0;
 }
 
-static void draw_game_status (void)
+static int draw_digit (uint16_t x, uint16_t y, uint8_t digit)
+{
+   switch (digit)
+   {
+      case 0:
+         draw_element (&digit_0, x, y, set_colour (digit_0.colour));
+         break;
+      case 1:
+         draw_element (&digit_1, x, y, set_colour (digit_0.colour));
+         break;
+      case 2:
+         draw_element (&digit_2, x, y, set_colour (digit_0.colour));
+         break;
+      case 3:
+         draw_element (&digit_3, x, y, set_colour (digit_0.colour));
+         break;
+      case 4:
+         draw_element (&digit_4, x, y, set_colour (digit_0.colour));
+         break;
+      case 5:
+         draw_element (&digit_5, x, y, set_colour (digit_0.colour));
+         break;
+      case 6:
+         draw_element (&digit_6, x, y, set_colour (digit_0.colour));
+         break;
+      case 7:
+         draw_element (&digit_7, x, y, set_colour (digit_0.colour));
+         break;
+      case 8:
+         draw_element (&digit_8, x, y, set_colour (digit_0.colour));
+         break;
+      case 9:
+         draw_element (&digit_9, x, y, set_colour (digit_0.colour));
+         break;
+      default:
+         fprintf (stderr, "should not happen, hmm\n");
+         return -1;
+   }
+
+   return 0;
+}
+
+static void draw_game_status (game_context_t *game)
 {
    uint16_t x = 0;
    uint16_t y = 0;
+   uint8_t *number = NULL;
 
    // draw STATUS (chuck original $8d3b)
    x = x_convert_to_sdl (0x0);
@@ -205,25 +248,71 @@ static void draw_game_status (void)
    y = y_convert_to_sdl (0xc7);
    draw_element (&red_background, x, y, set_colour (red_background.colour));
 
+   // draw 6 score digits
+   y = y_convert_to_sdl (0xc6);
+   set_score_gfx (game->players_context);
+   number = get_score_gfx (game->players_context);
+   for (int i = 0; i < 6; i++)
+   {
+      x = x_convert_to_sdl (0x1c + 5*i);
+      draw_digit (x, y, number[i]);
+   }
+
    // draw PLAYER (chuck original $8d67)
    x = x_convert_to_sdl (0x0);
    y = y_convert_to_sdl (0xb8);
    draw_element (&player_txt, x, y, set_colour (player_txt.colour));
+
+   // draw player number
+   x = x_convert_to_sdl (0x1b);
+   y = y_convert_to_sdl (0xb7);
+   draw_digit (x, y, 1);
 
    // draw LEVEL (chuck original $8d80)
    x = x_convert_to_sdl (0x24);
    y = y_convert_to_sdl (0xb8);
    draw_element (&level_txt, x, y, set_colour (level_txt.colour));
 
+   // draw level number
+   y = y_convert_to_sdl (0xb7);
+   set_current_level_gfx (game->players_context);
+   number = get_current_level_gfx (game->players_context);
+   for (int i = 0; i < 3; i++)
+   {
+      x = x_convert_to_sdl (0x3b + 5*i);
+      draw_digit (x, y, number[i]);
+   }
+
    // draw BONUS (chuck original $8db3)
    x = x_convert_to_sdl (0x4e);
    y = y_convert_to_sdl (0xb8);
    draw_element (&bonus_txt, x, y, set_colour (bonus_txt.colour));
 
+   // draw bonus numbers
+   y = y_convert_to_sdl (0xb7);
+   set_bonus_gfx (game->players_context);
+   number = get_bonus_gfx (game->players_context);
+   for (int i = 0; i < 4; i++)
+   {
+      x = x_convert_to_sdl (0x66 + 5*i);
+      draw_digit (x, y, number[i]);
+   }
+
    // draw TIME (chuck original $8dda)
    x = x_convert_to_sdl (0x7e);
    y = y_convert_to_sdl (0xb8);
    draw_element (&time_txt, x, y, set_colour (time_txt.colour));
+
+   // draw time numbers
+   y = y_convert_to_sdl (0xb7);
+   set_time_gfx (game->players_context);
+   number = get_time_gfx (game->players_context);
+   for (int i = 0; i < 3; i++)
+   {
+      x = x_convert_to_sdl (0x91 + 5*i);
+      draw_digit (x, y, number[i]);
+   }
+
 }
 
 static int draw_level (game_context_t *game)
@@ -236,7 +325,7 @@ static int draw_level (game_context_t *game)
    uint8_t off_y = 0;
 
    // draw game status at the top
-   draw_game_status ();
+   draw_game_status (game);
 
    // draw platforms first
    for (i = 0; i < game->levels[game->players_context->current_level % 8].n_platforms; i++)
@@ -1044,6 +1133,12 @@ static int init_game_context (game_context_t *game, uint8_t level)
 
    // clear the sandbox
    memset (game->players_context->sandbox, 0, OFFSET_X_MAX * OFFSET_Y_MAX);
+
+   // init game status
+   set_score (game->players_context, 49385);
+   set_bonus (game->players_context, 1000);
+   set_time (game->players_context, 900);
+   set_current_level (game->players_context, 0);
 
    return 0;
 }

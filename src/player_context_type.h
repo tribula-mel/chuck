@@ -25,4 +25,27 @@ typedef struct __player_context
    uint8_t sandbox[OFFSET_Y_MAX][OFFSET_X_MAX];
 } player_context_t;
 
+uint8_t get_current_player (player_context_t *player);
+void set_current_player (player_context_t *player, uint8_t num);
+uint8_t get_current_level (player_context_t *player);
+void set_current_level (player_context_t *player, uint8_t num);
+uint8_t *get_current_level_gfx (player_context_t *player);
+void convert_num_to_gfx (uint16_t num, uint8_t *gfx,
+                         uint32_t base, uint8_t level);
+void set_current_level_gfx (player_context_t *player);
+uint32_t get_score (player_context_t *player);
+void set_score (player_context_t *player, uint32_t num);
+uint8_t *get_score_gfx (player_context_t *player);
+void set_score_gfx (player_context_t *player);
+uint16_t get_time (player_context_t *player);
+void set_time (player_context_t *player, uint16_t num);
+uint8_t *get_time_gfx (player_context_t *player);
+void set_time_gfx (player_context_t *player);
+uint16_t get_bonus (player_context_t *player);
+void set_bonus (player_context_t *player, uint16_t num);
+uint8_t *get_bonus_gfx (player_context_t *player);
+void set_bonus_gfx (player_context_t *player);
+uint8_t get_lives (player_context_t *player);
+void set_lives (player_context_t *player, uint8_t num);
+
 #endif // __PLAYER_CONTEXT_TYPE_H__
