@@ -186,6 +186,46 @@ static int draw_ladder (uint16_t x, uint16_t y, uint8_t h)
    return 0;
 }
 
+static void draw_game_status (void)
+{
+   uint16_t x = 0;
+   uint16_t y = 0;
+
+   // draw STATUS (chuck original $8d3b)
+   x = x_convert_to_sdl (0x0);
+   y = y_convert_to_sdl (0xc7);
+   draw_element (&score_txt, x, y, set_colour (score_txt.colour));
+
+   // draw "red block" (chuck original $8d46 - $8d59)
+   //    this block is drawn for current active player
+   //    x = player_number * $22 - $07
+   //       player_number [1..4]
+   //    currently only one player supported
+   x = x_convert_to_sdl (0x1b);
+   y = y_convert_to_sdl (0xc7);
+   draw_element (&red_background, x, y, set_colour (red_background.colour));
+
+   // draw PLAYER (chuck original $8d67)
+   x = x_convert_to_sdl (0x0);
+   y = y_convert_to_sdl (0xb8);
+   draw_element (&player_txt, x, y, set_colour (player_txt.colour));
+
+   // draw LEVEL (chuck original $8d80)
+   x = x_convert_to_sdl (0x24);
+   y = y_convert_to_sdl (0xb8);
+   draw_element (&level_txt, x, y, set_colour (level_txt.colour));
+
+   // draw BONUS (chuck original $8db3)
+   x = x_convert_to_sdl (0x4e);
+   y = y_convert_to_sdl (0xb8);
+   draw_element (&bonus_txt, x, y, set_colour (bonus_txt.colour));
+
+   // draw TIME (chuck original $8dda)
+   x = x_convert_to_sdl (0x7e);
+   y = y_convert_to_sdl (0xb8);
+   draw_element (&time_txt, x, y, set_colour (time_txt.colour));
+}
+
 static int draw_level (game_context_t *game)
 {
    uint16_t x = 0;
@@ -194,6 +234,9 @@ static int draw_level (game_context_t *game)
    uint8_t i = 0;
    uint8_t off_x = 0;
    uint8_t off_y = 0;
+
+   // draw game status at the top
+   draw_game_status ();
 
    // draw platforms first
    for (i = 0; i < game->levels[game->players_context->current_level % 8].n_platforms; i++)
@@ -377,7 +420,7 @@ static uint8_t get_chuck_gfx_off_y (game_context_t *game)
 static void set_chuck_tile_rel_off_x (game_context_t *game, uint8_t off)
 {
    game->chuck_state.tile_rel_off_x = off & 0x7;
-   printf ("chuck tile_rel_off_x %x\n", off & 0x7);
+   // printf ("chuck tile_rel_off_x %x\n", off & 0x7);
 }
 
 static uint8_t get_chuck_tile_rel_off_x (game_context_t *game)
@@ -388,7 +431,7 @@ static uint8_t get_chuck_tile_rel_off_x (game_context_t *game)
 static void set_chuck_tile_rel_off_y (game_context_t *game, uint8_t off)
 {
    game->chuck_state.tile_rel_off_y = (off & 0x7);
-   printf ("chuck tile_rel_off_y %x\n", off & 0x7);
+   // printf ("chuck tile_rel_off_y %x\n", off & 0x7);
 }
 
 static uint8_t get_chuck_tile_rel_off_y (game_context_t *game)
@@ -401,7 +444,7 @@ static bool set_chuck_tile_off_x (game_context_t *game, uint8_t off)
    uint8_t tile_off_x = game->chuck_state.el.tile_offset.x;
 
    game->chuck_state.el.tile_offset.x = off;
-   printf ("chuck tile_off_x %x\n", off);
+   // printf ("chuck tile_off_x %x\n", off);
 
    return (tile_off_x == off);
 }
@@ -416,7 +459,7 @@ static bool set_chuck_tile_off_y (game_context_t *game, uint8_t off)
    uint8_t tile_off_y = game->chuck_state.el.tile_offset.y;
 
    game->chuck_state.el.tile_offset.y = off;
-   printf ("chuck tile_off_y %x\n", off);
+   // printf ("chuck tile_off_y %x\n", off);
 
    return (tile_off_y == off);
 }

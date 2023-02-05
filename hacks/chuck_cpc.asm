@@ -2510,11 +2510,11 @@
 8D3F: 16 00       ld   d,$00     # x
 8D41: 1E C7       ld   e,$C7     # y
 8D43: CD B9 8C    call $8CB9
-8D46: 3A 00 7B    ld   a,($7B00)
+8D46: 3A 00 7B    ld   a,($7B00) # current player number (starts at 0)
 8D49: 47          ld   b,a
 8D4A: 04          inc  b
 8D4B: AF          xor  a
-8D4C: C6 22       add  a,$22
+8D4C: C6 22       add  a,$22     # x = player_number*$22-$07
 8D4E: 10 FC       djnz $8D4C
 8D50: D6 07       sub  $07
 8D52: 06 05       ld   b,$05
@@ -2522,29 +2522,29 @@
 8D55: 1E C7       ld   e,$C7
 8D57: 3E 29       ld   a,$29     # sprite number for "red background"
 8D59: CD B9 8C    call $8CB9
-8D5C: 3A 99 7B    ld   a,($7B99)
+8D5C: 3A 99 7B    ld   a,($7B99) # number of players [1..4]
 8D5F: 47          ld   b,a
 8D60: C5          push bc
-8D61: CD 0F 8E    call $8E0F     # draws lives under "red background"
+8D61: CD 0F 8E    call $8E0F     # draws score/lives for all players
 8D64: C1          pop  bc
 8D65: 10 F9       djnz $8D60
-8D67: 3E 2A       ld   a,$2A
+8D67: 3E 2A       ld   a,$2A     # sprite number for "PLAYER"
 8D69: 06 02       ld   b,$02
 8D6B: 16 00       ld   d,$00
 8D6D: 1E B8       ld   e,$B8
 8D6F: CD B9 8C    call $8CB9
-8D72: 3A 00 7B    ld   a,($7B00)
-8D75: C6 1F       add  a,$1F
+8D72: 3A 00 7B    ld   a,($7B00) # current player number (starts at 0)
+8D75: C6 1F       add  a,$1F     # adjust sprite number for "0" .. "9"
 8D77: 06 02       ld   b,$02
 8D79: 16 1B       ld   d,$1B
 8D7B: 1E B7       ld   e,$B7
-8D7D: CD B9 8C    call $8CB9
-8D80: 3E 2B       ld   a,$2B
+8D7D: CD B9 8C    call $8CB9     # draw player number
+8D80: 3E 2B       ld   a,$2B     # sprite number for "LEVEL"
 8D82: 06 02       ld   b,$02
 8D84: 16 24       ld   d,$24
 8D86: 1E B8       ld   e,$B8
 8D88: CD B9 8C    call $8CB9
-8D8B: 3A 5D 7B    ld   a,($7B5D)
+8D8B: 3A 5D 7B    ld   a,($7B5D) # player level number (starts at 0)
 8D8E: 3C          inc  a
 8D8F: CD 6A 8E    call $8E6A
 8D92: F5          push af
@@ -2557,15 +2557,15 @@
 8D9C: 0E 02       ld   c,$02
 8D9E: 16 3B       ld   d,$3B
 8DA0: 1E B7       ld   e,$B7
-8DA2: CD 59 8E    call $8E59
+8DA2: CD 59 8E    call $8E59     # draw first level digit (level > 99)
 8DA5: F1          pop  af
 8DA6: 0E 02       ld   c,$02
 8DA8: 16 40       ld   d,$40
 8DAA: 1E B7       ld   e,$B7
-8DAC: CD 59 8E    call $8E59
+8DAC: CD 59 8E    call $8E59     # draw second level digit
 8DAF: F1          pop  af
-8DB0: CD 59 8E    call $8E59
-8DB3: 3E 2C       ld   a,$2C
+8DB0: CD 59 8E    call $8E59     # draw third level digit
+8DB3: 3E 2C       ld   a,$2C     # sprite number for "BONUS"
 8DB5: 06 02       ld   b,$02
 8DB7: 16 4E       ld   d,$4E
 8DB9: 1E B8       ld   e,$B8
@@ -2641,7 +2641,7 @@
 8E3B: 79          ld   a,c
 8E3C: B7          or   a
 8E3D: C8          ret  z
-8E3E: FE 08       cp   $08
+8E3E: FE 08       cp   $08       # don't draw more than 8 lives
 8E40: 38 02       jr   c,$8E44
 8E42: 3E 08       ld   a,$08
 8E44: 47          ld   b,a

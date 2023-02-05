@@ -34,6 +34,7 @@
         change (always zero), so the three bytes are multiplied by 10
    7b96 current player time (three bytes)
    7b5d current player level
+        starts at 0
 
 -| routine $8c76 draws individual letter ($8cb8 ret)
    hl = address in the screen buffer
