@@ -2414,7 +2414,7 @@
 8CB5: 0D          dec  c
 8CB6: 20 BE       jr   nz,$8C76
 8CB8: C9          ret
-8CB9: F5          push af
+8CB9: F5          push af        # draws the top game status section
 8CBA: CD 0A 8C    call $8C0A
 8CBD: F1          pop  af
 8CBE: F5          push af
@@ -2505,10 +2505,10 @@
 8D36: 36 00       ld   (hl),$00
 8D38: ED B0       ldir
 8D3A: C9          ret
-8D3B: 3E 28       ld   a,$28
-8D3D: 06 02       ld   b,$02
-8D3F: 16 00       ld   d,$00
-8D41: 1E C7       ld   e,$C7
+8D3B: 3E 28       ld   a,$28     # sprite number for "SCORE"
+8D3D: 06 02       ld   b,$02     # colour
+8D3F: 16 00       ld   d,$00     # x
+8D41: 1E C7       ld   e,$C7     # y
 8D43: CD B9 8C    call $8CB9
 8D46: 3A 00 7B    ld   a,($7B00)
 8D49: 47          ld   b,a
@@ -2518,14 +2518,14 @@
 8D4E: 10 FC       djnz $8D4C
 8D50: D6 07       sub  $07
 8D52: 06 05       ld   b,$05
-8D54: 57          ld   d,a
+8D54: 57          ld   d,a       # $1b it seems
 8D55: 1E C7       ld   e,$C7
-8D57: 3E 29       ld   a,$29
+8D57: 3E 29       ld   a,$29     # sprite number for "red background"
 8D59: CD B9 8C    call $8CB9
 8D5C: 3A 99 7B    ld   a,($7B99)
 8D5F: 47          ld   b,a
 8D60: C5          push bc
-8D61: CD 0F 8E    call $8E0F
+8D61: CD 0F 8E    call $8E0F     # draws lives under "red background"
 8D64: C1          pop  bc
 8D65: 10 F9       djnz $8D60
 8D67: 3E 2A       ld   a,$2A
@@ -2634,7 +2634,7 @@
 8E30: 0E 06       ld   c,$06
 8E32: 7E          ld   a,(hl)
 8E33: 23          inc  hl
-8E34: CD 59 8E    call $8E59
+8E34: CD 59 8E    call $8E59     # renders the 6 digit score number
 8E37: 10 F9       djnz $8E32
 8E39: D1          pop  de
 8E3A: C1          pop  bc

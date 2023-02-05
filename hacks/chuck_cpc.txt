@@ -663,13 +663,16 @@
 -| call $8c0a
    inputs:
       de = (x, y) coordinates
-   translates (x, y) into the screen address
+   output:
+      hl = translated (x, y) into the screen address
 
 -| call $8c34
    inputs:
      a = index into table at $8000
         this index is stored at $5 offset in the table at $7b36
            this seems to be required sprite
+   output:
+      ix = address of the sprite 
    translates the index into required sprite address in memory
    it seems that $8000 table is referenced two times during this
       process, first the index in 'a' reg is used to get an index
@@ -1060,3 +1063,5 @@
 -| call $94ca
    sets carry flag if chuck hits a platform during left or right jump
    otherwise carry flag is reset
+
+-| $7b99 carry number of players
