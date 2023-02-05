@@ -81,7 +81,7 @@
       hl $c000
       ix $84fc
 
-   "this does not seem to do any !?"
+   "red background for score"
       bc $0409
       de $01a0
       hl $c00d
