@@ -49,7 +49,7 @@ static int8_t get_chuck_jump_dx (game_context_t *game);
 
 // running the game in original resolution would result in tiny graphics
 // for now this will be hard coded
-static const uint8_t scale = 2;
+static const uint8_t scale = 1;
 
 #define DOTS_PER_PIXEL_X (4)
 #define DOTS_PER_PIXEL_Y (2)
@@ -621,6 +621,13 @@ static void chuck_collect_seed (game_context_t *game)
    // do other seed logic in here (in time)
    //    stop the level timer
    //    assign points to the score
+   set_score (game->players_context,
+              get_score (game->players_context) + 50);
+}
+
+static uint16_t adjust_egg_score (uint8_t level)
+{
+   return (100 + 100 * (level % 4));
 }
 
 static void chuck_collect_egg (game_context_t *game,
@@ -632,6 +639,9 @@ static void chuck_collect_egg (game_context_t *game,
 
    // do other seed logic in here (in time)
    //    assign points to the score
+   set_score (game->players_context,
+              get_score (game->players_context) +
+                 adjust_egg_score (game->players_context->current_level));
    //    move to next level when all eggs collected
 }
 
@@ -1135,7 +1145,7 @@ static int init_game_context (game_context_t *game, uint8_t level)
    memset (game->players_context->sandbox, 0, OFFSET_X_MAX * OFFSET_Y_MAX);
 
    // init game status
-   set_score (game->players_context, 49385);
+   set_score (game->players_context, 0);
    set_bonus (game->players_context, 1000);
    set_time (game->players_context, 900);
    set_current_level (game->players_context, 0);
