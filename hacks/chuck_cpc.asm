@@ -3644,13 +3644,13 @@
 9601: 79          ld   a,c
 9602: 32 0D 7B    ld   ($7B0D),a
 9605: 3E 00       ld   a,$00
-9607: 32 9C 7B    ld   ($7B9C),a
-960A: 32 9B 7B    ld   ($7B9B),a
-960D: 32 9D 7B    ld   ($7B9D),a
-9610: 32 9E 7B    ld   ($7B9E),a
+9607: 32 9C 7B    ld   ($7B9C),a    # counter for duck moves
+960A: 32 9B 7B    ld   ($7B9B),a    # counter for flying duck and TIME updates
+960D: 32 9D 7B    ld   ($7B9D),a    # counter ?
+9610: 32 9E 7B    ld   ($7B9E),a    # counter for TIME timeout if seed collected
 9613: 3E 76       ld   a,$76
-9615: 32 A0 7B    ld   ($7BA0),a
-9618: 32 A1 7B    ld   ($7BA1),a
+9615: 32 A0 7B    ld   ($7BA0),a    # 4 bytes that have a random value
+9618: 32 A1 7B    ld   ($7BA1),a    #    for ducks movement
 961B: 32 A2 7B    ld   ($7BA2),a
 961E: 32 A3 7B    ld   ($7BA3),a
 9621: 3A 00 7B    ld   a,($7B00)
@@ -3733,12 +3733,12 @@
 96B5: EE FF       xor  $FF
 96B7: 32 0B 7B    ld   ($7B0B),a
 96BA: C9          ret
-96BB: 3A 9B 7B    ld   a,($7B9B)
+96BB: 3A 9B 7B    ld   a,($7B9B)    # goes from 0 to 8
 96BE: 3C          inc  a
-96BF: E6 07       and  $07
+96BF: E6 07       and  $07          # when 8 goes back to 0
 96C1: 32 9B 7B    ld   ($7B9B),a
-96C4: CA 5A 98    jp   z,$985A
-96C7: FE 04       cp   $04
+96C4: CA 5A 98    jp   z,$985A      # flying duck is updated
+96C7: FE 04       cp   $04          # if 4 then timer is updated
 96C9: CA F3 98    jp   z,$98F3
 96CC: 3A 07 7B    ld   a,($7B07)
 96CF: 47          ld   b,a
@@ -3750,7 +3750,7 @@
 96DD: B8          cp   b
 96DE: 38 01       jr   c,$96E1
 96E0: C9          ret
-96E1: CD E3 8B    call $8BE3
+96E1: CD E3 8B    call $8BE3        # duck update
 96E4: FD 56 02    ld   d,(iy+$02)
 96E7: FD 5E 03    ld   e,(iy+$03)
 96EA: FD 66 04    ld   h,(iy+$04)
@@ -4040,55 +4040,55 @@
 98EC: FD 77 05    ld   (iy+$05),a
 98EF: CD E6 8B    call $8BE6           # updates flying duck on the screen ?
 98F2: C9          ret
-98F3: 3A 9E 7B    ld   a,($7B9E)
+98F3: 3A 9E 7B    ld   a,($7B9E)       # usually 0, $14 when seed collected
 98F6: B7          or   a
-98F7: 28 05       jr   z,$98FE
-98F9: 3D          dec  a
+98F7: 28 05       jr   z,$98FE         # if zero update TIME every 4 game loops
+98F9: 3D          dec  a               # otherwise reduce the timeout counter
 98FA: 32 9E 7B    ld   ($7B9E),a
 98FD: C9          ret
-98FE: 21 98 7B    ld   hl,$7B98
+98FE: 21 98 7B    ld   hl,$7B98        # manages TIME
 9901: 16 9B       ld   d,$9B
-9903: CD 83 99    call $9983
-9906: 35          dec  (hl)
-9907: F5          push af
-9908: F2 0D 99    jp   p,$990D
-990B: 36 09       ld   (hl),$09
+9903: CD 83 99    call $9983           # clear the current digit at $9b, $b7
+9906: 35          dec  (hl)            # dec the least significant digit
+9907: F5          push af              # store the flag register
+9908: F2 0D 99    jp   p,$990D         # if not less than 0 skip the next instruction
+990B: 36 09       ld   (hl),$09        # set the last digit to 9
 990D: 16 9B       ld   d,$9B
-990F: CD 83 99    call $9983
-9912: F1          pop  af
-9913: F2 3D 99    jp   p,$993D
-9916: 2B          dec  hl
+990F: CD 83 99    call $9983           # draw new digit ($9b, $b7)
+9912: F1          pop  af              # restore the flag (we need p bit)
+9913: F2 3D 99    jp   p,$993D         # if last digit was not less than 0 then no need for an update
+9916: 2B          dec  hl              # otherwise point to the middle digit ($7b97)
 9917: 16 96       ld   d,$96
-9919: CD 83 99    call $9983
-991C: 35          dec  (hl)
-991D: F5          push af
-991E: F2 23 99    jp   p,$9923
-9921: 36 09       ld   (hl),$09
+9919: CD 83 99    call $9983           # clear it first
+991C: 35          dec  (hl)            # decrement it
+991D: F5          push af              # store the f reg
+991E: F2 23 99    jp   p,$9923         # if bigger or equal to zero skip
+9921: 36 09       ld   (hl),$09        # otherwise set to 9
 9923: 16 96       ld   d,$96
-9925: CD 83 99    call $9983
+9925: CD 83 99    call $9983           # draw new digit on $96,$b7
 9928: F1          pop  af
 9929: F2 3D 99    jp   p,$993D
-992C: 2B          dec  hl
-992D: 16 91       ld   d,$91
-992F: CD 83 99    call $9983
-9932: 35          dec  (hl)
-9933: F2 38 99    jp   p,$9938
-9936: 36 09       ld   (hl),$09
+992C: 2B          dec  hl              # first digit ($7b96)
+992D: 16 91       ld   d,$91           # (x,y) = ($91, $b7)
+992F: CD 83 99    call $9983           # clear
+9932: 35          dec  (hl)            # dec it
+9933: F2 38 99    jp   p,$9938         # if positive skip
+9936: 36 09       ld   (hl),$09        #    writing 9
 9938: 16 91       ld   d,$91
-993A: CD 83 99    call $9983
+993A: CD 83 99    call $9983           # render new digit at $91, $b7
 993D: 3A 98 7B    ld   a,($7B98)
 9940: B7          or   a
-9941: 28 03       jr   z,$9946
-9943: FE 05       cp   $05
+9941: 28 03       jr   z,$9946         # if last digit reaches 0 reduce the bonus 
+9943: FE 05       cp   $05             # every 5 ticks bonus is reduced
 9945: C0          ret  nz
-9946: 21 66 7B    ld   hl,$7B66
-9949: 7E          ld   a,(hl)
+9946: 21 66 7B    ld   hl,$7B66        # bonus address pointer
+9949: 7E          ld   a,(hl)          # first digit
 994A: 23          inc  hl
-994B: B6          or   (hl)
+994B: B6          or   (hl)            # second digit
 994C: 23          inc  hl
-994D: B6          or   (hl)
-994E: C8          ret  z
-994F: 16 70       ld   d,$70
+994D: B6          or   (hl)            # third digit
+994E: C8          ret  z               # if bonus == 0 exit
+994F: 16 70       ld   d,$70           # if not reduce it for 10 points
 9951: CD 83 99    call $9983
 9954: 35          dec  (hl)
 9955: F5          push af
@@ -4139,7 +4139,7 @@
 99AB: 20 2E       jr   nz,$99DB
 99AD: 21 69 7B    ld   hl,$7B69
 99B0: 35          dec  (hl)
-99B1: 21 6A 7B    ld   hl,$7B6A
+99B1: 21 6A 7B    ld   hl,$7B6A     # egg array of $c members
 99B4: 79          ld   a,c
 99B5: CB 3F       srl  a
 99B7: CB 3F       srl  a
@@ -4147,7 +4147,7 @@
 99BB: CB 3F       srl  a
 99BD: 85          add  a,l
 99BE: 6F          ld   l,a
-99BF: 35          dec  (hl)
+99BF: 35          dec  (hl)         # mark an egg as $ff if collected
 99C0: CD FB 99    call $99FB
 99C3: 3A 5D 7B    ld   a,($7B5D)
 99C6: CB 3F       srl  a
@@ -4161,7 +4161,7 @@
 99D7: 3E 01       ld   a,$01
 99D9: B7          or   a
 99DA: C9          ret
-99DB: 21 76 7B    ld   hl,$7B76
+99DB: 21 76 7B    ld   hl,$7B76     # seed table for current level
 99DE: 79          ld   a,c
 99DF: CB 3F       srl  a
 99E1: CB 3F       srl  a
@@ -4169,13 +4169,13 @@
 99E5: CB 3F       srl  a
 99E7: 85          add  a,l
 99E8: 6F          ld   l,a
-99E9: 35          dec  (hl)
+99E9: 35          dec  (hl)         # marks a seed with $ff when collected
 99EA: CD 07 9A    call $9A07
 99ED: 3E 05       ld   a,$05
 99EF: 0E 01       ld   c,$01
 99F1: CD 13 9A    call $9A13
-99F4: 3E 14       ld   a,$14
-99F6: 32 9E 7B    ld   ($7B9E),a
+99F4: 3E 14       ld   a,$14        # set $7b9e to $14 every time
+99F6: 32 9E 7B    ld   ($7B9E),a    #    seed is collected
 99F9: B7          or   a
 99FA: C9          ret
 99FB: AF          xor  a

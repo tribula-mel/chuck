@@ -177,6 +177,7 @@ typedef struct __game_context
    seed_state_t seed_state[MAX_N_SEED];
    egg_state_t egg_state[MAX_N_EGGS];
    rand_t random;
+   uint8_t time_off_ticks;
 } game_context_t;
 
 #endif // __GAME_TYPES

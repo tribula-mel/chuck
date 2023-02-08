@@ -46,10 +46,13 @@ static bool adj_chuck_all_off_x (game_context_t *game, int8_t change);
 static bool adj_chuck_all_off_y (game_context_t *game, int8_t change);
 static void set_chuck_jump_dx (game_context_t *game, int8_t jump_dx);
 static int8_t get_chuck_jump_dx (game_context_t *game);
+static void set_time_off (game_context_t *game, uint8_t ticks);
+static uint8_t get_time_off (game_context_t *game);
+
 
 // running the game in original resolution would result in tiny graphics
 // for now this will be hard coded
-static const uint8_t scale = 1;
+static const uint8_t scale = 2;
 
 #define DOTS_PER_PIXEL_X (4)
 #define DOTS_PER_PIXEL_Y (2)
@@ -250,7 +253,6 @@ static void draw_game_status (game_context_t *game)
 
    // draw 6 score digits
    y = y_convert_to_sdl (0xc6);
-   set_score_gfx (game->players_context);
    number = get_score_gfx (game->players_context);
    for (int i = 0; i < 6; i++)
    {
@@ -609,6 +611,16 @@ static void adjust_chuck_dvy (game_context_t *game, uint8_t tile_rel_y)
    set_chuck_dvy (game, tile_rel_y);
 }
 
+static void set_time_off (game_context_t *game, uint8_t ticks)
+{
+   game->time_off_ticks = ticks;
+}
+
+static uint8_t get_time_off (game_context_t *game)
+{
+   return (game->time_off_ticks);
+}
+
 static void chuck_collect_seed (game_context_t *game)
 {
    uint8_t x = get_chuck_tile_off_x (game);
@@ -623,6 +635,7 @@ static void chuck_collect_seed (game_context_t *game)
    //    assign points to the score
    set_score (game->players_context,
               get_score (game->players_context) + 50);
+   set_time_off (game, 0x14); // original chuck $99f6
 }
 
 static uint16_t adjust_egg_score (uint8_t level)
@@ -969,7 +982,7 @@ static int draw_elevator (game_context_t *game)
 
 static int move_flying_duck (game_context_t *game)
 {
-   static uint8_t wait = 8;
+   static uint8_t wait = 8; // original chuck $96bb
 
    if (wait == 0)
    {
@@ -998,6 +1011,39 @@ static int move_elevator (game_context_t *game)
    }
 
    wait--;
+
+   return 0;
+}
+
+static int move_time (game_context_t *game)
+{
+   static uint8_t wait = 4; // original chuck $96bb
+   uint8_t ticks = 0;
+   uint16_t time = get_time (game->players_context);
+   uint32_t bonus = get_bonus (game->players_context);
+   uint8_t *time_gfx = NULL;
+
+   wait--;
+   if (wait == 0)
+   {
+      wait = 4;
+      ticks = get_time_off (game);
+      if (ticks == 0)
+      {
+         set_time (game->players_context, --time);
+         if (time == 0)
+         {
+            // life lost
+         }
+
+         time_gfx = get_time_gfx (game->players_context);
+         if ((time_gfx[2] == 0x0) || (time_gfx[2] == 0x5))
+            if (bonus != 0)
+               set_bonus (game->players_context, bonus - 10);
+      }
+      else
+         set_time_off (game, --ticks);
+   }
 
    return 0;
 }
@@ -1148,7 +1194,7 @@ static int init_game_context (game_context_t *game, uint8_t level)
    set_score (game->players_context, 0);
    set_bonus (game->players_context, 1000);
    set_time (game->players_context, 900);
-   set_current_level (game->players_context, 0);
+   set_current_level (game->players_context, game->players_context->current_level);
 
    return 0;
 }
@@ -1823,6 +1869,7 @@ int main (void)
       move_duck (&game);
       move_flying_duck (&game);
       move_elevator (&game);
+      move_time (&game);
    }
 
    al_destroy_display(disp);

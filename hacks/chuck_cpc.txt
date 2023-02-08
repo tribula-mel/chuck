@@ -589,7 +589,7 @@
       busy wait (time out) for 9 ticks out of 300 ticks/sec
       this amounts to 30 msec
          the game loop uses from 1 to 5 ticks out of 9 so the real wait
-            is in between 3 - 15 msec
+            is in between 13.2 - 26.4 msec
    9b17 jp $9ae1
 
 -| collision check
@@ -1066,3 +1066,5 @@
    otherwise carry flag is reset
 
 -| $7b99 carry number of players
+
+-| it seems that original game ran around 12 game loop frames per second

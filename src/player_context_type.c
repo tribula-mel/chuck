@@ -22,6 +22,7 @@ uint8_t get_current_level (player_context_t *player)
 void set_current_level (player_context_t *player, uint8_t num)
 {
    player->current_level = num;
+   set_current_level_gfx (player);
 }
 
 uint8_t *get_current_level_gfx (player_context_t *player)
@@ -59,6 +60,7 @@ uint32_t get_score (player_context_t *player)
 void set_score (player_context_t *player, uint32_t num)
 {
    player->score = num;
+   set_score_gfx (player);
 }
 
 uint8_t *get_score_gfx (player_context_t *player)
@@ -80,6 +82,7 @@ uint16_t get_time (player_context_t *player)
 void set_time (player_context_t *player, uint16_t num)
 {
    player->time = num;
+   set_time_gfx (player);
 }
 
 uint8_t *get_time_gfx (player_context_t *player)
@@ -101,6 +104,7 @@ uint16_t get_bonus (player_context_t *player)
 void set_bonus (player_context_t *player, uint16_t num)
 {
    player->bonus = num;
+   set_bonus_gfx (player);
 }
 
 uint8_t *get_bonus_gfx (player_context_t *player)
