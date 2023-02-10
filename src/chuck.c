@@ -1825,7 +1825,7 @@ int main (void)
    al_init_font_addon ();
    must_init (al_init_ttf_addon (), "ttf_addon");
 
-   font = al_load_ttf_font ("amstrad_cpc464.ttf", 32, 0);
+   font = al_load_ttf_font_stretch ("amstrad_cpc464.ttf", 64, 32, 0);
    if (font == NULL)
       exit (EXIT_FAILURE);
 
