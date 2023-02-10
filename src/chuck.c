@@ -7,6 +7,8 @@
 #include <time.h>
 
 #include <allegro5/allegro5.h>
+#include <allegro5/allegro_font.h>
+#include <allegro5/allegro_ttf.h>
 #include <allegro5/allegro_primitives.h>
 
 #include "game_types.h"
@@ -1718,6 +1720,92 @@ static void must_init(bool test, const char *description)
     exit (EXIT_FAILURE);
 }
 
+static void draw_chuckie_egg (game_context_t *game)
+{
+   uint16_t x = 0;
+   uint16_t y = 0;
+
+   // C
+   x = x_convert_to_sdl (0x2);
+   y = y_convert_to_sdl (0xc7);
+   printf ("C x,y %d,%d\n", x, y);
+   draw_element (&title_c, x, y, set_colour (title_c.colour));
+   // H
+   x = x_convert_to_sdl (0x11);
+   y = y_convert_to_sdl (0xc7);
+   draw_element (&title_h, x, y, set_colour (title_h.colour));
+   // U
+   x = x_convert_to_sdl (0x20);
+   y = y_convert_to_sdl (0xc7);
+   draw_element (&title_u, x, y, set_colour (title_u.colour));
+   // C
+   x = x_convert_to_sdl (0x2f);
+   y = y_convert_to_sdl (0xc7);
+   draw_element (&title_c, x, y, set_colour (title_c.colour));
+   // K
+   x = x_convert_to_sdl (0x3e);
+   y = y_convert_to_sdl (0xc7);
+   draw_element (&title_k, x, y, set_colour (title_k.colour));
+   // I
+   x = x_convert_to_sdl (0x4d);
+   y = y_convert_to_sdl (0xc7);
+   draw_element (&title_i, x, y, set_colour (title_i.colour));
+   // E
+   x = x_convert_to_sdl (0x5c);
+   y = y_convert_to_sdl (0xc7);
+   draw_element (&title_e, x, y, set_colour (title_e.colour));
+   // E
+   x = x_convert_to_sdl (0x72);
+   y = y_convert_to_sdl (0xc7);
+   draw_element (&title_e, x, y, set_colour (title_e.colour));
+   // G
+   x = x_convert_to_sdl (0x81);
+   y = y_convert_to_sdl (0xc7);
+   draw_element (&title_g, x, y, set_colour (title_g.colour));
+   // G
+   x = x_convert_to_sdl (0x90);
+   y = y_convert_to_sdl (0xc7);
+   draw_element (&title_g, x, y, set_colour (title_g.colour));
+}
+
+static void title_loop (game_context_t *game, ALLEGRO_EVENT *event,
+                        ALLEGRO_EVENT_QUEUE *queue)
+{
+   bool done = false;
+
+   while (true)
+   {
+      if (al_is_event_queue_empty (queue))
+      {
+         // draw chuckie egg letters
+         draw_chuckie_egg (game);
+
+         // original game prints the text at location (0x5, 0x7)
+         // this translates into screen positions (0x20, 0x98)
+         //   formula being screen_x = 8 * (text_x - 1)
+         //                 screen_y = 8 * (25 - (text_y - 1))
+         al_draw_text (game->font, al_map_rgb (0x80, 0x80, 0x80),
+                       x_convert_to_sdl (0x20), y_convert_to_sdl (0x98),
+                       0, "HIGH  SCORES");
+
+         // show it in the window
+         al_flip_display ();
+      }
+
+      al_wait_for_event (queue, event);
+      switch (event->type)
+      {
+         case ALLEGRO_EVENT_KEY_DOWN:
+            if (event->keyboard.keycode == ALLEGRO_KEY_S)
+               done = true;
+            break;
+      }
+
+      if (done)
+         break;
+   }
+}
+
 int main (void)
 {
    player_context_t player_1;
@@ -1729,28 +1817,36 @@ int main (void)
    bool done = false;
    bool redraw = true;
    ALLEGRO_EVENT event;
+   ALLEGRO_FONT *font;
  
-   must_init(al_init(), "allegro");
-   must_init(al_install_keyboard(), "keyboard");
+   must_init (al_init (), "allegro");
+   must_init (al_install_keyboard (), "keyboard");
+   // doesn't have a return value in allegro 5
+   al_init_font_addon ();
+   must_init (al_init_ttf_addon (), "ttf_addon");
 
-   ALLEGRO_TIMER* timer = al_create_timer(1.0 / 30.0);
-   must_init(timer, "timer");
+   font = al_load_ttf_font ("amstrad_cpc464.ttf", 32, 0);
+   if (font == NULL)
+      exit (EXIT_FAILURE);
 
-   ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue();
-   must_init(queue, "queue");
+   ALLEGRO_TIMER* timer = al_create_timer (1.0 / 30.0);
+   must_init (timer, "timer");
 
-   al_set_new_display_option(ALLEGRO_SAMPLE_BUFFERS, 1, ALLEGRO_SUGGEST);
-   al_set_new_display_option(ALLEGRO_SAMPLES, 8, ALLEGRO_SUGGEST);
-   al_set_new_bitmap_flags(ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR);
+   ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue ();
+   must_init (queue, "queue");
 
-   ALLEGRO_DISPLAY* disp = al_create_display(width, height);
-   must_init(disp, "display");
+   al_set_new_display_option (ALLEGRO_SAMPLE_BUFFERS, 1, ALLEGRO_SUGGEST);
+   al_set_new_display_option (ALLEGRO_SAMPLES, 8, ALLEGRO_SUGGEST);
+   al_set_new_bitmap_flags (ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR);
 
-   must_init(al_init_primitives_addon(), "primitives");
+   ALLEGRO_DISPLAY* disp = al_create_display (width, height);
+   must_init (disp, "display");
 
-   al_register_event_source(queue, al_get_keyboard_event_source());
-   al_register_event_source(queue, al_get_display_event_source(disp));
-   al_register_event_source(queue, al_get_timer_event_source(timer));
+   must_init (al_init_primitives_addon(), "primitives");
+
+   al_register_event_source (queue, al_get_keyboard_event_source ());
+   al_register_event_source (queue, al_get_display_event_source (disp));
+   al_register_event_source (queue, al_get_timer_event_source (timer));
 
    memset (&game, 0, sizeof (game));
    game.number_of_players = 1;
@@ -1763,6 +1859,7 @@ int main (void)
    game.levels[5] = level_classic_six;
    game.levels[6] = level_classic_seven;
    game.levels[7] = level_classic_eight;
+   game.font = font;
 
    memset (&player_1, 0, sizeof (player_1));
    player_1.current_player = 1;
@@ -1778,15 +1875,21 @@ int main (void)
    #define KEY_RELEASED 2
 
    uint8_t key[ALLEGRO_KEY_MAX];
-   memset(key, 0, sizeof(key));
+   memset (key, 0, sizeof (key));
 
-   al_start_timer(timer);
+   // draw the title screen and show it
+   al_clear_to_color (al_map_rgb (0, 0, 0));
+   title_loop (&game, &event, queue);
+   al_flip_display ();
+   al_flip_display ();
+
+   al_start_timer (timer);
 
    while (true)
    {
       if ((redraw == true) && al_is_event_queue_empty (queue))
       {
-         al_clear_to_color(al_map_rgb(0, 0, 0));
+         al_clear_to_color (al_map_rgb (0, 0, 0));
          draw_level (&game);
          draw_ducks (&game);
          draw_flying_duck (&game);
@@ -1797,7 +1900,7 @@ int main (void)
             draw_elevator (&game);
 
          // show it in the window
-         al_flip_display();
+         al_flip_display ();
 
          redraw = false;
       }
@@ -1813,7 +1916,7 @@ int main (void)
          dump_sandbox = false;
       }
 
-      al_wait_for_event(queue, &event);
+      al_wait_for_event (queue, &event);
 
       switch (event.type)
       {
@@ -1845,7 +1948,7 @@ int main (void)
             if (key[ALLEGRO_KEY_ESCAPE])
                done = true;
 
-            for(int i = 0; i < ALLEGRO_KEY_MAX; i++)
+            for (int i = 0; i < ALLEGRO_KEY_MAX; i++)
                key[i] &= KEY_SEEN;
 
             redraw = true;
@@ -1863,7 +1966,7 @@ int main (void)
             break;
       }
 
-      if(done)
+      if (done)
          break;
 
       move_duck (&game);
@@ -1872,9 +1975,9 @@ int main (void)
       move_time (&game);
    }
 
-   al_destroy_display(disp);
-   al_destroy_timer(timer);
-   al_destroy_event_queue(queue);
+   al_destroy_display (disp);
+   al_destroy_timer (timer);
+   al_destroy_event_queue (queue);
 
    return (EXIT_SUCCESS);
 }

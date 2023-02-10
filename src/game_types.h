@@ -178,6 +178,7 @@ typedef struct __game_context
    egg_state_t egg_state[MAX_N_EGGS];
    rand_t random;
    uint8_t time_off_ticks;
+   ALLEGRO_FONT *font;
 } game_context_t;
 
 #endif // __GAME_TYPES
