@@ -4250,13 +4250,13 @@
 9A76: 7E          ld   a,(hl)
 9A77: E1          pop  hl
 9A78: C9          ret
-9A79: E1          pop  hl
+9A79: E1          pop  hl        # prints "HIGH  SCORES"
 9A7A: 7E          ld   a,(hl)
 9A7B: 23          inc  hl
 9A7C: E5          push hl
 9A7D: FE FF       cp   $FF
 9A7F: C8          ret  z
-9A80: CD 5A BB    call $BB5A
+9A80: CD 5A BB    call $BB5A     # TXT OUTPUT
 9A83: 18 F4       jr   $9A79
 9A85: CD 0D BD    call $BD0D
 9A88: 7D          ld   a,l
@@ -4305,7 +4305,7 @@
 9AC9: 20 FF       jr   nz,$9ACA
 9ACB: 3A 00 7B    ld   a,($7B00)
 9ACE: C6 31       add  a,$31
-9AD0: CD 5A BB    call $BB5A
+9AD0: CD 5A BB    call $BB5A     # TXT OUTPUT
 9AD3: 06 96       ld   b,$96
 9AD5: CD 1C 9D    call $9D1C
 9AD8: CD B6 95    call $95B6
@@ -4404,7 +4404,7 @@
 9B8E: 20 FF       jr   nz,$9B8F
 9B90: 3A 00 7B    ld   a,($7B00)
 9B93: C6 31       add  a,$31
-9B95: CD 5A BB    call $BB5A
+9B95: CD 5A BB    call $BB5A     # TXT OUTPUT
 9B98: 06 C8       ld   b,$C8
 9B9A: CD 1C 9D    call $9D1C
 9B9D: CD F0 A0    call $A0F0
@@ -4589,7 +4589,7 @@
 9CD9: FE 04       cp   $04
 9CDB: 30 F6       jr   nc,$9CD3
 9CDD: 79          ld   a,c
-9CDE: CD 5A BB    call $BB5A
+9CDE: CD 5A BB    call $BB5A     # TXT OUTPUT
 9CE1: D6 30       sub  $30
 9CE3: 32 99 7B    ld   ($7B99),a
 9CE6: 32 9A 7B    ld   ($7B9A),a
@@ -4900,7 +4900,7 @@
 9F19: 7E          ld   a,(hl)
 9F1A: FE FF       cp   $FF
 9F1C: C8          ret  z
-9F1D: CD 5A BB    call $BB5A
+9F1D: CD 5A BB    call $BB5A     # TXT OUTPUT
 9F20: C3 18 9F    jp   $9F18
 9F23: CD 2A BB    call $BB2A
 9F26: F5          push af
@@ -5140,10 +5140,10 @@ A073: 52          ld   d,d
 A074: 45          ld   b,l
 A075: 53          ld   d,e
 A076: FF          rst  $38
-A077: 3E FF       ld   a,$FF
-A079: CD 63 BB    call $BB63
-A07C: 3E 04       ld   a,$04
-A07E: CD DE BB    call $BBDE
+A077: 3E FF       ld   a,$FF # switch to graphics printing mode (a non zero)
+A079: CD 63 BB    call $BB63 # TXT SET GRAPHIC
+A07C: 3E 04       ld   a,$04 # colour for text
+A07E: CD DE BB    call $BBDE # GRA SET PEN
 A081: 06 00       ld   b,$00
 A083: C5          push bc
 A084: 04          inc  b
@@ -5152,9 +5152,9 @@ A087: D6 0C       sub  $0C
 A089: 10 FC       djnz $A087
 A08B: 6F          ld   l,a
 A08C: 26 00       ld   h,$00
-A08E: 29          add  hl,hl
-A08F: 11 00 00    ld   de,$0000
-A092: CD C0 BB    call $BBC0
+A08E: 29          add  hl,hl    # hl = y
+A08F: 11 00 00    ld   de,$0000 # de = x
+A092: CD C0 BB    call $BBC0    # GRA MOVE ABSOLUTE (in 640x400 logical res)
 A095: C1          pop  bc
 A096: 78          ld   a,b
 A097: 3C          inc  a
@@ -5162,16 +5162,16 @@ A098: 0E 20       ld   c,$20
 A09A: FE 0A       cp   $0A
 A09C: 20 02       jr   nz,$A0A0
 A09E: 0E 31       ld   c,$31
-A0A0: 79          ld   a,c
-A0A1: CD 5A BB    call $BB5A
+A0A0: 79          ld   a,c       # ASCII to print out
+A0A1: CD 5A BB    call $BB5A     # TXT OUTPUT
 A0A4: 78          ld   a,b
 A0A5: C6 31       add  a,$31
 A0A7: FE 3A       cp   $3A
 A0A9: 20 02       jr   nz,$A0AD
 A0AB: 3E 30       ld   a,$30
-A0AD: CD 5A BB    call $BB5A
+A0AD: CD 5A BB    call $BB5A     # TXT OUTPUT
 A0B0: 3E 20       ld   a,$20
-A0B2: CD 5A BB    call $BB5A
+A0B2: CD 5A BB    call $BB5A     # TXT OUTPUT
 A0B5: 21 00 79    ld   hl,$7900
 A0B8: 78          ld   a,b
 A0B9: 87          add  a,a
@@ -5190,15 +5190,15 @@ A0C8: 79          ld   a,c
 A0C9: 18 04       jr   $A0CF
 A0CB: C6 30       add  a,$30
 A0CD: 0E 30       ld   c,$30
-A0CF: CD 5A BB    call $BB5A
+A0CF: CD 5A BB    call $BB5A     # TXT OUTPUT
 A0D2: 23          inc  hl
 A0D3: 10 EF       djnz $A0C4
 A0D5: 3E 20       ld   a,$20
-A0D7: CD 5A BB    call $BB5A
+A0D7: CD 5A BB    call $BB5A     # TXT OUTPUT
 A0DA: 06 08       ld   b,$08
 A0DC: 7E          ld   a,(hl)
 A0DD: 23          inc  hl
-A0DE: CD 5A BB    call $BB5A
+A0DE: CD 5A BB    call $BB5A     # TXT OUTPUT
 A0E1: 10 F9       djnz $A0DC
 A0E3: C1          pop  bc
 A0E4: 04          inc  b
@@ -5299,7 +5299,7 @@ A177: 20 20       jr   nz,$A199
 A179: FF          rst  $38
 A17A: 3A 00 7B    ld   a,($7B00)
 A17D: C6 31       add  a,$31
-A17F: CD 5A BB    call $BB5A
+A17F: CD 5A BB    call $BB5A     # TXT OUTPUT
 A182: 3E FF       ld   a,$FF
 A184: CD 63 BB    call $BB63
 A187: 3E 03       ld   a,$03
@@ -5316,7 +5316,7 @@ A198: 29          add  hl,hl
 A199: 11 60 01    ld   de,$0160
 A19C: CD C0 BB    call $BBC0
 A19F: 3E 3E       ld   a,$3E
-A1A1: CD 5A BB    call $BB5A
+A1A1: CD 5A BB    call $BB5A     # TXT OUTPUT
 A1A4: CD F7 A1    call $A1F7
 A1A7: 2A A4 7B    ld   hl,($7BA4)
 A1AA: 0E 00       ld   c,$00
@@ -5333,7 +5333,7 @@ A1BD: 78          ld   a,b
 A1BE: 77          ld   (hl),a
 A1BF: 0C          inc  c
 A1C0: 23          inc  hl
-A1C1: CD 5A BB    call $BB5A
+A1C1: CD 5A BB    call $BB5A     # TXT OUTPUT
 A1C4: 18 E6       jr   $A1AC
 A1C6: 79          ld   a,c
 A1C7: B7          or   a
@@ -5346,7 +5346,7 @@ A1CF: C5          push bc
 A1D0: E5          push hl
 A1D1: CD E0 A1    call $A1E0
 A1D4: 3E 20       ld   a,$20
-A1D6: CD 5A BB    call $BB5A
+A1D6: CD 5A BB    call $BB5A     # TXT OUTPUT
 A1D9: CD E0 A1    call $A1E0
 A1DC: E1          pop  hl
 A1DD: C1          pop  bc

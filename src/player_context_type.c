@@ -30,11 +30,11 @@ uint8_t *get_current_level_gfx (player_context_t *player)
    return (&player->gfx_current_level[0]);
 }
 
-void convert_num_to_gfx (uint16_t num, uint8_t *gfx,
+void convert_num_to_gfx (uint32_t num, uint8_t *gfx,
                          uint32_t base, uint8_t level)
 {
    uint32_t div = base;
-   uint16_t helper = num;
+   uint32_t helper = num;
    uint8_t i;
 
    for (i = 0; i < level; i++)

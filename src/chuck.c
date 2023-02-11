@@ -14,6 +14,7 @@
 #include "game_types.h"
 #include "gfx_classic_levels.h"
 #include "gfx_sprites.h"
+#include "title_context.h"
 
 static void set_chuck_gfx_off_x (game_context_t *game, uint8_t off);
 static uint8_t get_chuck_gfx_off_x (game_context_t *game);
@@ -1720,7 +1721,7 @@ static void must_init(bool test, const char *description)
     exit (EXIT_FAILURE);
 }
 
-static void draw_chuckie_egg (game_context_t *game)
+static void draw_chuckie_egg (void)
 {
    uint16_t x = 0;
    uint16_t y = 0;
@@ -1728,7 +1729,6 @@ static void draw_chuckie_egg (game_context_t *game)
    // C
    x = x_convert_to_sdl (0x2);
    y = y_convert_to_sdl (0xc7);
-   printf ("C x,y %d,%d\n", x, y);
    draw_element (&title_c, x, y, set_colour (title_c.colour));
    // H
    x = x_convert_to_sdl (0x11);
@@ -1768,35 +1768,86 @@ static void draw_chuckie_egg (game_context_t *game)
    draw_element (&title_g, x, y, set_colour (title_g.colour));
 }
 
-static void title_loop (game_context_t *game, ALLEGRO_EVENT *event,
-                        ALLEGRO_EVENT_QUEUE *queue)
+static void draw_high_score (title_context_t *title)
+{
+   uint8_t y = 0x88; // original chuck $a085
+   uint8_t x = 0x8;
+   uint8_t score[6];
+   bool leading_zero = true;
+
+   char *digit[] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"};
+
+   for (int i = 0; i < 10; i++)
+   {
+         // table position
+         if ((i + 1) == 10)
+            x = 0;
+
+         // position
+         al_draw_text (title->font, al_map_rgb (0x00, 0xff, 0xff),
+                       x_convert_to_sdl (x), y_convert_to_sdl (y),
+                       0, digit[i + 1]);
+         // name
+         al_draw_text (title->font, al_map_rgb (0x00, 0xff, 0xff),
+                       x_convert_to_sdl (0x60), y_convert_to_sdl (y),
+                       0, title->high_score[i].name);
+         // score
+         convert_num_to_gfx (title->high_score[i].score, &score[0], 100000, 6);
+         for (int j = 0; j < 6; j++)
+         {
+            if ((leading_zero == true) && (score[j] == 0))
+               continue;
+
+            al_draw_text (title->font, al_map_rgb (0x00, 0xff, 0xff),
+                          x_convert_to_sdl (0x28 + (0x8 * j)), y_convert_to_sdl (y),
+                          0, digit[score[j]]);
+
+            leading_zero = false;
+         }
+
+         leading_zero = true;
+         y -= 0xc;
+   }
+}
+
+static void title_loop (title_context_t *title)
 {
    bool done = false;
 
+   al_clear_to_color (al_map_rgb (0, 0, 0));
+
    while (true)
    {
-      if (al_is_event_queue_empty (queue))
+      if (al_is_event_queue_empty (title->queue))
       {
          // draw chuckie egg letters
-         draw_chuckie_egg (game);
+         draw_chuckie_egg ();
 
          // original game prints the text at location (0x5, 0x7)
          // this translates into screen positions (0x20, 0x98)
          //   formula being screen_x = 8 * (text_x - 1)
          //                 screen_y = 8 * (25 - (text_y - 1))
-         al_draw_text (game->font, al_map_rgb (0x80, 0x80, 0x80),
+         al_draw_text (title->font, al_map_rgb (0xff, 0xff, 0xff),
                        x_convert_to_sdl (0x20), y_convert_to_sdl (0x98),
                        0, "HIGH  SCORES");
+         al_draw_text (title->font, al_map_rgb (0xff, 0xff, 0x80),
+                       x_convert_to_sdl (0x10), y_convert_to_sdl (0x10),
+                       0, "Press S to start");
+         al_draw_text (title->font, al_map_rgb (0xff, 0xff, 0x80),
+                       x_convert_to_sdl (0x10), y_convert_to_sdl (0x8),
+                       0, "K to change keys");
+
+         draw_high_score (title);
 
          // show it in the window
          al_flip_display ();
       }
 
-      al_wait_for_event (queue, event);
-      switch (event->type)
+      al_wait_for_event (title->queue, title->event);
+      switch (title->event->type)
       {
          case ALLEGRO_EVENT_KEY_DOWN:
-            if (event->keyboard.keycode == ALLEGRO_KEY_S)
+            if (title->event->keyboard.keycode == ALLEGRO_KEY_S)
                done = true;
             break;
       }
@@ -1808,6 +1859,7 @@ static void title_loop (game_context_t *game, ALLEGRO_EVENT *event,
 
 int main (void)
 {
+   title_context_t title;
    player_context_t player_1;
    game_context_t game;
    bool dump_sandbox = true;
@@ -1878,10 +1930,12 @@ int main (void)
    memset (key, 0, sizeof (key));
 
    // draw the title screen and show it
-   al_clear_to_color (al_map_rgb (0, 0, 0));
-   title_loop (&game, &event, queue);
-   al_flip_display ();
-   al_flip_display ();
+   init_high_score (&title);
+   set_title_font (&title, font);
+   set_title_event (&title, &event);
+   set_title_queue (&title, queue);
+
+   title_loop (&title);
 
    al_start_timer (timer);
 
@@ -1902,18 +1956,18 @@ int main (void)
          // show it in the window
          al_flip_display ();
 
-         redraw = false;
-      }
-
-      if (dump_sandbox == true)
-      {
-         for (int i = OFFSET_Y_MAX - 1; i >= 0; i--)
+         if (dump_sandbox == true)
          {
-            for (int j = 0; j < OFFSET_X_MAX; j++)
-               printf ("%2x ", get_sandbox (&game, j, i));
-            printf ("\n");
+            for (int i = OFFSET_Y_MAX - 1; i >= 0; i--)
+            {
+               for (int j = 0; j < OFFSET_X_MAX; j++)
+                  printf ("%2x ", get_sandbox (&game, j, i));
+               printf ("\n");
+            }
+            dump_sandbox = false;
          }
-         dump_sandbox = false;
+
+         redraw = false;
       }
 
       al_wait_for_event (queue, &event);

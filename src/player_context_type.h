@@ -30,7 +30,7 @@ void set_current_player (player_context_t *player, uint8_t num);
 uint8_t get_current_level (player_context_t *player);
 void set_current_level (player_context_t *player, uint8_t num);
 uint8_t *get_current_level_gfx (player_context_t *player);
-void convert_num_to_gfx (uint16_t num, uint8_t *gfx,
+void convert_num_to_gfx (uint32_t num, uint8_t *gfx,
                          uint32_t base, uint8_t level);
 void set_current_level_gfx (player_context_t *player);
 uint32_t get_score (player_context_t *player);
