@@ -1812,42 +1812,90 @@ static void draw_high_score (title_context_t *title)
 
 static void title_loop (title_context_t *title)
 {
+   ALLEGRO_EVENT event;
+   uint8_t counter = 0;
    bool done = false;
 
-   al_clear_to_color (al_map_rgb (0, 0, 0));
+   al_start_timer (title->timer);
 
    while (true)
    {
       if (al_is_event_queue_empty (title->queue))
       {
-         // draw chuckie egg letters
-         draw_chuckie_egg ();
+         if ((counter & 0x1) == 0x0)
+         {
+            al_clear_to_color (al_map_rgb (0, 0, 0));
+            // draw chuckie egg letters
+            draw_chuckie_egg ();
 
-         // original game prints the text at location (0x5, 0x7)
-         // this translates into screen positions (0x20, 0x98)
-         //   formula being screen_x = 8 * (text_x - 1)
-         //                 screen_y = 8 * (25 - (text_y - 1))
-         al_draw_text (title->font, al_map_rgb (0xff, 0xff, 0xff),
-                       x_convert_to_sdl (0x20), y_convert_to_sdl (0x98),
-                       0, "HIGH  SCORES");
-         al_draw_text (title->font, al_map_rgb (0xff, 0xff, 0x80),
-                       x_convert_to_sdl (0x10), y_convert_to_sdl (0x10),
-                       0, "Press S to start");
-         al_draw_text (title->font, al_map_rgb (0xff, 0xff, 0x80),
-                       x_convert_to_sdl (0x10), y_convert_to_sdl (0x8),
-                       0, "K to change keys");
+            // original game prints the text at location (0x5, 0x7)
+            // this translates into screen positions (0x20, 0x98)
+            //   formula being screen_x = 8 * (text_x - 1)
+            //                 screen_y = 8 * (25 - (text_y - 1))
+            al_draw_text (title->font, al_map_rgb (0xff, 0xff, 0xff),
+                          x_convert_to_sdl (0x20), y_convert_to_sdl (0x98),
+                          0, "HIGH  SCORES");
+            al_draw_text (title->font, al_map_rgb (0xff, 0xff, 0x80),
+                          x_convert_to_sdl (0x10), y_convert_to_sdl (0x10),
+                          0, "Press S to start");
+            al_draw_text (title->font, al_map_rgb (0xff, 0xff, 0x80),
+                          x_convert_to_sdl (0x10), y_convert_to_sdl (0x8),
+                          0, "K to change keys");
 
-         draw_high_score (title);
+            draw_high_score (title);
 
-         // show it in the window
-         al_flip_display ();
+            // show it in the window
+            al_flip_display ();
+         }
+         else
+         {
+            al_clear_to_color (al_map_rgb (0, 0, 0));
+            // draw chuckie egg letters
+            draw_chuckie_egg ();
+
+            al_draw_text (title->font, al_map_rgb (0x00, 0xff, 0xff),
+                          x_convert_to_sdl (0x30), y_convert_to_sdl (0x98),
+                          0, "K E Y S");
+            al_draw_text (title->font, al_map_rgb (0x00, 0xff, 0xff),
+                          x_convert_to_sdl (0x0), y_convert_to_sdl (0x80),
+                          0, "   Up .. 'up'");
+            al_draw_text (title->font, al_map_rgb (0x00, 0xff, 0xff),
+                          x_convert_to_sdl (0x0), y_convert_to_sdl (0x70),
+                          0, " Down .. 'down'");
+            al_draw_text (title->font, al_map_rgb (0x00, 0xff, 0xff),
+                          x_convert_to_sdl (0x0), y_convert_to_sdl (0x60),
+                          0, " Left .. 'left'");
+            al_draw_text (title->font, al_map_rgb (0x00, 0xff, 0xff),
+                          x_convert_to_sdl (0x0), y_convert_to_sdl (0x50),
+                          0, "Right .. 'right'");
+            al_draw_text (title->font, al_map_rgb (0x00, 0xff, 0xff),
+                          x_convert_to_sdl (0x0), y_convert_to_sdl (0x40),
+                          0, " Jump .. LCTRL");
+            al_draw_text (title->font, al_map_rgb (0xff, 0x00, 0xff),
+                          x_convert_to_sdl (0x0), y_convert_to_sdl (0x28),
+                          0, " Hold .. 'H'");
+            al_draw_text (title->font, al_map_rgb (0xff, 0x00, 0xff),
+                          x_convert_to_sdl (0x0), y_convert_to_sdl (0x20),
+                          0, "Abort .. Escape +'H'");
+            al_draw_text (title->font, al_map_rgb (0xff, 0xff, 0x80),
+                          x_convert_to_sdl (0x10), y_convert_to_sdl (0x10),
+                          0, "Press S to start");
+            al_draw_text (title->font, al_map_rgb (0xff, 0xff, 0x80),
+                          x_convert_to_sdl (0x10), y_convert_to_sdl (0x8),
+                          0, "K to change keys");
+
+            al_flip_display ();
+         }
       }
 
-      al_wait_for_event (title->queue, title->event);
-      switch (title->event->type)
+      al_wait_for_event (title->queue, &event);
+      switch (event.type)
       {
+         case ALLEGRO_EVENT_TIMER:
+            counter++;
+            break;
          case ALLEGRO_EVENT_KEY_DOWN:
-            if (title->event->keyboard.keycode == ALLEGRO_KEY_S)
+            if (event.keyboard.keycode == ALLEGRO_KEY_S)
                done = true;
             break;
       }
@@ -1869,20 +1917,12 @@ int main (void)
    bool done = false;
    bool redraw = true;
    ALLEGRO_EVENT event;
-   ALLEGRO_FONT *font;
  
    must_init (al_init (), "allegro");
    must_init (al_install_keyboard (), "keyboard");
-   // doesn't have a return value in allegro 5
-   al_init_font_addon ();
-   must_init (al_init_ttf_addon (), "ttf_addon");
 
-   font = al_load_ttf_font_stretch ("amstrad_cpc464.ttf", 64, 32, 0);
-   if (font == NULL)
-      exit (EXIT_FAILURE);
-
-   ALLEGRO_TIMER* timer = al_create_timer (1.0 / 30.0);
-   must_init (timer, "timer");
+   ALLEGRO_TIMER* game_timer = al_create_timer (1.0 / 30.0);
+   must_init (game_timer, "game_timer");
 
    ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue ();
    must_init (queue, "queue");
@@ -1898,7 +1938,7 @@ int main (void)
 
    al_register_event_source (queue, al_get_keyboard_event_source ());
    al_register_event_source (queue, al_get_display_event_source (disp));
-   al_register_event_source (queue, al_get_timer_event_source (timer));
+   al_register_event_source (queue, al_get_timer_event_source (game_timer));
 
    memset (&game, 0, sizeof (game));
    game.number_of_players = 1;
@@ -1911,7 +1951,6 @@ int main (void)
    game.levels[5] = level_classic_six;
    game.levels[6] = level_classic_seven;
    game.levels[7] = level_classic_eight;
-   game.font = font;
 
    memset (&player_1, 0, sizeof (player_1));
    player_1.current_player = 1;
@@ -1930,14 +1969,10 @@ int main (void)
    memset (key, 0, sizeof (key));
 
    // draw the title screen and show it
-   init_high_score (&title);
-   set_title_font (&title, font);
-   set_title_event (&title, &event);
-   set_title_queue (&title, queue);
-
+   init_title_context (&title);
    title_loop (&title);
 
-   al_start_timer (timer);
+   al_start_timer (game_timer);
 
    while (true)
    {
@@ -2030,7 +2065,7 @@ int main (void)
    }
 
    al_destroy_display (disp);
-   al_destroy_timer (timer);
+   al_destroy_timer (game_timer);
    al_destroy_event_queue (queue);
 
    return (EXIT_SUCCESS);

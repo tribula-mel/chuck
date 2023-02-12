@@ -12,8 +12,8 @@ typedef struct __high_score
 typedef struct __title_context
 {
    ALLEGRO_FONT *font;
-   ALLEGRO_EVENT *event;
    ALLEGRO_EVENT_QUEUE *queue;
+   ALLEGRO_TIMER *timer;
    high_score_t high_score[10];
 } title_context_t;
 
@@ -22,7 +22,12 @@ void set_high_score (title_context_t *title, high_score_t *high_score,
                      uint8_t index);
 void init_high_score (title_context_t *title);
 void set_title_font (title_context_t *title, ALLEGRO_FONT *font);
-void set_title_event (title_context_t *title, ALLEGRO_EVENT *event);
+ALLEGRO_FONT *get_title_font (title_context_t *title);
 void set_title_queue (title_context_t *title, ALLEGRO_EVENT_QUEUE *queue);
+ALLEGRO_EVENT_QUEUE *get_title_queue (title_context_t *title);
+void set_title_timer (title_context_t *title, ALLEGRO_TIMER *timer);
+ALLEGRO_TIMER *get_title_timer (title_context_t *title);
+void init_title_context (title_context_t *title);
+void deint_title_context (title_context_t *title);
 
 #endif // __TITLE_CONTEXT_H__

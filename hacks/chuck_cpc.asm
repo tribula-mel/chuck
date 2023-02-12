@@ -4771,21 +4771,21 @@
 9E4F: 0A          ld   a,(bc)
 9E50: FF          rst  $38
 9E51: CD 82 9E    call $9E82
-9E54: 3A 5A 7B    ld   a,($7B5A)
-9E57: CD 04 9F    call $9F04
-9E5A: CD 93 9E    call $9E93
-9E5D: 3A 59 7B    ld   a,($7B59)
-9E60: CD 04 9F    call $9F04
-9E63: CD A4 9E    call $9EA4
-9E66: 3A 58 7B    ld   a,($7B58)
-9E69: CD 04 9F    call $9F04
-9E6C: CD B5 9E    call $9EB5
-9E6F: 3A 57 7B    ld   a,($7B57)
-9E72: CD 04 9F    call $9F04
-9E75: CD C6 9E    call $9EC6
-9E78: 3A 5B 7B    ld   a,($7B5B)
-9E7B: CD 04 9F    call $9F04
-9E7E: CD D7 9E    call $9ED7
+9E54: 3A 5A 7B    ld   a,($7B5A) # load up key
+9E57: CD 04 9F    call $9F04     # translate the key to ascii
+9E5A: CD 93 9E    call $9E93     # print "   Up .. "
+9E5D: 3A 59 7B    ld   a,($7B59) # load down key
+9E60: CD 04 9F    call $9F04     # translate the key to ascii
+9E63: CD A4 9E    call $9EA4     # print " Down .. "
+9E66: 3A 58 7B    ld   a,($7B58) # load left key
+9E69: CD 04 9F    call $9F04     # translate the key to ascii
+9E6C: CD B5 9E    call $9EB5     # print " Left .. "
+9E6F: 3A 57 7B    ld   a,($7B57) # load right key
+9E72: CD 04 9F    call $9F04     # translate the key to ascii
+9E75: CD C6 9E    call $9EC6     # print "Right .. "
+9E78: 3A 5B 7B    ld   a,($7B5B) # load jump key
+9E7B: CD 04 9F    call $9F04     # translate the key to ascii
+9E7E: CD D7 9E    call $9ED7     # print " Jump .. "
 9E81: C9          ret
 9E82: CD D4 95    call $95D4
 9E85: 0D          dec  c
