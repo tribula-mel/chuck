@@ -6,7 +6,7 @@
 typedef struct __player_context
 {
    // player number 1 .. 4
-   uint8_t current_player;
+   uint8_t player_number;
    // current level
    uint8_t current_level;
    uint8_t gfx_current_level[3];
@@ -25,8 +25,9 @@ typedef struct __player_context
    uint8_t sandbox[OFFSET_Y_MAX][OFFSET_X_MAX];
 } player_context_t;
 
-uint8_t get_current_player (player_context_t *player);
-void set_current_player (player_context_t *player, uint8_t num);
+void init_player_context (player_context_t *player);
+uint8_t get_player_number(player_context_t *player);
+void set_player_number (player_context_t *player, uint8_t num);
 uint8_t get_current_level (player_context_t *player);
 void set_current_level (player_context_t *player, uint8_t num);
 uint8_t *get_current_level_gfx (player_context_t *player);

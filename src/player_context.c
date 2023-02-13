@@ -1,16 +1,28 @@
 #include <inttypes.h>
+#include <string.h>
 
 #include "player_context.h"
 
-// player related setters and getters
-uint8_t get_current_player (player_context_t *player)
+void init_player_context (player_context_t *player)
 {
-   return (player->current_player);
+   memset (player, 0, sizeof (player_context_t));
+   player->player_number = 1;
+   player->current_level = 0;
+   player->score = 0;
+   player->time = 1000;
+   player->bonus = 900;
+   player->lives = 5;
 }
 
-void set_current_player (player_context_t *player, uint8_t num)
+// player related setters and getters
+uint8_t get_player_number (player_context_t *player)
 {
-   player->current_player = num;
+   return (player->player_number);
+}
+
+void set_player_number (player_context_t *player, uint8_t num)
+{
+   player->player_number = num;
 }
 
 // level related setters and getters
