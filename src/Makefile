@@ -5,7 +5,7 @@ CHUCK_DEPS =  chuck.c game_types.h gfx_classic_levels.h gfx_sprites.h \
 
 all: chuck
 
-player_context.o: player_context.c player_context.h common_defines.h
+player_context.o: player_context.c player_context.h
 	gcc -Wall -g ${INCLUDE} -c player_context.c
 
 title_context.o: title_context.c title_context.h

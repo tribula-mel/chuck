@@ -47,5 +47,8 @@ uint8_t *get_bonus_gfx (player_context_t *player);
 void set_bonus_gfx (player_context_t *player);
 uint8_t get_lives (player_context_t *player);
 void set_lives (player_context_t *player, uint8_t num);
+uint8_t get_sandbox (player_context_t *game, uint8_t x, uint8_t y);
+void set_sandbox (player_context_t *game, uint8_t x,
+                  uint8_t y, uint8_t content);
 
 #endif // __PLAYER_CONTEXT_TYPE_H__

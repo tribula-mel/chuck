@@ -127,3 +127,14 @@ void set_lives (player_context_t *player, uint8_t num)
 {
    player->lives = num;
 }
+
+uint8_t get_sandbox (player_context_t *player, uint8_t x, uint8_t y)
+{
+   return (player->sandbox[y][x]);
+}
+
+void set_sandbox (player_context_t *player, uint8_t x,
+                  uint8_t y, uint8_t content)
+{
+   player->sandbox[y][x] = content;
+}
