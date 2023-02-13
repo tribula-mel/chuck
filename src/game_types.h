@@ -2,7 +2,7 @@
 #define __GAME_TYPES__
 
 #include "common_defines.h"
-#include "player_context_type.h"
+#include "player_context.h"
 
 typedef enum {
    pastel_yellow  = 0x02,

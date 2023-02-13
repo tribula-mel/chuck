@@ -1,6 +1,6 @@
 #include <inttypes.h>
 
-#include "player_context_type.h"
+#include "player_context.h"
 
 // player related setters and getters
 uint8_t get_current_player (player_context_t *player)
