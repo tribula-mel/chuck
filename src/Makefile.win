@@ -1,0 +1,21 @@
+LIBS = -Lallegro5/lib -lallegro_image.dll -lallegro_primitives.dll \
+       -lallegro_font.dll -lallegro_ttf.dll -lallegro.dll
+INCLUDE = -I/usr/share/mingw-w64/include/ -I/usr/x86_64-w64-mingw32/include \
+          -I/usr/include -I.
+CHUCK_DEPS =  chuck.c game_types.h gfx_classic_levels.h gfx_sprites.h \
+              player_context_type.h common_defines.h
+
+all: chuck
+
+player_context_type.o: player_context_type.h common_defines.h
+	x86_64-w64-mingw32-gcc -Wall -g ${INCLUDE} -c player_context_type.c
+
+chuck.o: ${CHUCK_DEPS}
+	#x86_64-w64-mingw32-gcc -Wall -Wl,--subsystem,windows -g ${INCLUDE} -DWIN10 -c chuck.c
+	x86_64-w64-mingw32-gcc -Wall -g ${INCLUDE} -DWIN10 -c chuck.c
+
+chuck: chuck.o player_context_type.o
+	x86_64-w64-mingw32-gcc -o chuck.win player_context_type.o chuck.o ${LIBS}
+
+clean:
+	rm -rf chuck chuck.o player_context_type.o
