@@ -1,8 +1,7 @@
-#ifndef __GAME_TYPES__
-#define __GAME_TYPES__
+#ifndef __GAME_TYPES_H__
+#define __GAME_TYPES_H__
 
 #include "common_defines.h"
-#include "player_context.h"
 
 typedef enum {
    pastel_yellow  = 0x02,
@@ -162,23 +161,4 @@ typedef struct __chuck_state
    int8_t jump_dx;
 } chuck_state_t;
 
-typedef struct __game_context
-{
-   uint8_t number_of_players;
-   player_context_t *players_context;
-   level_t levels[8];
-   // chuck position
-   chuck_state_t chuck_state;
-   // duck positions
-   ducks_state_t ducks_state;
-   // flying duck position
-   element_state_t flying_duck_state;
-   element_state_t elevator_state[N_PADDLES];
-   seed_state_t seed_state[MAX_N_SEED];
-   egg_state_t egg_state[MAX_N_EGGS];
-   rand_t random;
-   uint8_t time_off_ticks;
-   ALLEGRO_FONT *font;
-} game_context_t;
-
-#endif // __GAME_TYPES
+#endif // __GAME_TYPES_H__

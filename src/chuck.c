@@ -16,6 +16,7 @@
 #include "gfx_sprites.h"
 #include "player_context.h"
 #include "title_context.h"
+#include "game_context.h"
 
 static void set_chuck_gfx_off_x (game_context_t *game, uint8_t off);
 static uint8_t get_chuck_gfx_off_x (game_context_t *game);
@@ -47,8 +48,6 @@ static bool adj_chuck_all_off_x (game_context_t *game, int8_t change);
 static bool adj_chuck_all_off_y (game_context_t *game, int8_t change);
 static void set_chuck_jump_dx (game_context_t *game, int8_t jump_dx);
 static int8_t get_chuck_jump_dx (game_context_t *game);
-static void set_time_off (game_context_t *game, uint8_t ticks);
-static uint8_t get_time_off (game_context_t *game);
 
 // running the game in original resolution would result in tiny graphics
 // for now this will be hard coded
@@ -609,16 +608,6 @@ static void calc_chuck_dv (game_context_t *game)
 static void adjust_chuck_dvy (game_context_t *game, uint8_t tile_rel_y)
 {
    set_chuck_dvy (game, tile_rel_y);
-}
-
-static void set_time_off (game_context_t *game, uint8_t ticks)
-{
-   game->time_off_ticks = ticks;
-}
-
-static uint8_t get_time_off (game_context_t *game)
-{
-   return (game->time_off_ticks);
 }
 
 static void chuck_collect_seed (game_context_t *game)
