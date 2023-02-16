@@ -28,6 +28,6 @@ ALLEGRO_EVENT_QUEUE *get_title_queue (title_context_t *title);
 void set_title_timer (title_context_t *title, ALLEGRO_TIMER *timer);
 ALLEGRO_TIMER *get_title_timer (title_context_t *title);
 void init_title_context (title_context_t *title);
-void deint_title_context (title_context_t *title);
+void deinit_title_context (title_context_t *title);
 
 #endif // __TITLE_CONTEXT_H__

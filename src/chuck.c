@@ -12,7 +12,6 @@
 #include <allegro5/allegro_primitives.h>
 
 #include "game_types.h"
-#include "gfx_classic_levels.h"
 #include "gfx_sprites.h"
 #include "player_context.h"
 #include "title_context.h"
@@ -51,17 +50,6 @@ static bool adj_chuck_all_off_x (game_context_t *game, int8_t change);
 static bool adj_chuck_all_off_y (game_context_t *game, int8_t change);
 static void set_chuck_jump_dx (game_context_t *game, int8_t jump_dx);
 static int8_t get_chuck_jump_dx (game_context_t *game);
-
-// running the game in original resolution would result in tiny graphics
-// for now this will be hard coded
-static const uint8_t scale = 2;
-
-#define DOTS_PER_PIXEL_X (4)
-#define DOTS_PER_PIXEL_Y (2)
-
-// original game on cpc464 ran in mode 0
-static const uint16_t x_res = DOTS_PER_PIXEL_X * 160;
-static const uint16_t y_res = DOTS_PER_PIXEL_Y * 200;
 
 /* chuck tile x offset to sdl */
 static uint16_t tile_x_convert_to_sdl (uint8_t offset)
@@ -238,6 +226,7 @@ static void draw_game_status (game_context_t *game)
    uint16_t x = 0;
    uint16_t y = 0;
    uint8_t *number = NULL;
+   uint8_t max_lives = 0;
 
    // draw STATUS (chuck original $8d3b)
    x = x_convert_to_sdl (0x0);
@@ -255,7 +244,7 @@ static void draw_game_status (game_context_t *game)
 
    // draw 6 score digits
    y = y_convert_to_sdl (0xc6);
-   number = get_score_gfx (game->players_context);
+   number = get_score_gfx (game->player_context);
    for (int i = 0; i < 6; i++)
    {
       x = x_convert_to_sdl (0x1c + 5*i);
@@ -279,8 +268,8 @@ static void draw_game_status (game_context_t *game)
 
    // draw level number
    y = y_convert_to_sdl (0xb7);
-   set_current_level_gfx (game->players_context);
-   number = get_current_level_gfx (game->players_context);
+   set_current_level_gfx (game->player_context);
+   number = get_current_level_gfx (game->player_context);
    for (int i = 0; i < 3; i++)
    {
       x = x_convert_to_sdl (0x3b + 5*i);
@@ -294,8 +283,8 @@ static void draw_game_status (game_context_t *game)
 
    // draw bonus numbers
    y = y_convert_to_sdl (0xb7);
-   set_bonus_gfx (game->players_context);
-   number = get_bonus_gfx (game->players_context);
+   set_bonus_gfx (game->player_context);
+   number = get_bonus_gfx (game->player_context);
    for (int i = 0; i < 4; i++)
    {
       x = x_convert_to_sdl (0x66 + 5*i);
@@ -309,14 +298,23 @@ static void draw_game_status (game_context_t *game)
 
    // draw time numbers
    y = y_convert_to_sdl (0xb7);
-   set_time_gfx (game->players_context);
-   number = get_time_gfx (game->players_context);
+   set_time_gfx (game->player_context);
+   number = get_time_gfx (game->player_context);
    for (int i = 0; i < 3; i++)
    {
       x = x_convert_to_sdl (0x91 + 5*i);
       draw_digit (x, y, number[i]);
    }
 
+   // draw lives
+   y = y_convert_to_sdl (0xbd);
+   max_lives = game->player_context->lives;
+   // there is only space for eight life sprites
+   if (max_lives > 8)
+      max_lives = 8; 
+   for (int i = 0; i < max_lives; i++)
+      draw_element (&life, x_convert_to_sdl (0x1b + 4*i) ,
+                    y, set_colour (life.colour));
 }
 
 static int draw_level (game_context_t *game)
@@ -332,54 +330,54 @@ static int draw_level (game_context_t *game)
    draw_game_status (game);
 
    // draw platforms first
-   for (i = 0; i < game->levels[game->players_context->current_level % 8].n_platforms; i++)
+   for (i = 0; i < game->levels[game->player_context->current_level % 8].n_platforms; i++)
    {
-      off_x = game->levels[game->players_context->current_level % 8].platform_offsets[i].offset.x;
-      off_y = game->levels[game->players_context->current_level % 8].platform_offsets[i].offset.y;
+      off_x = game->levels[game->player_context->current_level % 8].platform_offsets[i].offset.x;
+      off_y = game->levels[game->player_context->current_level % 8].platform_offsets[i].offset.y;
       x = tile_x_convert_to_sdl (off_x);
       y = tile_y_convert_to_sdl (off_y);
-      n = game->levels[game->players_context->current_level % 8].platform_offsets[i].offset_x_end -
+      n = game->levels[game->player_context->current_level % 8].platform_offsets[i].offset_x_end -
           off_x + 1;
       draw_platform (x, y, n);
       for (int j = 0; j < n; j++)
-         set_sandbox (game->players_context, off_x + j, off_y, 0x01);
+         set_sandbox (game->player_context, off_x + j, off_y, 0x01);
    }
 
    // next draw ladders
-   for (i = 0; i < game->levels[game->players_context->current_level % 8].n_ladders; i++)
+   for (i = 0; i < game->levels[game->player_context->current_level % 8].n_ladders; i++)
    {
-      off_x = game->levels[game->players_context->current_level % 8].ladder_offsets[i].offset.x;
-      off_y = game->levels[game->players_context->current_level % 8].ladder_offsets[i].offset.y;
+      off_x = game->levels[game->player_context->current_level % 8].ladder_offsets[i].offset.x;
+      off_y = game->levels[game->player_context->current_level % 8].ladder_offsets[i].offset.y;
       x = tile_x_convert_to_sdl (off_x);
       y = tile_y_convert_to_sdl (off_y);
-      n = game->levels[game->players_context->current_level % 8].ladder_offsets[i].offset_y_end -
+      n = game->levels[game->player_context->current_level % 8].ladder_offsets[i].offset_y_end -
           off_y + 1;
       draw_ladder (x, y, n);
       for (int j = 0; j < n; j++)
       {
-         if (get_sandbox (game->players_context, off_x, off_y + j) == 0x01)
-            set_sandbox (game->players_context, off_x, off_y + j, 0x03);
+         if (get_sandbox (game->player_context, off_x, off_y + j) == 0x01)
+            set_sandbox (game->player_context, off_x, off_y + j, 0x03);
          else
-            set_sandbox (game->players_context, off_x, off_y + j, 0x02);
+            set_sandbox (game->player_context, off_x, off_y + j, 0x02);
       }
    }
 
    // next draw eggs
-   for (i = 0; i < game->levels[game->players_context->current_level % 8].n_eggs; i++)
+   for (i = 0; i < game->levels[game->player_context->current_level % 8].n_eggs; i++)
    {
       if (game->egg_state[i].present == true)
       {
-         off_x = game->levels[game->players_context->current_level % 8].egg_offsets[i].x;
-         off_y = game->levels[game->players_context->current_level % 8].egg_offsets[i].y;
+         off_x = game->levels[game->player_context->current_level % 8].egg_offsets[i].x;
+         off_y = game->levels[game->player_context->current_level % 8].egg_offsets[i].y;
          x = tile_x_convert_to_sdl (off_x);
          y = tile_y_convert_to_sdl (off_y);
          draw_element (&egg, x, y, set_colour (egg.colour));
-         set_sandbox (game->players_context, off_x, off_y, 0x04 + i * 0x10);
+         set_sandbox (game->player_context, off_x, off_y, 0x04 + i * 0x10);
       }
    }
 
    // next draw seeds
-   for (i = 0; i < game->levels[game->players_context->current_level % 8].n_seeds; i++)
+   for (i = 0; i < game->levels[game->player_context->current_level % 8].n_seeds; i++)
    {
       if (game->seed_state[i].present == true)
       {
@@ -388,7 +386,7 @@ static int draw_level (game_context_t *game)
          x = tile_x_convert_to_sdl (off_x);
          y = tile_y_convert_to_sdl (off_y);
          draw_element (&seed, x, y, set_colour (seed.colour));
-         set_sandbox (game->players_context, off_x, off_y, 0x08 + i * 0x10);
+         set_sandbox (game->player_context, off_x, off_y, 0x08 + i * 0x10);
       }
    }
 
@@ -619,14 +617,14 @@ static void chuck_collect_seed (game_context_t *game)
    uint8_t y = get_chuck_tile_off_y (game);
 
    // clear a seed
-   game->seed_state[get_sandbox (game->players_context, x, y) >> 4].present = false;
-   set_sandbox (game->players_context, x, y, 0);
+   game->seed_state[get_sandbox (game->player_context, x, y) >> 4].present = false;
+   set_sandbox (game->player_context, x, y, 0);
 
    // do other seed logic in here (in time)
    //    stop the level timer
    //    assign points to the score
-   set_score (game->players_context,
-              get_score (game->players_context) + 50);
+   set_score (game->player_context,
+              get_score (game->player_context) + 50);
    set_time_off (game, 0x14); // original chuck $99f6
 }
 
@@ -639,14 +637,14 @@ static void chuck_collect_egg (game_context_t *game,
                                uint8_t x, uint8_t y)
 {
    // clear an egg
-   game->egg_state[get_sandbox (game->players_context, x, y) >> 4].present = false;
-   set_sandbox (game->players_context, x, y, 0);
+   game->egg_state[get_sandbox (game->player_context, x, y) >> 4].present = false;
+   set_sandbox (game->player_context, x, y, 0);
 
    // do other seed logic in here (in time)
    //    assign points to the score
-   set_score (game->players_context,
-              get_score (game->players_context) +
-                 adjust_egg_score (game->players_context->current_level));
+   set_score (game->player_context,
+              get_score (game->player_context) +
+                 adjust_egg_score (game->player_context->current_level));
    //    move to next level when all eggs collected
 }
 
@@ -713,19 +711,19 @@ static int animate_chuck_fall (game_context_t *game)
    set_chuck_tile_rel_off_y (game, tile_rel_y);
    game->chuck_state.vertical_counter++; 
    calc_chuck_dv (game);
-   if (get_sandbox (game->players_context, get_chuck_tile_off_x (game),
+   if (get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                     get_chuck_tile_off_y (game) - 1) & 0x1)
       if (tile_rel_y < 4)
          adjust_chuck_dvy (game, tile_rel_y);
 
    // check if should collect a seed
-   if ((get_sandbox (game->players_context, get_chuck_tile_off_x (game),
+   if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                      get_chuck_tile_off_y (game)) & 0x8) &&
        (get_chuck_tile_rel_off_y (game) <= collect))
       chuck_collect_seed (game);
 
    // check if should collect a seed
-   if ((get_sandbox (game->players_context, get_chuck_tile_off_x (game),
+   if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                      get_chuck_tile_off_y (game)) & 0x4) &&
        (get_chuck_tile_rel_off_y (game) <= collect))
       chuck_collect_egg (game, get_chuck_tile_off_x (game),
@@ -733,7 +731,7 @@ static int animate_chuck_fall (game_context_t *game)
 
    // check if the fall should stop or life lost
    if ((tile_rel_y == 0) &&
-       (get_sandbox (game->players_context, get_chuck_tile_off_x (game),
+       (get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                      get_chuck_tile_off_y (game) - 1) & 0x1))
       game->chuck_state.vertical_state = 0;
 
@@ -790,19 +788,19 @@ static bool chuck_platform_collision (game_context_t *game,
    backup = tile_rel_off_y + dy;
    if ((backup >= 0x0) && (backup < 0x8)) // original chuck $94ff
    {
-      if (get_sandbox (game->players_context, tile_off_x, tile_off_y) == 0x1)
+      if (get_sandbox (game->player_context, tile_off_x, tile_off_y) == 0x1)
          return true;
    }
    else if (backup >= 0x0)
    {
       tile_off_y += 0x1;
-      if (get_sandbox (game->players_context, tile_off_x, tile_off_y) == 0x1)
+      if (get_sandbox (game->player_context, tile_off_x, tile_off_y) == 0x1)
          return true;
    }
    else if (backup < 0x0)
    {
       tile_off_y -= 0x1;
-      if (get_sandbox (game->players_context, tile_off_x, tile_off_y) == 0x1)
+      if (get_sandbox (game->player_context, tile_off_x, tile_off_y) == 0x1)
          return true;
    }
 
@@ -810,7 +808,7 @@ static bool chuck_platform_collision (game_context_t *game,
       return false;
 
    tile_off_y += 0x1;
-   if (get_sandbox (game->players_context, tile_off_x, tile_off_y) == 0x1)
+   if (get_sandbox (game->player_context, tile_off_x, tile_off_y) == 0x1)
       return true;
 
    return false;
@@ -835,13 +833,13 @@ static int animate_chuck_jump (game_context_t *game)
       // we are nearing the end of the jump, but there is a missmatch
       //    in between dy and the height of chuck above the platform
       //    so we must limit dy
-      if ((get_sandbox (game->players_context, get_chuck_tile_off_x (game),
+      if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game) - 1) & 0x1) && (dy < 0))
          if (get_chuck_tile_rel_off_y (game) < abs(dy))
             dy = (-1) * get_chuck_tile_rel_off_y (game);
 
       // platform above our head ?
-      if ((get_sandbox (game->players_context, get_chuck_tile_off_x (game),
+      if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game) + 1) == 0x1) &&
           (get_chuck_tile_rel_off_y (game) == on_the_bottom_edge))
       {
@@ -855,7 +853,7 @@ static int animate_chuck_jump (game_context_t *game)
       set_chuck_vertical_count (game, get_chuck_vertical_count (game) + 1);
 
       // check if should collect a seed
-      if ((get_sandbox (game->players_context, get_chuck_tile_off_x (game),
+      if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game)) & 0x8) &&
           (get_chuck_tile_rel_off_y (game) <= collect))
          chuck_collect_seed (game);
@@ -863,19 +861,19 @@ static int animate_chuck_jump (game_context_t *game)
       // collect an egg if applicable
       if (get_chuck_tile_rel_off_y (game) < 0x4)
       {
-         if ((get_sandbox (game->players_context, get_chuck_tile_off_x (game),
+         if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                            get_chuck_tile_off_y (game)) & 0x4))
             chuck_collect_egg (game, get_chuck_tile_off_x (game),
                                get_chuck_tile_off_y (game));
       }
       else
-         if ((get_sandbox (game->players_context, get_chuck_tile_off_x (game),
+         if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                            get_chuck_tile_off_y (game) + 1) & 0x4))
             chuck_collect_egg (game, get_chuck_tile_off_x (game),
                                get_chuck_tile_off_y (game) + 1);
 
       // end of jump ?
-      if ((get_sandbox (game->players_context, get_chuck_tile_off_x (game),
+      if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game) - 1) & 0x1) == 0x1)
          if (get_chuck_tile_rel_off_y (game) == 0)
             set_chuck_vertical_state (game, horizontal);
@@ -1007,12 +1005,27 @@ static int move_elevator (game_context_t *game)
    return 0;
 }
 
+static void life_management (game_context_t *game)
+{
+   // reduce number of lives for the current player
+   // if zero then game over
+   // move to the next player (if any)
+
+   uint8_t life = get_lives (game->player_context);
+
+   if (life == 0)
+      // game over
+      set_back_to_title (game, true);
+
+   set_lives (game->player_context, --life);
+}
+
 static int move_time (game_context_t *game)
 {
    static uint8_t wait = 4; // original chuck $96bb
    uint8_t ticks = 0;
-   uint16_t time = get_time (game->players_context);
-   uint32_t bonus = get_bonus (game->players_context);
+   uint16_t time = get_time (game->player_context);
+   uint32_t bonus = get_bonus (game->player_context);
    uint8_t *time_gfx = NULL;
 
    wait--;
@@ -1022,16 +1035,17 @@ static int move_time (game_context_t *game)
       ticks = get_time_off (game);
       if (ticks == 0)
       {
-         set_time (game->players_context, --time);
+         set_time (game->player_context, --time);
          if (time == 0)
          {
             // life lost
+            return 0;
          }
 
-         time_gfx = get_time_gfx (game->players_context);
+         time_gfx = get_time_gfx (game->player_context);
          if ((time_gfx[2] == 0x0) || (time_gfx[2] == 0x5))
             if (bonus != 0)
-               set_bonus (game->players_context, bonus - 10);
+               set_bonus (game->player_context, bonus - 10);
       }
       else
          set_time_off (game, --ticks);
@@ -1148,7 +1162,7 @@ static int move_duck (game_context_t *game)
    index = game->ducks_state.duck_to_move - 1;
    game->ducks_state.duck_to_move--;
    if (game->ducks_state.duck_to_move == 0)
-      game->ducks_state.duck_to_move = adjust_duck_speed (game->players_context->current_level, 8);
+      game->ducks_state.duck_to_move = adjust_duck_speed (game->player_context->current_level, 8);
 
    x = game->ducks_state.ducks_state[index].tile_offset.x;
    y = game->ducks_state.ducks_state[index].tile_offset.y;
@@ -1166,13 +1180,13 @@ static int move_duck (game_context_t *game)
    {
       if (game->ducks_state.ducks_state[index].direction == right)
       {
-         game->seed_state[get_sandbox (game->players_context, x + 1, y) >> 4].present = false;
-         set_sandbox (game->players_context, x + 1, y, 0);
+         game->seed_state[get_sandbox (game->player_context, x + 1, y) >> 4].present = false;
+         set_sandbox (game->player_context, x + 1, y, 0);
       }
       else
       {
-         game->seed_state[get_sandbox (game->players_context, x - 1, y) >> 4].present = false;
-         set_sandbox (game->players_context, x - 1, y, 0);
+         game->seed_state[get_sandbox (game->player_context, x - 1, y) >> 4].present = false;
+         set_sandbox (game->player_context, x - 1, y, 0);
       }
    }
 
@@ -1193,29 +1207,29 @@ static int move_duck (game_context_t *game)
    // can move left (either platform or ladder over platform) ?
    if ((y >= 1) && (x >= 1))
    {
-      if ((get_sandbox (game->players_context, x - 1, y - 1) == 0x01) ||
-          (get_sandbox (game->players_context, x - 1, y - 1) == 0x03))
+      if ((get_sandbox (game->player_context, x - 1, y - 1) == 0x01) ||
+          (get_sandbox (game->player_context, x - 1, y - 1) == 0x03))
          moves |= left;
    }
    // can move right (either platform or ladder over platform) ?
    if ((y >= 1) && (x < 0x13))
    {
-      if ((get_sandbox (game->players_context, x + 1, y - 1) == 0x01) ||
-          (get_sandbox (game->players_context, x + 1, y - 1) == 0x03))
+      if ((get_sandbox (game->player_context, x + 1, y - 1) == 0x01) ||
+          (get_sandbox (game->player_context, x + 1, y - 1) == 0x03))
          moves |= right;
    }
    // can move up (either ladder or ladder over platform) ?
    if (x < 0x14)
    {
-      if ((get_sandbox (game->players_context, x, y + 2) == 0x02) ||
-          (get_sandbox (game->players_context, x, y + 2) == 0x03))
+      if ((get_sandbox (game->player_context, x, y + 2) == 0x02) ||
+          (get_sandbox (game->player_context, x, y + 2) == 0x03))
          moves |= up;
    }
    // can move down (either ladder or ladder over platform) ?
    if ((y >= 1) && (x < 0x14))
    {
-      if ((get_sandbox (game->players_context, x, y - 1) == 0x02) ||
-          (get_sandbox (game->players_context, x, y - 1) == 0x03))
+      if ((get_sandbox (game->player_context, x, y - 1) == 0x02) ||
+          (get_sandbox (game->player_context, x, y - 1) == 0x03))
          moves |= down;
    }
 
@@ -1263,7 +1277,7 @@ one_move:
          if (game->ducks_state.ducks_state[index].direction != right)
             game->ducks_state.ducks_state[index].direction = right;
          // check if a seed is in the way
-         if (get_sandbox (game->players_context, x + 1, y) & 0x08)
+         if (get_sandbox (game->player_context, x + 1, y) & 0x08)
             game->ducks_state.ducks_state[index].sprite_state = duck_half_stoop_start;
          else
          {
@@ -1275,7 +1289,7 @@ one_move:
          if (game->ducks_state.ducks_state[index].direction != left)
             game->ducks_state.ducks_state[index].direction = left;
          // check if a seed is in the way
-         if ((get_sandbox (game->players_context, x - 1, y) & 0x08) &&
+         if ((get_sandbox (game->player_context, x - 1, y) & 0x08) &&
              (game->ducks_state.ducks_state[index].sprite_state == 0))
             game->ducks_state.ducks_state[index].sprite_state = duck_half_stoop_start;
          else
@@ -1359,7 +1373,7 @@ static void move_chuck_left (game_context_t *game)
       return;
 
    // platform on the left ?
-   if ((get_sandbox (game->players_context, get_chuck_tile_off_x (game) - 1,
+   if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game) - 1,
                      get_chuck_tile_off_y (game)) == 0x1) &&
        (get_chuck_tile_rel_off_x (game) == 0x1))
       return;
@@ -1368,7 +1382,7 @@ static void move_chuck_left (game_context_t *game)
    {
       if (get_chuck_tile_rel_off_y (game) != 0)
          return;
-      if ((get_sandbox (game->players_context, get_chuck_tile_off_x (game),
+      if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game) - 1) & 0x1) != 1)
          return;
       }
@@ -1377,21 +1391,21 @@ static void move_chuck_left (game_context_t *game)
 
       if (adj_chuck_all_off_x (game, -1))
       {
-         if ((get_sandbox (game->players_context, get_chuck_tile_off_x (game),
+         if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                            get_chuck_tile_off_y (game) - 1) & 0x1) == 0)
       {
          // we are entering the fall
          reset_chuck_vertical_state (game);
          return;
       }
-      if ((get_sandbox (game->players_context, get_chuck_tile_off_x (game),
+      if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game)) & 0x8))
       {
          // collect a seed
          chuck_collect_seed (game);
          return;
       }
-      if ((get_sandbox (game->players_context, get_chuck_tile_off_x (game),
+      if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game)) & 0x4))
       {
          // collect a egg
@@ -1420,7 +1434,7 @@ static void move_chuck_right (game_context_t *game)
       return;
 
    // platform on the right ?
-   if ((get_sandbox (game->players_context, get_chuck_tile_off_x (game) + 1,
+   if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game) + 1,
                      get_chuck_tile_off_y (game)) == 0x1) &&
        (get_chuck_tile_rel_off_x (game) == 0x5))
       return;
@@ -1429,7 +1443,7 @@ static void move_chuck_right (game_context_t *game)
    {
       if (get_chuck_tile_rel_off_y (game) != 0)
          return;
-      if ((get_sandbox (game->players_context, get_chuck_tile_off_x (game),
+      if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game) - 1) & 0x1) != 1)
          return;
    }
@@ -1438,21 +1452,21 @@ static void move_chuck_right (game_context_t *game)
 
    if (adj_chuck_all_off_x (game, 1))
    {
-      if ((get_sandbox (game->players_context, get_chuck_tile_off_x (game),
+      if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game) - 1) & 0x1) == 0)
       {
          // we are entering the fall
          reset_chuck_vertical_state (game);
          return;
       }
-      if ((get_sandbox (game->players_context, get_chuck_tile_off_x (game),
+      if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game)) & 0x8))
       {
          // collect a seed
          chuck_collect_seed (game);
          return;
       }
-      if ((get_sandbox (game->players_context, get_chuck_tile_off_x (game),
+      if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game)) & 0x4))
       {
          // collect a egg
@@ -1489,7 +1503,7 @@ static void move_chuck_up (game_context_t *game)
             adj_chuck_all_off_y (game, -1);
 
       // is there ladder
-      if (get_sandbox (game->players_context, get_chuck_tile_off_x (game),
+      if (get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                        get_chuck_tile_off_y (game) + 2) & 0x2)
       {
          adj_chuck_all_off_y (game, 2);
@@ -1516,7 +1530,7 @@ static void move_chuck_down (game_context_t *game)
    if (get_chuck_tile_rel_off_x (game) == in_the_middle)
    {
       // is there ladder
-      if (((get_sandbox (game->players_context, get_chuck_tile_off_x (game),
+      if (((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                          get_chuck_tile_off_y (game) - 1) & 0x2) &&
           (get_chuck_tile_rel_off_y (game) == on_the_bottom_edge))
           ||
@@ -1614,7 +1628,7 @@ static void set_chuck_vertical_count (game_context_t *game, uint8_t count)
    game->chuck_state.vertical_counter = count;
 }
 
-static void must_init(bool test, const char *description)
+void must_init(bool test, const char *description)
 {
     if (test)
       return;
@@ -1808,82 +1822,36 @@ static void title_loop (title_context_t *title)
    }
 }
 
-int main (void)
+#define KEY_SEEN     1
+#define KEY_RELEASED 2
+
+static void game_loop (game_context_t *game)
 {
-   title_context_t title;
-   player_context_t player_1;
-   game_context_t game;
-   bool dump_sandbox = true;
-   int width = x_res * scale, height = y_res * scale;
+   ALLEGRO_EVENT event;
+   uint8_t key[ALLEGRO_KEY_MAX];
    int8_t dx = 0;
    int8_t dy = 0;
    bool done = false;
    bool redraw = true;
-   ALLEGRO_EVENT event;
- 
-   must_init (al_init (), "allegro");
-   must_init (al_install_keyboard (), "keyboard");
+   bool dump_sandbox = true;
 
-   ALLEGRO_TIMER* game_timer = al_create_timer (1.0 / 30.0);
-   must_init (game_timer, "game_timer");
-
-   ALLEGRO_EVENT_QUEUE* queue = al_create_event_queue ();
-   must_init (queue, "queue");
-
-   al_set_new_display_option (ALLEGRO_SAMPLE_BUFFERS, 1, ALLEGRO_SUGGEST);
-   al_set_new_display_option (ALLEGRO_SAMPLES, 8, ALLEGRO_SUGGEST);
-   al_set_new_bitmap_flags (ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR);
-
-   ALLEGRO_DISPLAY* disp = al_create_display (width, height);
-   must_init (disp, "display");
-
-   must_init (al_init_primitives_addon(), "primitives");
-
-   al_register_event_source (queue, al_get_keyboard_event_source ());
-   al_register_event_source (queue, al_get_display_event_source (disp));
-   al_register_event_source (queue, al_get_timer_event_source (game_timer));
-
-   memset (&game, 0, sizeof (game));
-   game.number_of_players = 1;
-   game.players_context = &player_1;
-   game.levels[0] = level_classic_one;
-   game.levels[1] = level_classic_two;
-   game.levels[2] = level_classic_three;
-   game.levels[3] = level_classic_four;
-   game.levels[4] = level_classic_five;
-   game.levels[5] = level_classic_six;
-   game.levels[6] = level_classic_seven;
-   game.levels[7] = level_classic_eight;
-
-   init_player_context (&player_1);
-
-   init_game_context (&game, player_1.current_level);
-
-   #define KEY_SEEN     1
-   #define KEY_RELEASED 2
-
-   uint8_t key[ALLEGRO_KEY_MAX];
    memset (key, 0, sizeof (key));
 
-   // draw the title screen and show it
-   init_title_context (&title);
-   title_loop (&title);
-
-   al_start_timer (game_timer);
+   al_start_timer (game->timer);
 
    while (true)
    {
-      if ((redraw == true) && al_is_event_queue_empty (queue))
+      if ((redraw == true) && al_is_event_queue_empty (game->queue))
       {
          al_clear_to_color (al_map_rgb (0, 0, 0));
-         draw_level (&game);
-         draw_ducks (&game);
-         draw_flying_duck (&game);
-         draw_chuck (&game);
-         animate_chuck_fall (&game);
-         animate_chuck_jump (&game);
-         if (game.levels[player_1.current_level % 8].elevator == true)
-            draw_elevator (&game);
+         draw_level (game);
+         draw_ducks (game);
+         draw_flying_duck (game);
+         draw_chuck (game);
+         animate_chuck_fall (game);
+         animate_chuck_jump (game);
+         if (game->levels[game->player_context->current_level % 8].elevator == true)
+            draw_elevator (game);
 
          // show it in the window
          al_flip_display ();
@@ -1893,7 +1861,7 @@ int main (void)
             for (int i = OFFSET_Y_MAX - 1; i >= 0; i--)
             {
                for (int j = 0; j < OFFSET_X_MAX; j++)
-                  printf ("%2x ", get_sandbox (game.players_context, j, i));
+                  printf ("%2x ", get_sandbox (game->player_context, j, i));
                printf ("\n");
             }
             dump_sandbox = false;
@@ -1902,7 +1870,7 @@ int main (void)
          redraw = false;
       }
 
-      al_wait_for_event (queue, &event);
+      al_wait_for_event (game->queue, &event);
 
       switch (event.type)
       {
@@ -1917,18 +1885,18 @@ int main (void)
                dx += 1;
             if (key[ALLEGRO_KEY_LCTRL])
                // jump
-               if (get_chuck_vertical_state (&game) != in_jump)
+               if (get_chuck_vertical_state (game) != in_jump)
                {
-                  set_chuck_vertical_state (&game, in_jump);
-                  set_chuck_jump_dx (&game, dx);
+                  set_chuck_vertical_state (game, in_jump);
+                  set_chuck_jump_dx (game, dx);
                }
-            move_chuck (&game, dx, dy);
+            move_chuck (game, dx, dy);
             dx = dy = 0;
 
             if (key[ALLEGRO_KEY_SPACE])
             {
-               player_1.current_level++;
-               init_game_context (&game, player_1.current_level);
+               game->player_context->current_level++;
+               init_game_context (game, game->player_context);
                dump_sandbox = true;
             }
             if (key[ALLEGRO_KEY_ESCAPE])
@@ -1955,15 +1923,51 @@ int main (void)
       if (done)
          break;
 
-      move_duck (&game);
-      move_flying_duck (&game);
-      move_elevator (&game);
-      move_time (&game);
+      move_duck (game);
+      move_flying_duck (game);
+      move_elevator (game);
+      move_time (game);
+   }
+}
+
+int main (void)
+{
+   ALLEGRO_FONT *font;
+   title_context_t title;
+   player_context_t player;
+   game_context_t game;
+ 
+   must_init (al_init (), "allegro");
+   must_init (al_install_keyboard (), "keyboard");
+
+   al_set_new_display_option (ALLEGRO_SAMPLE_BUFFERS, 1, ALLEGRO_SUGGEST);
+   al_set_new_display_option (ALLEGRO_SAMPLES, 8, ALLEGRO_SUGGEST);
+   al_set_new_bitmap_flags (ALLEGRO_MIN_LINEAR | ALLEGRO_MAG_LINEAR);
+
+   must_init (al_init_primitives_addon(), "primitives");
+
+   // doesn't have a return value in allegro 5
+   al_init_font_addon ();
+   must_init (al_init_ttf_addon(), "ttf addon");
+
+   font = al_load_ttf_font_stretch ("amstrad_cpc464.ttf", 64, 32, 0);
+   must_init (font, "cpc464 ttf font");
+
+   init_title_context (&title);
+   init_player_context (&player);
+   init_game_context (&game, &player);
+   set_game_font (&game, font);
+   set_title_font (&title, font);
+
+   while (true)
+   {
+      title_loop (&title);
+      game_loop (&game);
    }
 
-   al_destroy_display (disp);
-   al_destroy_timer (game_timer);
-   al_destroy_event_queue (queue);
+   //al_destroy_display (disp);
+   deinit_title_context (&title);
+   deinit_game_context (&game);
 
    return (EXIT_SUCCESS);
 }

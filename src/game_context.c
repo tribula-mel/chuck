@@ -1,14 +1,35 @@
 #include "game_context.h"
+#include "gfx_classic_levels.h"
+#include "common_defines.h"
 
 extern uint8_t adjust_duck_speed (uint8_t level, uint8_t speed);
 extern void set_chuck_tile_rel_off_x (game_context_t *game, uint8_t off);
 extern void set_chuck_tile_rel_off_y (game_context_t *game, uint8_t off);
 extern uint8_t adjust_n_ducks (uint8_t n_ducks, uint8_t level);
+extern void must_init(bool test, const char *description);
 
-void init_game_context (game_context_t *game, uint8_t level)
+void init_game_context (game_context_t *game, player_context_t *player)
 {
+   ALLEGRO_TIMER *timer;
+   ALLEGRO_EVENT_QUEUE *queue;
+   ALLEGRO_DISPLAY* disp;
    uint8_t n_ducks = 0;
+   uint8_t level = player->current_level;
+   int width = x_res * scale, height = y_res * scale;
    int i = 0;
+
+   memset (game, 0, sizeof (game_context_t));
+
+   game->number_of_players = 1;
+   game->player_context = player;
+   game->levels[0] = level_classic_one;
+   game->levels[1] = level_classic_two;
+   game->levels[2] = level_classic_three;
+   game->levels[3] = level_classic_four;
+   game->levels[4] = level_classic_five;
+   game->levels[5] = level_classic_six;
+   game->levels[6] = level_classic_seven;
+   game->levels[7] = level_classic_eight;
 
    n_ducks = adjust_n_ducks (game->levels[level % 8].n_ducks, level);
    game->ducks_state.n_ducks = n_ducks;
@@ -69,13 +90,35 @@ void init_game_context (game_context_t *game, uint8_t level)
    game->random.number = 0x76767676;
 
    // clear the sandbox
-   memset (game->players_context->sandbox, 0, OFFSET_X_MAX * OFFSET_Y_MAX);
+   memset (game->player_context->sandbox, 0, OFFSET_X_MAX * OFFSET_Y_MAX);
 
    // init game status
-   set_score (game->players_context, 0);
-   set_bonus (game->players_context, 1000);
-   set_time (game->players_context, 900);
-   set_current_level (game->players_context, game->players_context->current_level);
+   set_score (game->player_context, 0);
+   set_bonus (game->player_context, 1000);
+   set_time (game->player_context, 900);
+   set_current_level (game->player_context, level);
+
+   disp = al_create_display (width, height);
+   must_init (disp, "display");
+
+   timer = al_create_timer (1.0 / 30.0);
+   must_init (timer, "game timer");
+
+   queue = al_create_event_queue ();
+   must_init (queue, "game queue");
+
+   al_register_event_source (queue, al_get_keyboard_event_source ());
+   al_register_event_source (queue, al_get_display_event_source (disp));
+   al_register_event_source (queue, al_get_timer_event_source (timer));
+
+   set_game_queue (game, queue);
+   set_game_timer (game, timer);
+}
+
+void deinit_game_context (game_context_t *game)
+{
+   al_destroy_timer (get_game_timer (game));
+   al_destroy_event_queue (get_game_queue (game));
 }
 
 void set_time_off (game_context_t *game, uint8_t ticks)
@@ -86,4 +129,44 @@ void set_time_off (game_context_t *game, uint8_t ticks)
 uint8_t get_time_off (game_context_t *game)
 {
    return (game->time_off_ticks);
+}
+
+void set_game_font (game_context_t *game, ALLEGRO_FONT *font)
+{
+   game->font = font;
+}
+
+ALLEGRO_FONT *get_game_font (game_context_t *game)
+{
+   return (game->font);
+}
+
+void set_game_queue (game_context_t *game, ALLEGRO_EVENT_QUEUE *queue)
+{
+   game->queue = queue;
+}
+
+ALLEGRO_EVENT_QUEUE *get_game_queue (game_context_t *game)
+{
+   return (game->queue);
+}
+
+void set_game_timer (game_context_t *game, ALLEGRO_TIMER *timer)
+{
+   game->timer = timer;
+}
+
+ALLEGRO_TIMER *get_game_timer (game_context_t *game)
+{
+   return (game->timer);
+}
+
+void set_back_to_title (game_context_t *game, bool value)
+{
+   game->back_to_title = value;
+}
+
+bool get_back_to_title (game_context_t *game)
+{
+   return (game->back_to_title);
 }
