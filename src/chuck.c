@@ -50,6 +50,7 @@ static bool adj_chuck_all_off_x (game_context_t *game, int8_t change);
 static bool adj_chuck_all_off_y (game_context_t *game, int8_t change);
 static void set_chuck_jump_dx (game_context_t *game, int8_t jump_dx);
 static int8_t get_chuck_jump_dx (game_context_t *game);
+static void life_management (game_context_t *game);
 
 /* chuck tile x offset to sdl */
 static uint16_t tile_x_convert_to_sdl (uint8_t offset)
@@ -682,9 +683,12 @@ static int animate_chuck_fall (game_context_t *game)
    }
 
    if (gfx_y < 0x10)
+   {
       // height of the chuck sprite
       // this would also be condition for lost life
       gfx_y = 0x10;
+      life_management (game);
+   }
    if (tile_rel_x < 0)
    {
       tile_rel_x = 7;
@@ -1014,13 +1018,17 @@ static void life_management (game_context_t *game)
    // if zero then game over
    // move to the next player (if any)
 
-   uint8_t life = get_lives (game->player_context);
+   uint8_t lives = get_lives (game->player_context);
 
-   if (life == 0)
+   if (lives == 0)
       // game over
+      // TODO show Game Over banner
       set_back_to_title (game, true);
-
-   set_lives (game->player_context, --life);
+   else
+   {
+      set_lives (game->player_context, --lives);
+      set_life_lost (game, true);
+   }
 }
 
 static int move_time (game_context_t *game)
@@ -1041,7 +1049,9 @@ static int move_time (game_context_t *game)
          set_time (game->player_context, --time);
          if (time == 0)
          {
-            // life lost
+            // TODO show Timeout banner
+            life_management (game);
+
             return 0;
          }
 
@@ -1349,7 +1359,10 @@ static bool adj_chuck_all_off_y (game_context_t *game, int8_t change)
    set_chuck_tile_rel_off_y (game, get_chuck_tile_rel_off_y (game) + change);
 
    if (get_chuck_gfx_off_y (game) < 0x10)
+   {
       set_chuck_gfx_off_y (game, 0x10);
+      life_management (game);
+   }
 
    tile_y = get_chuck_gfx_off_y (game) - 0x10 - get_chuck_tile_rel_off_y (game);
    tile_y /= 8;
@@ -1928,6 +1941,15 @@ static void game_loop (game_context_t *game)
       move_flying_duck (game);
       move_elevator (game);
       move_time (game);
+
+      if (get_back_to_title (game))
+         break;
+
+      if (get_life_lost (game))
+      {
+         init_game_restart_level (game);
+         dump_sandbox = true;
+      }
    }
 
    al_stop_timer (game->timer);

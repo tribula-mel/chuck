@@ -24,6 +24,8 @@ typedef struct __game_context
 {
    bool back_to_title;
    bool next_level;
+   bool restart_level;
+   bool life_lost;
    uint8_t number_of_players;
    uint8_t current_player;
    player_context_t *player_context;
@@ -47,6 +49,7 @@ typedef struct __game_context
 void init_game_context (game_context_t *game, player_context_t *player);
 void deinit_game_context (game_context_t *game);
 void init_game_next_level (game_context_t *game);
+void init_game_restart_level (game_context_t *game);
 void set_time_off (game_context_t *game, uint8_t ticks);
 uint8_t get_time_off (game_context_t *game);
 void set_game_font (game_context_t *game, ALLEGRO_FONT *font);
@@ -59,5 +62,9 @@ void set_back_to_title (game_context_t *game, bool value);
 bool get_back_to_title (game_context_t *game);
 void set_next_level (game_context_t *game, bool value);
 bool get_next_level (game_context_t *game);
+void set_restart_level (game_context_t *game, bool value);
+bool get_restart_level (game_context_t *game);
+void set_life_lost (game_context_t *game, bool value);
+bool get_life_lost (game_context_t *game);
 
 #endif // __GAME_CONTEXT_H__
