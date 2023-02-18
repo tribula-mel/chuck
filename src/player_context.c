@@ -150,3 +150,13 @@ void set_sandbox (player_context_t *player, uint8_t x,
 {
    player->sandbox[y][x] = content;
 }
+
+uint8_t get_n_eggs (player_context_t *player)
+{
+   return (player->n_of_eggs);
+}
+
+void set_n_eggs (player_context_t *player, uint8_t num)
+{
+   player->n_of_eggs = num;
+}

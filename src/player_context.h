@@ -23,6 +23,8 @@ typedef struct __player_context
    uint8_t lives;
    // movement context
    uint8_t sandbox[OFFSET_Y_MAX][OFFSET_X_MAX];
+   // collected eggs
+   uint8_t n_of_eggs;
 } player_context_t;
 
 void init_player_context (player_context_t *player);
@@ -51,5 +53,8 @@ void set_lives (player_context_t *player, uint8_t num);
 uint8_t get_sandbox (player_context_t *game, uint8_t x, uint8_t y);
 void set_sandbox (player_context_t *game, uint8_t x,
                   uint8_t y, uint8_t content);
+uint8_t get_sandbox (player_context_t *game, uint8_t x, uint8_t y);
+void set_n_eggs (player_context_t *player, uint8_t num);
+uint8_t get_n_eggs (player_context_t *player);
 
 #endif // __PLAYER_CONTEXT_TYPE_H__

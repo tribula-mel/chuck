@@ -23,6 +23,7 @@ static const uint16_t y_res = DOTS_PER_PIXEL_Y * 200;
 typedef struct __game_context
 {
    bool back_to_title;
+   bool next_level;
    uint8_t number_of_players;
    uint8_t current_player;
    player_context_t *player_context;
@@ -45,6 +46,7 @@ typedef struct __game_context
 
 void init_game_context (game_context_t *game, player_context_t *player);
 void deinit_game_context (game_context_t *game);
+void init_game_next_level (game_context_t *game);
 void set_time_off (game_context_t *game, uint8_t ticks);
 uint8_t get_time_off (game_context_t *game);
 void set_game_font (game_context_t *game, ALLEGRO_FONT *font);
@@ -55,5 +57,7 @@ void set_game_timer (game_context_t *game, ALLEGRO_TIMER *timer);
 ALLEGRO_TIMER *get_game_timer (game_context_t *game);
 void set_back_to_title (game_context_t *game, bool value);
 bool get_back_to_title (game_context_t *game);
+void set_next_level (game_context_t *game, bool value);
+bool get_next_level (game_context_t *game);
 
 #endif // __GAME_CONTEXT_H__

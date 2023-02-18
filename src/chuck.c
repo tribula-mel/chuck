@@ -645,7 +645,10 @@ static void chuck_collect_egg (game_context_t *game,
    set_score (game->player_context,
               get_score (game->player_context) +
                  adjust_egg_score (game->player_context->current_level));
-   //    move to next level when all eggs collected
+   // move to next level when all eggs collected
+   set_n_eggs (game->player_context, get_n_eggs (game->player_context) + 1);
+   if (get_n_eggs (game->player_context) == MAX_N_EGGS)
+      set_next_level (game, true);
 }
 
 static int animate_chuck_fall (game_context_t *game)
@@ -1087,19 +1090,6 @@ static uint8_t randomizer (game_context_t *game)
    game->random.byte[0] |= c;
 
    return game->random.byte[0];
-}
-
-// every finished 16 levels time drops by 100
-static uint16_t calc_level_time (uint8_t level)
-{
-   int16_t time;
-
-   time = 900 - 100 * (level / 16);
-   // limit to 100
-   if (time <= 0)
-      time = 100;
-
-   return time;
 }
 
 uint8_t adjust_n_ducks (uint8_t n_ducks, uint8_t level)
@@ -1820,6 +1810,8 @@ static void title_loop (title_context_t *title)
       if (done)
          break;
    }
+
+   al_stop_timer (title->timer);
 }
 
 #define KEY_SEEN     1
@@ -1893,12 +1885,14 @@ static void game_loop (game_context_t *game)
             move_chuck (game, dx, dy);
             dx = dy = 0;
 
+#if 0
             if (key[ALLEGRO_KEY_SPACE])
             {
                game->player_context->current_level++;
                init_game_context (game, game->player_context);
                dump_sandbox = true;
             }
+#endif
             if (key[ALLEGRO_KEY_ESCAPE])
                done = true;
 
@@ -1923,11 +1917,20 @@ static void game_loop (game_context_t *game)
       if (done)
          break;
 
+      if (get_next_level (game))
+      {
+         game->player_context->current_level++;
+         init_game_next_level (game);
+         dump_sandbox = true;
+      }
+
       move_duck (game);
       move_flying_duck (game);
       move_elevator (game);
       move_time (game);
    }
+
+   al_stop_timer (game->timer);
 }
 
 int main (void)
