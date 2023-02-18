@@ -79,8 +79,8 @@ void init_game_context (game_context_t *game, player_context_t *player)
    // initialize elevator state
    for (i = 0; i < N_PADDLES; i++)
    {
-      game->elevator_state[i].tile_offset.x = game->levels[level % 8].elevator_offset[i].x;
-      game->elevator_state[i].tile_offset.y = game->levels[level % 8].elevator_offset[i].y;
+      game->elevator_state[i].gfx_offset.x = game->levels[level % 8].elevator_offset[i].x;
+      game->elevator_state[i].gfx_offset.y = game->levels[level % 8].elevator_offset[i].y;
    }
 
    // initialize seed state
@@ -170,8 +170,8 @@ void init_game_next_level (game_context_t *game)
    // initialize elevator state
    for (i = 0; i < N_PADDLES; i++)
    {
-      game->elevator_state[i].tile_offset.x = game->levels[level % 8].elevator_offset[i].x;
-      game->elevator_state[i].tile_offset.y = game->levels[level % 8].elevator_offset[i].y;
+      game->elevator_state[i].gfx_offset.x = game->levels[level % 8].elevator_offset[i].x;
+      game->elevator_state[i].gfx_offset.y = game->levels[level % 8].elevator_offset[i].y;
    }
 
    // initialize seed state
@@ -250,8 +250,8 @@ void init_game_restart_level (game_context_t *game)
    // initialize elevator state
    for (i = 0; i < N_PADDLES; i++)
    {
-      game->elevator_state[i].tile_offset.x = game->levels[level % 8].elevator_offset[i].x;
-      game->elevator_state[i].tile_offset.y = game->levels[level % 8].elevator_offset[i].y;
+      game->elevator_state[i].gfx_offset.x = game->levels[level % 8].elevator_offset[i].x;
+      game->elevator_state[i].gfx_offset.y = game->levels[level % 8].elevator_offset[i].y;
    }
 
    // initialize chuck state

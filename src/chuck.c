@@ -845,6 +845,13 @@ static int animate_chuck_jump (game_context_t *game)
          if (get_chuck_tile_rel_off_y (game) < abs(dy))
             dy = (-1) * get_chuck_tile_rel_off_y (game);
 
+      // same as above but this time we check for the elevator paddles
+      if ((((abs (game->elevator_state[0].gfx_offset.x - get_chuck_gfx_off_x (game)) < 0x8) &&
+            (abs (game->elevator_state[0].gfx_offset.y - get_chuck_gfx_off_y (game) - 0x11) < 0x4)) ||
+           ((abs (game->elevator_state[1].gfx_offset.x - get_chuck_gfx_off_x (game)) < 0x8) &&
+            (abs (game->elevator_state[1].gfx_offset.y - get_chuck_gfx_off_y (game) - 0x11) < 0x4))) && (dy))
+         dy = (-1) * get_chuck_tile_rel_off_y (game);
+
       // platform above our head ?
       if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game) + 1) == 0x1) &&
@@ -884,6 +891,13 @@ static int animate_chuck_jump (game_context_t *game)
                         get_chuck_tile_off_y (game) - 1) & 0x1) == 0x1)
          if (get_chuck_tile_rel_off_y (game) == 0)
             set_chuck_vertical_state (game, horizontal);
+
+      // same as above but this time we check for the elevator paddles
+      if (((abs (game->elevator_state[0].gfx_offset.x - get_chuck_gfx_off_x (game)) < 0x8) &&
+           (abs (game->elevator_state[0].gfx_offset.y - get_chuck_gfx_off_y (game) - 0x11) < 0x4)) ||
+          ((abs (game->elevator_state[1].gfx_offset.x - get_chuck_gfx_off_x (game)) < 0x8) &&
+           (abs (game->elevator_state[1].gfx_offset.y - get_chuck_gfx_off_y (game) - 0x11) < 0x4)))
+         set_chuck_vertical_state (game, on_elevator);
    }
 
    return 0;
@@ -967,8 +981,8 @@ static int draw_elevator (game_context_t *game)
 
    for (i = 0; i < N_PADDLES; i++)
    {
-      off_x = game->elevator_state[i].tile_offset.x;
-      off_y = game->elevator_state[i].tile_offset.y;
+      off_x = game->elevator_state[i].gfx_offset.x;
+      off_y = game->elevator_state[i].gfx_offset.y;
       x = x_convert_to_sdl (off_x);
       y = y_convert_to_sdl (off_y);
       draw_element (&elevator, x, y, set_colour (elevator.colour));
@@ -999,12 +1013,15 @@ static int move_elevator (game_context_t *game)
    if (wait == 0)
    {
       wait = 4;
-      game->elevator_state[0].tile_offset.y += 2;
-      if (game->elevator_state[0].tile_offset.y > 0xae)
-         game->elevator_state[0].tile_offset.y = 4;
-      game->elevator_state[1].tile_offset.y += 2;
-      if (game->elevator_state[1].tile_offset.y > 0xae)
-         game->elevator_state[1].tile_offset.y = 4;
+      game->elevator_state[0].gfx_offset.y += 2;
+      if (game->elevator_state[0].gfx_offset.y > 0xae)
+         game->elevator_state[0].gfx_offset.y = 4;
+      game->elevator_state[1].gfx_offset.y += 2;
+      if (game->elevator_state[1].gfx_offset.y > 0xae)
+         game->elevator_state[1].gfx_offset.y = 4;
+
+      if (get_chuck_vertical_state (game) == on_elevator)
+         adj_chuck_all_off_y (game, +2);
    }
 
    wait--;
@@ -1494,6 +1511,9 @@ static void move_chuck_right (game_context_t *game)
 
 static void move_chuck_up (game_context_t *game)
 {
+   if (game->chuck_state.vertical_state == on_elevator)
+      return;
+
    // first check if we are in the middle of the tile
    if (get_chuck_tile_rel_off_x (game) == in_the_middle)
    {
@@ -1529,6 +1549,9 @@ static void move_chuck_up (game_context_t *game)
 
 static void move_chuck_down (game_context_t *game)
 {
+   if (game->chuck_state.vertical_state == on_elevator)
+      return;
+
    // first check if we are in the middle of the tile
    if (get_chuck_tile_rel_off_x (game) == in_the_middle)
    {
