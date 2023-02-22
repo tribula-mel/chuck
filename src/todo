@@ -7,3 +7,15 @@
 + title screen                            [ ]
 + flying duck movement                    [ ]
 + collision check                         [ ]
++ game loop initialization                [ ]
++ chuck movement: up jump on elevator     [ ]
++ level 8 not drawn as it should          [ ]
++ chuck movement: left/right edges
+     on elevator                          [ ]
++ high score update after game over       [ ]
++ 4 players support                       [ ]
++ animate score after level finished      [ ]
++ chuck movement: proper width check
+     for the elevator x position          [ ]
++ print game over                         [ ]
++ print get ready player                  [ ]

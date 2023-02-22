@@ -862,15 +862,13 @@ static sprite_t flying_duck_lsbwu =
 static sprite_t elevator =
 {
    .width  = 0x02,
-   .height = 0x06,
+   .height = 0x04,
    .colour = 0x88,
    // 16x6 pixels
    .sprite =
       {
          0x1f, 0xf8,
          0x1f, 0xf8,
-         0x04, 0x20,
-         0x0e, 0x70,
          0x1b, 0xd8,
          0x11, 0x88,
       }

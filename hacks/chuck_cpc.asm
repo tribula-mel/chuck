@@ -2274,9 +2274,8 @@
 8BD3: 09          add  hl,bc
 8BD4: 0A          ld   a,(bc)
 8BD5: 11 03 0D    ld   de,$0D03
-8BD8: 11 0D C3    ld   de,$C30D
-8BDB: B9          cp   c
-8BDC: 8C          adc  a,h
+8BD8: 11 0D
+8BDA: C3 B9 8C    jp   $8CB9
 8BDD: C3 CD 8C    jp   $8CCD
 8BE0: C3 E2 8F    jp   $8FE2
 8BE3: C3 91 8F    jp   $8F91
@@ -2415,16 +2414,16 @@
 8CB6: 20 BE       jr   nz,$8C76
 8CB8: C9          ret
 8CB9: F5          push af        # draws the top game status section
-8CBA: CD 0A 8C    call $8C0A
+8CBA: CD 0A 8C    call $8C0A     # translate de into (x, y)
 8CBD: F1          pop  af
 8CBE: F5          push af
 8CBF: E5          push hl
 8CC0: 78          ld   a,b
-8CC1: CD 5B 8C    call $8C5B
+8CC1: CD 5B 8C    call $8C5B     # colour translation
 8CC4: E1          pop  hl
 8CC5: F1          pop  af
-8CC6: CD 34 8C    call $8C34
-8CC9: CD 76 8C    call $8C76
+8CC6: CD 34 8C    call $8C34     # returns sprite address
+8CC9: CD 76 8C    call $8C76     # draws sprite
 8CCC: C9          ret
 8CCD: C5          push bc
 8CCE: D5          push de
@@ -3369,25 +3368,25 @@
 93D0: 3A 05 7B    ld   a,($7B05)       # is elevator working
 93D3: B7          or   a
 93D4: 28 5A       jr   z,$9430         # if not jump to $9430
-93D6: 3A 08 7B    ld   a,($7B08)       # elevator related code
-93D9: D6 01       sub  $01
-93DB: FD BE 00    cp   (iy+$00)
+93D6: 3A 08 7B    ld   a,($7B08)       # elevator related code; load x pos
+93D9: D6 01       sub  $01             # dec x by 1
+93DB: FD BE 00    cp   (iy+$00)        # compare with chuck x
 93DE: 30 50       jr   nc,$9430
 93E0: C6 0A       add  a,$0A
 93E2: FD BE 00    cp   (iy+$00)
 93E5: 38 49       jr   c,$9430
-93E7: FD 7E 01    ld   a,(iy+$01)
-93EA: D6 11       sub  $11
+93E7: FD 7E 01    ld   a,(iy+$01)      # chuck's x is in the paddle's x range
+93EA: D6 11       sub  $11             # chuck's y - $11
 93EC: D5          push de
 93ED: 57          ld   d,a
 93EE: D6 02       sub  $02
 93F0: 81          add  a,c
 93F1: 5F          ld   e,a
-93F2: 3A 09 7B    ld   a,($7B09)
+93F2: 3A 09 7B    ld   a,($7B09)       # bottom paddle y pos
 93F5: BA          cp   d
 93F6: 28 05       jr   z,$93FD
 93F8: 30 10       jr   nc,$940A
-93FA: BB          cp   e
+93FA: BB          cp   e               # paddle's y - chuck's y
 93FB: 38 0D       jr   c,$940A
 93FD: 5F          ld   e,a
 93FE: 3A 0B 7B    ld   a,($7B0B)
@@ -3695,43 +3694,43 @@
 9668: 11 5C 7B    ld   de,$7B5C
 966B: 01 3A 00    ld   bc,$003A
 966E: C9          ret
-966F: 3A 05 7B    ld   a,($7B05)
+966F: 3A 05 7B    ld   a,($7B05)    # is elevator present in the level ?
 9672: B7          or   a
-9673: 28 45       jr   z,$96BA
-9675: 21 09 7B    ld   hl,$7B09
-9678: 3A 0B 7B    ld   a,($7B0B)
+9673: 28 45       jr   z,$96BA      # exit if no
+9675: 21 09 7B    ld   hl,$7B09     # bottom paddle y position
+9678: 3A 0B 7B    ld   a,($7B0B)    # $ff = top paddle, $0 for the bottom one
 967B: B7          or   a
 967C: 28 01       jr   z,$967F
-967E: 23          inc  hl
+967E: 23          inc  hl           # top paddle y pos
 967F: 7E          ld   a,(hl)
 9680: FE AE       cp   $AE
-9682: 30 12       jr   nc,$9696
+9682: 30 12       jr   nc,$9696     # if over limit jump
 9684: C6 02       add  a,$02
-9686: 77          ld   (hl),a
+9686: 77          ld   (hl),a       # add 2 to y pos
 9687: 5F          ld   e,a
 9688: 3A 08 7B    ld   a,($7B08)
 968B: 57          ld   d,a
 968C: 3E 36       ld   a,$36
 968E: 06 03       ld   b,$03
-9690: CD DA 8B    call $8BDA
+9690: CD DA 8B    call $8BDA        # draw paddle
 9693: C3 B2 96    jp   $96B2
-9696: 5F          ld   e,a
+9696: 5F          ld   e,a          # y of top position (limit reached)
 9697: 3E 04       ld   a,$04
-9699: 77          ld   (hl),a
+9699: 77          ld   (hl),a       # move x to the starting position
 969A: 3A 08 7B    ld   a,($7B08)
-969D: 57          ld   d,a
-969E: 3E 04       ld   a,$04
-96A0: 06 03       ld   b,$03
-96A2: CD DA 8B    call $8BDA
+969D: 57          ld   d,a          # x position
+969E: 3E 04       ld   a,$04        # sprite number
+96A0: 06 03       ld   b,$03        # colour
+96A2: CD DA 8B    call $8BDA        # erase paddle at top position
 96A5: 3A 08 7B    ld   a,($7B08)
 96A8: 57          ld   d,a
-96A9: 1E 04       ld   e,$04
+96A9: 1E 04       ld   e,$04        # bottom y position
 96AB: 3E 04       ld   a,$04
 96AD: 06 03       ld   b,$03
-96AF: CD DA 8B    call $8BDA
+96AF: CD DA 8B    call $8BDA        # draw paddle at bottom
 96B2: 3A 0B 7B    ld   a,($7B0B)
 96B5: EE FF       xor  $FF
-96B7: 32 0B 7B    ld   ($7B0B),a
+96B7: 32 0B 7B    ld   ($7B0B),a    # reverse the paddle for next update
 96BA: C9          ret
 96BB: 3A 9B 7B    ld   a,($7B9B)    # goes from 0 to 8
 96BE: 3C          inc  a

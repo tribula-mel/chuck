@@ -821,7 +821,49 @@ static bool chuck_platform_collision (game_context_t *game,
    return false;
 }
 
-static int animate_chuck_jump (game_context_t *game)
+static bool jump_on_elevator (game_context_t *game, int8_t *dy)
+{
+   uint8_t el_0_gfx_x = game->elevator_state[0].gfx_offset.x;
+   uint8_t el_0_gfx_y = game->elevator_state[0].gfx_offset.y;
+   uint8_t el_1_gfx_x = game->elevator_state[1].gfx_offset.x;
+   uint8_t el_1_gfx_y = game->elevator_state[1].gfx_offset.y;
+   uint8_t ch_gfx_x = get_chuck_gfx_off_x (game);
+   uint8_t ch_gfx_y = get_chuck_gfx_off_y (game);
+
+#if 0
+   if ((ch_gfx_x > el_0_gfx_x - 1) && (ch_gfx_x <= el_0_gfx_x - 1 + 0xa))
+      if (((ch_gfx_y - 0x11) == el_0_gfx_y) || ((ch_gfx_y - 0x11 - 0x2 + *dy) <= el_0_gfx_y))
+      {
+         *dy = ch_gfx_y - 0x11 - el_0_gfx_y;
+         return true;
+      }
+
+   if ((ch_gfx_x > el_1_gfx_x - 1) && (ch_gfx_x <= el_1_gfx_x - 1 + 0xa))
+      if (((ch_gfx_y - 0x11) == el_1_gfx_y) || ((ch_gfx_y - 0x11 - 0x2 + *dy) <= el_1_gfx_y))
+      {
+         *dy = ch_gfx_y - 0x11 - el_1_gfx_y;
+         return true;
+      }
+#endif
+
+   if ((ch_gfx_x > el_0_gfx_x) && (ch_gfx_x < el_0_gfx_x + 0x10))
+      if ((ch_gfx_y > el_0_gfx_y) && (ch_gfx_y - 0x11 - el_0_gfx_y < abs(*dy)))
+      {
+         *dy = -1 * (ch_gfx_y - 0x11 - el_0_gfx_y);
+         return true;
+      }
+
+   if ((ch_gfx_x > el_1_gfx_x) && (ch_gfx_x < el_1_gfx_x + 0x10))
+      if ((ch_gfx_y > el_1_gfx_y) && (ch_gfx_y - 0x11 - el_1_gfx_y < abs(*dy)))
+      {
+         *dy = -1 * (ch_gfx_y - 0x11 - el_1_gfx_y);
+         return true;
+      }
+
+   return false;
+}
+
+static int animate_chuck_jump (game_context_t *game, chuck_vertical_t prev_state)
 {
    if (game->chuck_state.vertical_state == in_jump)
    {
@@ -845,13 +887,14 @@ static int animate_chuck_jump (game_context_t *game)
          if (get_chuck_tile_rel_off_y (game) < abs(dy))
             dy = (-1) * get_chuck_tile_rel_off_y (game);
 
-      // same as above but this time we check for the elevator paddles
-      if ((((abs (game->elevator_state[0].gfx_offset.x - get_chuck_gfx_off_x (game)) < 0x8) &&
-            (abs (game->elevator_state[0].gfx_offset.y - get_chuck_gfx_off_y (game) - 0x11) < 0x4)) ||
-           ((abs (game->elevator_state[1].gfx_offset.x - get_chuck_gfx_off_x (game)) < 0x8) &&
-            (abs (game->elevator_state[1].gfx_offset.y - get_chuck_gfx_off_y (game) - 0x11) < 0x4))) && (dy))
-         dy = (-1) * get_chuck_tile_rel_off_y (game);
+      if (prev_state == on_elevator)
+         goto skip;
 
+      // same as above but this time we check for the elevator paddles
+      if (jump_on_elevator (game, &dy))
+         set_chuck_vertical_state (game, on_elevator);
+
+skip:
       // platform above our head ?
       if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game) + 1) == 0x1) &&
@@ -891,13 +934,6 @@ static int animate_chuck_jump (game_context_t *game)
                         get_chuck_tile_off_y (game) - 1) & 0x1) == 0x1)
          if (get_chuck_tile_rel_off_y (game) == 0)
             set_chuck_vertical_state (game, horizontal);
-
-      // same as above but this time we check for the elevator paddles
-      if (((abs (game->elevator_state[0].gfx_offset.x - get_chuck_gfx_off_x (game)) < 0x8) &&
-           (abs (game->elevator_state[0].gfx_offset.y - get_chuck_gfx_off_y (game) - 0x11) < 0x4)) ||
-          ((abs (game->elevator_state[1].gfx_offset.x - get_chuck_gfx_off_x (game)) < 0x8) &&
-           (abs (game->elevator_state[1].gfx_offset.y - get_chuck_gfx_off_y (game) - 0x11) < 0x4)))
-         set_chuck_vertical_state (game, on_elevator);
    }
 
    return 0;
@@ -1392,6 +1428,12 @@ static void move_chuck_left (game_context_t *game)
    if (game->chuck_state.vertical_state == in_jump)
       return;
 
+   if (game->chuck_state.vertical_state == on_elevator)
+   {
+      adj_chuck_all_off_x (game, -1);
+      return;
+   }
+
    // platform on the left ?
    if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game) - 1,
                      get_chuck_tile_off_y (game)) == 0x1) &&
@@ -1452,6 +1494,12 @@ static void move_chuck_right (game_context_t *game)
 {
    if (game->chuck_state.vertical_state == in_jump)
       return;
+
+   if (game->chuck_state.vertical_state == on_elevator)
+   {
+      adj_chuck_all_off_x (game, 1);
+      return;
+   }
 
    // platform on the right ?
    if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game) + 1,
@@ -1859,6 +1907,7 @@ static void game_loop (game_context_t *game)
    uint8_t key[ALLEGRO_KEY_MAX];
    int8_t dx = 0;
    int8_t dy = 0;
+   chuck_vertical_t prev_state = horizontal;
    bool done = false;
    bool redraw = true;
    bool dump_sandbox = true;
@@ -1877,7 +1926,7 @@ static void game_loop (game_context_t *game)
          draw_flying_duck (game);
          draw_chuck (game);
          animate_chuck_fall (game);
-         animate_chuck_jump (game);
+         animate_chuck_jump (game, prev_state);
          if (game->levels[game->player_context->current_level % 8].elevator == true)
             draw_elevator (game);
 
@@ -1915,17 +1964,16 @@ static void game_loop (game_context_t *game)
                // jump
                if (get_chuck_vertical_state (game) != in_jump)
                {
+                  prev_state = get_chuck_vertical_state (game);
                   set_chuck_vertical_state (game, in_jump);
                   set_chuck_jump_dx (game, dx);
                }
-            move_chuck (game, dx, dy);
-            dx = dy = 0;
 
-#if 0
+#if 1
             if (key[ALLEGRO_KEY_SPACE])
             {
                game->player_context->current_level++;
-               init_game_context (game, game->player_context);
+               init_game_next_level (game);
                dump_sandbox = true;
             }
 #endif
@@ -1960,18 +2008,24 @@ static void game_loop (game_context_t *game)
          dump_sandbox = true;
       }
 
-      move_duck (game);
-      move_flying_duck (game);
-      move_elevator (game);
-      move_time (game);
-
-      if (get_back_to_title (game))
-         break;
-
-      if (get_life_lost (game))
+      if ((redraw == true) && al_is_event_queue_empty (game->queue))
       {
-         init_game_restart_level (game);
-         dump_sandbox = true;
+         move_duck (game);
+         move_flying_duck (game);
+         if (game->levels[game->player_context->current_level % 8].elevator == true)
+            move_elevator (game);
+         move_time (game);
+         move_chuck (game, dx, dy);
+         dx = dy = 0;
+
+         if (get_back_to_title (game))
+            break;
+
+         if (get_life_lost (game))
+         {
+            init_game_restart_level (game);
+            dump_sandbox = true;
+         }
       }
    }
 
