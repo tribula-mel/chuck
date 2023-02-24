@@ -1,17 +1,18 @@
 LIBS = -lallegro_image -lallegro_primitives -lallegro_font -lallegro_ttf -lallegro
 INCLUDE = -I/usr/include/x86_64-linux-gnu
-CHUCK_DEPS =  chuck.c game_types.h gfx_classic_levels.h gfx_sprites.h \
-              player_context.h title_context.h game_context.h common_defines.h
+CHUCK_DEPS =  chuck.c game_types.h gfx_sprites.h \
+              player_context.h title_context.h game_context.h
 
 all: chuck
 
-player_context.o: player_context.c player_context.h
+player_context.o: player_context.c player_context.h common_defines.h
 	gcc -Wall -g ${INCLUDE} -c player_context.c
 
 title_context.o: title_context.c title_context.h
 	gcc -Wall -g ${INCLUDE} -c title_context.c
 
-game_context.o: game_context.c game_context.h
+game_context.o: game_context.c game_context.h gfx_classic_levels.h common_defines.h \
+                game_types.h player_context.h
 	gcc -Wall -g ${INCLUDE} -c game_context.c
 
 chuck.o: ${CHUCK_DEPS}

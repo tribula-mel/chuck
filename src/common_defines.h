@@ -17,6 +17,6 @@
 #define N_PADDLES        (0x02)
 
 #define OFFSET_X_MAX (0x14)
-#define OFFSET_Y_MAX (0x14)
+#define OFFSET_Y_MAX (0x16)
 
 #endif // __COMMON_DEFINES_H_

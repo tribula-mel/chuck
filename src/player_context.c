@@ -1,5 +1,6 @@
 #include <inttypes.h>
 #include <string.h>
+#include <assert.h>
 
 #include "player_context.h"
 
@@ -148,6 +149,8 @@ uint8_t get_sandbox (player_context_t *player, uint8_t x, uint8_t y)
 void set_sandbox (player_context_t *player, uint8_t x,
                   uint8_t y, uint8_t content)
 {
+   assert ((y < OFFSET_Y_MAX) && (x < OFFSET_X_MAX));
+
    player->sandbox[y][x] = content;
 }
 
