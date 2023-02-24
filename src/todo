@@ -19,3 +19,4 @@
      for the elevator x position          [ ]
 + print game over                         [ ]
 + print get ready player                  [ ]
++ chuck movement: limit upper y movement  [ ]
