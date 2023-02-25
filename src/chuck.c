@@ -1206,6 +1206,12 @@ static int move_duck (game_context_t *game)
    uint8_t random = 0;
    uint8_t direction = 0;
 
+   if (game->ducks_state.n_ducks == 0)
+   {
+      printf ("no ducks in this level\n");
+      return 0;
+   }
+
    if (game->ducks_state.duck_to_move > game->ducks_state.n_ducks)
    {
       game->ducks_state.duck_to_move--;
