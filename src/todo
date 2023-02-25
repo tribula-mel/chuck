@@ -9,7 +9,7 @@
 + collision check                         [ ]
 + game loop initialization                [ ]
 + chuck movement: up jump on elevator     [ ]
-+ level 8 not drawn as it should          [ ]
++ level 8 not drawn as it should          [x]
 + chuck movement: left/right edges
      on elevator                          [ ]
 + high score update after game over       [ ]
