@@ -2,7 +2,7 @@
 + chuck movement: check edge cases        [ ]
 + chuck movement: ladder tops             [ ]
 + chuck movement: through the platforms   [ ]
-+ chuck movement: jump during fall        [ ]
++ chuck movement: jump during fall        [x]
 + ducks movement: not as in original      [ ] 
 + title screen                            [ ]
 + flying duck movement                    [ ]

@@ -661,7 +661,7 @@ static int animate_chuck_fall (game_context_t *game)
    int8_t tile_rel_x = 0;
    int8_t tile_rel_y = 0;
 
-   if (game->chuck_state.vertical_state != falling)
+   if (get_chuck_vertical_state (game) != falling)
       return 0;
  
    gfx_x = get_chuck_gfx_off_x (game);
@@ -740,7 +740,7 @@ static int animate_chuck_fall (game_context_t *game)
    if ((tile_rel_y == 0) &&
        (get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                      get_chuck_tile_off_y (game) - 1) & 0x1))
-      game->chuck_state.vertical_state = 0;
+      set_chuck_vertical_state (game, horizontal);
 
    return 0;
 }
@@ -846,17 +846,17 @@ static bool jump_on_elevator (game_context_t *game, int8_t *dy)
       }
 #endif
 
-   if ((ch_gfx_x > el_0_gfx_x) && (ch_gfx_x < el_0_gfx_x + 0x10))
+   if ((ch_gfx_x > el_0_gfx_x - 1) && (ch_gfx_x < el_0_gfx_x + 0xa))
       if ((ch_gfx_y > el_0_gfx_y) && (ch_gfx_y - 0x11 - el_0_gfx_y < abs(*dy)))
       {
-         *dy = -1 * (ch_gfx_y - 0x11 - el_0_gfx_y);
+         *dy = el_0_gfx_y - ch_gfx_y + 0x11;
          return true;
       }
 
    if ((ch_gfx_x > el_1_gfx_x) && (ch_gfx_x < el_1_gfx_x + 0x10))
       if ((ch_gfx_y > el_1_gfx_y) && (ch_gfx_y - 0x11 - el_1_gfx_y < abs(*dy)))
       {
-         *dy = -1 * (ch_gfx_y - 0x11 - el_1_gfx_y);
+         *dy = el_1_gfx_y - ch_gfx_y + 0x11;
          return true;
       }
 
@@ -865,7 +865,7 @@ static bool jump_on_elevator (game_context_t *game, int8_t *dy)
 
 static int animate_chuck_jump (game_context_t *game, chuck_vertical_t prev_state)
 {
-   if (game->chuck_state.vertical_state == in_jump)
+   if (get_chuck_vertical_state (game) == in_jump)
    {
       int8_t dx = get_chuck_jump_dx (game);
       int8_t dy = calc_chuck_jump_dy (game, get_chuck_vertical_count (game));
@@ -944,7 +944,7 @@ static int draw_chuck (game_context_t *game)
    uint16_t x = 0;
    uint16_t y = 0;
 
-   if (game->chuck_state.vertical_state == falling)
+   if (get_chuck_vertical_state (game) == falling)
       return 0;
 
    x = x_convert_to_sdl (game->chuck_state.el.gfx_offset.x);
@@ -1363,7 +1363,7 @@ one_move:
 
 static void reset_chuck_vertical_state (game_context_t *game)
 {
-   game->chuck_state.vertical_state = falling;
+   set_chuck_vertical_state (game, falling);
 
    // these checks are needed due to the fact that the platform is 8
    //    pixels long, which means there is no middle
@@ -1425,10 +1425,10 @@ static bool adj_chuck_all_off_y (game_context_t *game, int8_t change)
 
 static void move_chuck_left (game_context_t *game)
 {
-   if (game->chuck_state.vertical_state == in_jump)
+   if (get_chuck_vertical_state (game) == in_jump)
       return;
 
-   if (game->chuck_state.vertical_state == on_elevator)
+   if (get_chuck_vertical_state (game) == on_elevator)
    {
       adj_chuck_all_off_x (game, -1);
       return;
@@ -1440,21 +1440,21 @@ static void move_chuck_left (game_context_t *game)
        (get_chuck_tile_rel_off_x (game) == 0x1))
       return;
 
-   if (game->chuck_state.vertical_state == on_ladder)
+   if (get_chuck_vertical_state (game) == on_ladder)
    {
       if (get_chuck_tile_rel_off_y (game) != 0)
          return;
       if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game) - 1) & 0x1) != 1)
          return;
-      }
+   }
 
-      set_chuck_vertical_state (game, horizontal);
+   set_chuck_vertical_state (game, horizontal);
 
-      if (adj_chuck_all_off_x (game, -1))
-      {
-         if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
-                           get_chuck_tile_off_y (game) - 1) & 0x1) == 0)
+   if (adj_chuck_all_off_x (game, -1))
+   {
+      if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
+                        get_chuck_tile_off_y (game) - 1) & 0x1) == 0)
       {
          // we are entering the fall
          reset_chuck_vertical_state (game);
@@ -1492,10 +1492,10 @@ static void move_chuck_left (game_context_t *game)
 
 static void move_chuck_right (game_context_t *game)
 {
-   if (game->chuck_state.vertical_state == in_jump)
+   if (get_chuck_vertical_state (game) == in_jump)
       return;
 
-   if (game->chuck_state.vertical_state == on_elevator)
+   if (get_chuck_vertical_state (game) == on_elevator)
    {
       adj_chuck_all_off_x (game, 1);
       return;
@@ -1507,7 +1507,7 @@ static void move_chuck_right (game_context_t *game)
        (get_chuck_tile_rel_off_x (game) == 0x5))
       return;
 
-   if (game->chuck_state.vertical_state == on_ladder)
+   if (get_chuck_vertical_state (game) == on_ladder)
    {
       if (get_chuck_tile_rel_off_y (game) != 0)
          return;
@@ -1559,7 +1559,7 @@ static void move_chuck_right (game_context_t *game)
 
 static void move_chuck_up (game_context_t *game)
 {
-   if (game->chuck_state.vertical_state == on_elevator)
+   if (get_chuck_vertical_state (game) == on_elevator)
       return;
 
    // first check if we are in the middle of the tile
@@ -1569,7 +1569,7 @@ static void move_chuck_up (game_context_t *game)
       //    on the negative tile relative offset
       // the tile relative offset y has to be positive since ladder is
       //    is climbed in +/-2 increments
-      if (game->chuck_state.vertical_state == in_jump)
+      if (get_chuck_vertical_state (game) == in_jump)
          if ((get_chuck_tile_rel_off_y (game) % 2) == 1)
             adj_chuck_all_off_y (game, -1);
 
@@ -1578,7 +1578,7 @@ static void move_chuck_up (game_context_t *game)
                        get_chuck_tile_off_y (game) + 2) & 0x2)
       {
          adj_chuck_all_off_y (game, 2);
-         game->chuck_state.vertical_state = on_ladder;
+         set_chuck_vertical_state (game, on_ladder);
 
          if (game->chuck_state.el.direction == up)
          {
@@ -1597,7 +1597,7 @@ static void move_chuck_up (game_context_t *game)
 
 static void move_chuck_down (game_context_t *game)
 {
-   if (game->chuck_state.vertical_state == on_elevator)
+   if (get_chuck_vertical_state (game) == on_elevator)
       return;
 
    // first check if we are in the middle of the tile
@@ -1608,21 +1608,21 @@ static void move_chuck_down (game_context_t *game)
                          get_chuck_tile_off_y (game) - 1) & 0x2) &&
           (get_chuck_tile_rel_off_y (game) == on_the_bottom_edge))
           ||
-          ((game->chuck_state.vertical_state == on_ladder) &&
+          ((get_chuck_vertical_state (game) == on_ladder) &&
             (get_chuck_tile_rel_off_y (game) != on_the_bottom_edge))
           ||
-          (game->chuck_state.vertical_state == in_jump))
+          (get_chuck_vertical_state (game) == in_jump))
       {
          // check to see if we are in the jump and if are catching the ladder
          //    on the negative tile relative offset
          // the tile relative offset y has to be positive since ladder is
          //    is climbed in +/-2 increments
-         if (game->chuck_state.vertical_state == in_jump)
+         if (get_chuck_vertical_state (game) == in_jump)
             if ((get_chuck_tile_rel_off_y (game) % 2) == 1)
                adj_chuck_all_off_y (game, -1);
 
          adj_chuck_all_off_y (game, -2);
-         game->chuck_state.vertical_state = on_ladder;
+         set_chuck_vertical_state (game, on_ladder);
 
          if (game->chuck_state.el.direction == down)
          {
@@ -1643,7 +1643,7 @@ static int move_chuck (game_context_t *game,
                        int8_t hor, int8_t ver)
 {
    // if falling then chuck can't move
-   if (game->chuck_state.vertical_state == falling)
+   if (get_chuck_vertical_state (game) == falling)
       return 0;
 
    // left
@@ -1962,7 +1962,8 @@ static void game_loop (game_context_t *game)
                dx += 1;
             if (key[ALLEGRO_KEY_LCTRL])
                // jump
-               if (get_chuck_vertical_state (game) != in_jump)
+               if ((get_chuck_vertical_state (game) != in_jump) &&
+                   (get_chuck_vertical_state (game) != falling))
                {
                   prev_state = get_chuck_vertical_state (game);
                   set_chuck_vertical_state (game, in_jump);
