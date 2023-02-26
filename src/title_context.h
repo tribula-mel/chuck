@@ -5,6 +5,7 @@
 
 typedef struct __high_score
 {
+   // max length is 8 plus NULL
    char name[9];
    uint32_t score;
 } high_score_t;

@@ -132,7 +132,6 @@ void init_game_context (game_context_t *game, player_context_t *player)
    queue = al_create_event_queue ();
    must_init (queue, "game queue");
 
-   al_register_event_source (queue, al_get_keyboard_event_source ());
    al_register_event_source (queue, al_get_display_event_source (disp));
    al_register_event_source (queue, al_get_timer_event_source (timer));
 

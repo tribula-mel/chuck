@@ -76,7 +76,6 @@ void init_title_context (title_context_t *title)
    queue = al_create_event_queue ();
    must_init (queue, "title queue");
 
-   al_register_event_source (queue, al_get_keyboard_event_source ());
    al_register_event_source (queue, al_get_timer_event_source (timer));
 
    set_title_queue (title, queue);

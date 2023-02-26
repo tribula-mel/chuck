@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include <allegro5/allegro5.h>
 #include <allegro5/allegro_font.h>
@@ -1406,6 +1407,7 @@ static bool adj_chuck_all_off_x (game_context_t *game, int8_t change)
 
    tile_x = get_chuck_gfx_off_x (game) + 0x3 - get_chuck_tile_rel_off_x (game);
    tile_x /= 8;
+   assert (tile_x < 0x14);
 
    return (set_chuck_tile_off_x (game, tile_x));
 }
@@ -1425,6 +1427,7 @@ static bool adj_chuck_all_off_y (game_context_t *game, int8_t change)
 
    tile_y = get_chuck_gfx_off_y (game) - 0x10 - get_chuck_tile_rel_off_y (game);
    tile_y /= 8;
+   assert (tile_y < 0x16);
 
    return (set_chuck_tile_off_y (game, tile_y));
 }
@@ -1807,11 +1810,95 @@ static void draw_high_score (title_context_t *title)
    }
 }
 
-static void title_loop (title_context_t *title)
+static void make_highscore_room (title_context_t *title, uint8_t index)
+{
+   for (int i = index; i < 10; i++)
+      set_high_score (title, get_high_score (title, i), i + 1);
+}
+
+static void manage_highscore (title_context_t *title, uint32_t score)
+{
+   ALLEGRO_EVENT event;
+   ALLEGRO_KEYBOARD_STATE kbdstate;
+   high_score_t *hs;
+   uint8_t y;
+   uint8_t index = 0;
+
+   for (int i = 0; i < 10; i++)
+   {
+      hs = get_high_score (title, i);
+      if (hs->score < score)
+      {
+         // we have high score
+         make_highscore_room (title, i);
+         hs->score = score;
+         memset (hs->name, 0, sizeof (hs->name));
+         y = 0x88 - i * 0xc;
+         set_high_score (title, hs, i);
+         while (true)
+         {
+            al_draw_text (title->font, al_map_rgb (0xff, 0xff, 0xff),
+                          x_convert_to_sdl (0x20), y_convert_to_sdl (0x98),
+                          0, "HIGH  SCORES");
+            al_draw_text (title->font, al_map_rgb (0xff, 0xff, 0x80),
+                          x_convert_to_sdl (0x10), y_convert_to_sdl (0x10),
+                          0, "ENTER YOUR NAME");
+            al_draw_text (title->font, al_map_rgb (0xff, 0xff, 0x80),
+                          x_convert_to_sdl (0x28), y_convert_to_sdl (0x8),
+                          0, "Player  1");
+            draw_high_score (title);
+            al_draw_text (title->font, al_map_rgb (0xff, 0xff, 0xff),
+                          x_convert_to_sdl (0x58), y_convert_to_sdl (y),
+                          0, ">");
+            al_draw_text (title->font, al_map_rgb (0x00, 0xff, 0xff),
+                          x_convert_to_sdl (0x60), y_convert_to_sdl (y),
+                          0, title->high_score[i].name);
+
+            al_flip_display ();
+            al_get_keyboard_state (&kbdstate);
+            if (al_key_down (&kbdstate, ALLEGRO_KEY_ENTER))
+               break;
+            if (al_key_down (&kbdstate, ALLEGRO_KEY_BACKSPACE))
+               if (index > 0)
+               {
+                  index--;
+                  al_draw_text (title->font, al_map_rgb (0x00, 0x00, 0x00),
+                                x_convert_to_sdl (0x60 + index * 0x8), y_convert_to_sdl (y),
+                                 0, &hs->name[index]);
+                  hs->name[index] = 0;
+               }
+
+            al_wait_for_event (title->queue, &event);
+            switch (event.type)
+            {
+               case ALLEGRO_EVENT_KEY_CHAR:
+               {
+                  if ((event.keyboard.unichar >= 32) && (event.keyboard.unichar < 127))
+                     if (index < 9)
+                     {
+                        hs->name[index++] = event.keyboard.unichar;
+                        set_high_score (title, hs, i);
+                     }
+                  break;
+               }
+            }
+         }
+
+         break;
+      }
+   }
+}
+
+static void title_loop (title_context_t *title, uint32_t score)
 {
    ALLEGRO_EVENT event;
    uint8_t counter = 0;
    bool done = false;
+
+   al_register_event_source (title->queue, al_get_keyboard_event_source ());
+
+   if (score > 1000)
+      manage_highscore (title, score);
 
    al_start_timer (title->timer);
 
@@ -1834,10 +1921,19 @@ static void title_loop (title_context_t *title)
                           0, "HIGH  SCORES");
             al_draw_text (title->font, al_map_rgb (0xff, 0xff, 0x80),
                           x_convert_to_sdl (0x10), y_convert_to_sdl (0x10),
-                          0, "Press S to start");
+                          0, "Press ");
+            al_draw_text (title->font, al_map_rgb (0x00, 0xff, 0xff),
+                          x_convert_to_sdl (0x40), y_convert_to_sdl (0x10),
+                          0, "S");
             al_draw_text (title->font, al_map_rgb (0xff, 0xff, 0x80),
+                          x_convert_to_sdl (0x48), y_convert_to_sdl (0x10),
+                          0, " to start");
+            al_draw_text (title->font, al_map_rgb (0x00, 0xff, 0xff),
                           x_convert_to_sdl (0x10), y_convert_to_sdl (0x8),
-                          0, "K to change keys");
+                          0, "K");
+            al_draw_text (title->font, al_map_rgb (0xff, 0xff, 0x80),
+                          x_convert_to_sdl (0x18), y_convert_to_sdl (0x8),
+                          0, " to change keys");
 
             draw_high_score (title);
 
@@ -1876,10 +1972,19 @@ static void title_loop (title_context_t *title)
                           0, "Abort .. Escape +'H'");
             al_draw_text (title->font, al_map_rgb (0xff, 0xff, 0x80),
                           x_convert_to_sdl (0x10), y_convert_to_sdl (0x10),
-                          0, "Press S to start");
+                          0, "Press ");
+            al_draw_text (title->font, al_map_rgb (0x00, 0xff, 0xff),
+                          x_convert_to_sdl (0x40), y_convert_to_sdl (0x10),
+                          0, "S");
             al_draw_text (title->font, al_map_rgb (0xff, 0xff, 0x80),
+                          x_convert_to_sdl (0x48), y_convert_to_sdl (0x10),
+                          0, " to start");
+            al_draw_text (title->font, al_map_rgb (0x00, 0xff, 0xff),
                           x_convert_to_sdl (0x10), y_convert_to_sdl (0x8),
-                          0, "K to change keys");
+                          0, "K");
+            al_draw_text (title->font, al_map_rgb (0xff, 0xff, 0x80),
+                          x_convert_to_sdl (0x18), y_convert_to_sdl (0x8),
+                          0, " to change keys");
 
             al_flip_display ();
          }
@@ -1902,12 +2007,13 @@ static void title_loop (title_context_t *title)
    }
 
    al_stop_timer (title->timer);
+   al_unregister_event_source(title->queue, al_get_keyboard_event_source());
 }
 
 #define KEY_SEEN     1
 #define KEY_RELEASED 2
 
-static void game_loop (game_context_t *game)
+static uint32_t game_loop (game_context_t *game)
 {
    ALLEGRO_EVENT event;
    uint8_t key[ALLEGRO_KEY_MAX];
@@ -1920,6 +2026,7 @@ static void game_loop (game_context_t *game)
 
    memset (key, 0, sizeof (key));
 
+   al_register_event_source (game->queue, al_get_keyboard_event_source ());
    al_start_timer (game->timer);
 
    while (true)
@@ -2036,7 +2143,14 @@ static void game_loop (game_context_t *game)
       }
    }
 
+   // draw the status for high score purposes
+   al_clear_to_color (al_map_rgb (0, 0, 0));
+   draw_game_status (game);
+
    al_stop_timer (game->timer);
+   al_unregister_event_source (game->queue, al_get_keyboard_event_source ());
+
+   return get_score (game->player_context);
 }
 
 int main (void)
@@ -2045,6 +2159,7 @@ int main (void)
    title_context_t title;
    player_context_t player;
    game_context_t game;
+   uint32_t score = 0;
  
    must_init (al_init (), "allegro");
    must_init (al_install_keyboard (), "keyboard");
@@ -2070,8 +2185,8 @@ int main (void)
 
    while (true)
    {
-      title_loop (&title);
-      game_loop (&game);
+      title_loop (&title, score);
+      score = game_loop (&game);
    }
 
    //al_destroy_display (disp);
