@@ -467,22 +467,22 @@ static int draw_flying_duck (game_context_t *game)
    uint8_t off_x = 0;
    uint8_t off_y = 0;
 
-   off_x = game->flying_duck_state.tile_offset.x;
-   off_y = game->flying_duck_state.tile_offset.y;
+   off_x = game->flying_duck_state.el.gfx_offset.x;
+   off_y = game->flying_duck_state.el.gfx_offset.y;
    x = x_convert_to_sdl (off_x);
    y = y_convert_to_sdl (off_y);
-   switch (game->flying_duck_state.direction)
+   switch (game->flying_duck_state.el.direction)
    {
       case right:
-         if (game->flying_duck_state.sprite_state == 0)
+         if (game->flying_duck_state.el.sprite_state == 0)
             draw_element (&flying_duck_rcbwd, x, y, set_colour (flying_duck_rcbwd.colour));
-         else if (game->flying_duck_state.sprite_state == 1)
+         else if (game->flying_duck_state.el.sprite_state == 1)
             draw_element (&flying_duck_rsbwu, x, y, set_colour (flying_duck_rcbwd.colour));
          break;
       case left:
-         if (game->flying_duck_state.sprite_state == 0)
+         if (game->flying_duck_state.el.sprite_state == 0)
             draw_element (&flying_duck_lcbwd, x, y, set_colour (flying_duck_rcbwd.colour));
-         else if (game->flying_duck_state.sprite_state == 1)
+         else if (game->flying_duck_state.el.sprite_state == 1)
             draw_element (&flying_duck_lsbwu, x, y, set_colour (flying_duck_rcbwd.colour));
          break;
    }
@@ -1028,14 +1028,80 @@ static int draw_elevator (game_context_t *game)
    return 0;
 }
 
+static bool flying_duck_free (uint8_t level)
+{
+   if (level >= 8)
+      return true;
+
+   return false;
+}
+
+// original chuck $985a
 static int move_flying_duck (game_context_t *game)
 {
    static uint8_t wait = 8; // original chuck $96bb
+   uint8_t flyd_x = game->flying_duck_state.el.gfx_offset.x;
+   uint8_t flyd_y = game->flying_duck_state.el.gfx_offset.y;
+   int8_t flyd_dx = game->flying_duck_state.dx;
+   int8_t flyd_dy = game->flying_duck_state.dy;
+   uint8_t state = game->flying_duck_state.el.sprite_state;
+   uint8_t chuck_x = game->chuck_state.el.gfx_offset.x;
+   uint8_t chuck_y = game->chuck_state.el.gfx_offset.y;
 
    if (wait == 0)
    {
       wait = 8;
-      game->flying_duck_state.sprite_state = (game->flying_duck_state.sprite_state + 1) % 2;
+
+      if (flying_duck_free (game->player_context->current_level) == false)
+         goto skip_flying;
+
+      if ((flyd_x + 0x4) >= chuck_x)
+      {
+         // flying duck is to the chuck's right
+         flyd_dx--;
+         if ((flyd_dx + 0x5) < 0)
+            flyd_dx++;
+         game->flying_duck_state.el.direction = left;
+      }
+      else
+      {
+         // flying duck is to the chuck's left
+         flyd_dx++;
+         if ((flyd_dx - 0x6) >= 0)
+            flyd_dx--;
+         game->flying_duck_state.el.direction = right;
+      }
+
+      chuck_y += 0x4;
+      if (chuck_y < flyd_y)
+      {
+         // flying duck is above chuck
+         flyd_dy--;
+         if ((flyd_dy + 0x6) < 0)
+            flyd_dy++;
+      }
+      else
+      {
+         // flying duck is to the chuck's left
+         flyd_dy++;
+         if ((flyd_dy - 0x7) >= 0)
+            flyd_dy--;
+      }
+
+      if ((flyd_y + flyd_dy) < 0x20)
+         flyd_dy = -flyd_dy;
+      if ((flyd_x + flyd_dx) >= 0x90)
+         flyd_dx = -flyd_dx;
+
+skip_flying:
+      flyd_x += flyd_dx;
+      flyd_y += flyd_dy;
+      game->flying_duck_state.el.gfx_offset.x = flyd_x;
+      game->flying_duck_state.el.gfx_offset.y = flyd_y;
+      game->flying_duck_state.dx = flyd_dx;
+      game->flying_duck_state.dy = flyd_dy;
+      state = (state & 0x1) ^ 0x1;
+      game->flying_duck_state.el.sprite_state = state;
    }
 
    wait--;
@@ -1166,16 +1232,6 @@ uint8_t adjust_n_ducks (uint8_t n_ducks, uint8_t level)
    return n_ducks;
 }
 
-#if 0 // todo enable when time is ripe
-static bool flying_duck_out_of_cage (uint8_t level)
-{
-   if (level >= 8)
-      return true;
-
-   return false;
-}
-#endif
-
 uint8_t adjust_duck_speed (uint8_t level, uint8_t speed)
 {
    if (level >= 32)
@@ -1208,10 +1264,7 @@ static int move_duck (game_context_t *game)
    uint8_t direction = 0;
 
    if (game->ducks_state.n_ducks == 0)
-   {
-      printf ("no ducks in this level\n");
       return 0;
-   }
 
    if (game->ducks_state.duck_to_move > game->ducks_state.n_ducks)
    {

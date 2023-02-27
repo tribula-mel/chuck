@@ -5,7 +5,7 @@
 + chuck movement: jump during fall        [x]
 + ducks movement: not as in original      [ ] 
 + title screen                            [ ]
-+ flying duck movement                    [ ]
++ flying duck movement                    [x]
 + collision check                         [ ]
 + game loop initialization                [ ]
 + chuck movement: up jump on elevator     [ ]

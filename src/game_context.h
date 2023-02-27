@@ -35,7 +35,7 @@ typedef struct __game_context
    // duck positions
    ducks_state_t ducks_state;
    // flying duck position
-   element_state_t flying_duck_state;
+   flying_duck_state_t flying_duck_state;
    element_state_t elevator_state[N_PADDLES];
    seed_state_t seed_state[MAX_N_SEED];
    egg_state_t egg_state[MAX_N_EGGS];

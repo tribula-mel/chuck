@@ -72,9 +72,12 @@ void init_game_context (game_context_t *game, player_context_t *player)
    game->ducks_state.duck_to_move = adjust_duck_speed (level, 8);
 
    // initialize flying duck state
-   game->flying_duck_state.tile_offset.x = 0x04;
-   game->flying_duck_state.tile_offset.y = 0x9e;
-   game->flying_duck_state.direction = right;
+   game->flying_duck_state.el.gfx_offset.x = 0x04;
+   game->flying_duck_state.el.gfx_offset.y = 0x9e;
+   game->flying_duck_state.el.direction = right;
+   game->flying_duck_state.el.sprite_state = 0;
+   game->flying_duck_state.dx = 0;
+   game->flying_duck_state.dy = 0;
 
    // initialize elevator state
    for (i = 0; i < N_PADDLES; i++)
@@ -162,9 +165,12 @@ void init_game_next_level (game_context_t *game)
    game->ducks_state.duck_to_move = adjust_duck_speed (level, 8);
 
    // initialize flying duck state
-   game->flying_duck_state.tile_offset.x = 0x04;
-   game->flying_duck_state.tile_offset.y = 0x9e;
-   game->flying_duck_state.direction = right;
+   game->flying_duck_state.el.gfx_offset.x = 0x04;
+   game->flying_duck_state.el.gfx_offset.y = 0x9e;
+   game->flying_duck_state.el.direction = right;
+   game->flying_duck_state.el.sprite_state = 0;
+   game->flying_duck_state.dx = 0;
+   game->flying_duck_state.dy = 0;
 
    // initialize elevator state
    for (i = 0; i < N_PADDLES; i++)
@@ -242,9 +248,12 @@ void init_game_restart_level (game_context_t *game)
    game->ducks_state.duck_to_move = adjust_duck_speed (level, 8);
 
    // initialize flying duck state
-   game->flying_duck_state.tile_offset.x = 0x04;
-   game->flying_duck_state.tile_offset.y = 0x9e;
-   game->flying_duck_state.direction = right;
+   game->flying_duck_state.el.gfx_offset.x = 0x04;
+   game->flying_duck_state.el.gfx_offset.y = 0x9e;
+   game->flying_duck_state.el.direction = right;
+   game->flying_duck_state.el.sprite_state = 0;
+   game->flying_duck_state.dx = 0;
+   game->flying_duck_state.dy = 0;
 
    // initialize elevator state
    for (i = 0; i < N_PADDLES; i++)

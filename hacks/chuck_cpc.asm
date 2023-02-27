@@ -3957,46 +3957,46 @@
 9856: 10 F9       djnz $9851
 9858: C1          pop  bc
 9859: C9          ret
-985A: FD 21 4E 7B ld   iy,$7B4E
-985E: FD 7E 05    ld   a,(iy+$05)
+985A: FD 21 4E 7B ld   iy,$7B4E     # flying duck table (x pos)
+985E: FD 7E 05    ld   a,(iy+$05)   # flying duck sprite state
 9861: E6 02       and  $02
 9863: 4F          ld   c,a
-9864: FD 66 00    ld   h,(iy+$00)
-9867: FD 6E 01    ld   l,(iy+$01)
-986A: FD 56 02    ld   d,(iy+$02)
-986D: FD 5E 03    ld   e,(iy+$03)
-9870: FD 7E 04    ld   a,(iy+$04)
+9864: FD 66 00    ld   h,(iy+$00)   # x pos
+9867: FD 6E 01    ld   l,(iy+$01)   # y pos
+986A: FD 56 02    ld   d,(iy+$02)   # dx
+986D: FD 5E 03    ld   e,(iy+$03)   # dy
+9870: FD 7E 04    ld   a,(iy+$04)   # 1 == free to move
 9873: B7          or   a
-9874: CA C9 98    jp   z,$98C9
-9877: DD 21 36 7B ld   ix,$7B36
+9874: CA C9 98    jp   z,$98C9      # skip the moving part
+9877: DD 21 36 7B ld   ix,$7B36     # chuck table
 987B: 7C          ld   a,h
-987C: C6 04       add  a,$04
-987E: DD BE 00    cp   (ix+$00)
+987C: C6 04       add  a,$04        # fly_duck.x + 4
+987E: DD BE 00    cp   (ix+$00)     # compare with chuck.x
 9881: 30 0D       jr   nc,$9890
-9883: 14          inc  d
+9883: 14          inc  d            # flying duck is to the chuck's left
 9884: 7A          ld   a,d
 9885: FE 06       cp   $06
 9887: FA 8B 98    jp   m,$988B
 988A: 15          dec  d
 988B: 0E 00       ld   c,$00
 988D: C3 9A 98    jp   $989A
-9890: 15          dec  d
+9890: 15          dec  d            # flying duck is to the chuck's right
 9891: 7A          ld   a,d
 9892: FE FB       cp   $FB
 9894: F2 98 98    jp   p,$9898
 9897: 14          inc  d
 9898: 0E 02       ld   c,$02
-989A: DD 7E 01    ld   a,(ix+$01)
-989D: C6 04       add  a,$04
-989F: BD          cp   l
+989A: DD 7E 01    ld   a,(ix+$01)   # chuck.y
+989D: C6 04       add  a,$04        # chuck.y + 4
+989F: BD          cp   l            # compare with fly_duck.y
 98A0: 38 0B       jr   c,$98AD
-98A2: 1C          inc  e
+98A2: 1C          inc  e            # flying duck is below chuck
 98A3: 7B          ld   a,e
 98A4: FE 07       cp   $07
 98A6: FA B5 98    jp   m,$98B5
 98A9: 1D          dec  e
 98AA: C3 B5 98    jp   $98B5
-98AD: 1D          dec  e
+98AD: 1D          dec  e            # flying duck is above chuck
 98AE: 7B          ld   a,e
 98AF: FE FA       cp   $FA
 98B1: F2 B5 98    jp   p,$98B5

@@ -938,6 +938,14 @@
 -| table $7b4e (flying duck)
    offset $0 x coordinate
    offset $1 y coordinate
+   offset $2 dx change for x
+   offset $3 dy change for y
+   offset $4 0 = in cage, 1 = free to fly
+   offset $5 sprite state
+             0 = duck right wing down
+             1 = duck right wing up
+             2 = duck left wing down
+             3 = duck left wing up
 
 -| code at $985a does flying duck update
 

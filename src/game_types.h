@@ -161,4 +161,11 @@ typedef struct __chuck_state
    int8_t jump_dx;
 } chuck_state_t;
 
+typedef struct __flying_duck_state
+{
+   element_state_t el;
+   int8_t dx;
+   int8_t dy;
+} flying_duck_state_t;
+
 #endif // __GAME_TYPES_H__
