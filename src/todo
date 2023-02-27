@@ -12,7 +12,7 @@
 + level 8 not drawn as it should          [x]
 + chuck movement: left/right edges
      on elevator                          [ ]
-+ high score update after game over       [ ]
++ high score update after game over       [x]
 + 4 players support                       [ ]
 + animate score after level finished      [ ]
 + chuck movement: proper width check
