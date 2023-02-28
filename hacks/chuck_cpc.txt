@@ -1061,7 +1061,7 @@
              if this offset is smaller than 0 then tile y is decreased
                 and this offset is reset to 6
              y = 8 * (tile y) + (offset $9) + 0x10 (chuck height)
-   offset $a jump sprite sequence $1, $2 .. $14
+   offset $a jump sprite sequence $0?, $1, $2 .. $14
    offset $b dx for jump (copy of $6 at the start of the jump)
    offset $c ?
 
