@@ -1670,22 +1670,27 @@ static void move_chuck_down (game_context_t *game)
       // is there ladder
       if (((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                          get_chuck_tile_off_y (game) - 1) & 0x2) &&
-          (get_chuck_tile_rel_off_y (game) == on_the_bottom_edge))
+           (get_chuck_tile_rel_off_y (game) == on_the_bottom_edge))
           ||
           ((get_chuck_vertical_state (game) == on_ladder) &&
-            (get_chuck_tile_rel_off_y (game) != on_the_bottom_edge))
+           (get_chuck_tile_rel_off_y (game) != on_the_bottom_edge))
           ||
-          (get_chuck_vertical_state (game) == in_jump))
+          ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
+                         get_chuck_tile_off_y (game) - 1) & 0x2) &&
+           (get_chuck_vertical_state (game) == in_jump)))
       {
          // check to see if we are in the jump and if are catching the ladder
          //    on the negative tile relative offset
          // the tile relative offset y has to be positive since ladder is
          //    is climbed in +/-2 increments
          if (get_chuck_vertical_state (game) == in_jump)
+         {
             if ((get_chuck_tile_rel_off_y (game) % 2) == 1)
                adj_chuck_all_off_y (game, -1);
+         }
+         else
+            adj_chuck_all_off_y (game, -2);
 
-         adj_chuck_all_off_y (game, -2);
          set_chuck_vertical_state (game, on_ladder);
 
          if (game->chuck_state.el.direction == down)

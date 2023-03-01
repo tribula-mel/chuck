@@ -1,11 +1,22 @@
-jsr $1b01
-input a (number to draw on the screen)
-input x - x position
-input y - y position
+-| chuck.ssd
+   load address: $1100
+   start address: $568b
+   lenth: $45c0
+   this version is with 8 new levels
 
-$502 - next 6 bytes carry the player 1 score; each byte ranges from 0 to 9
+-| chuckieegg.ssd
+   load address: $1100
+   start address: $29ab
+   lenth: $2700
 
-jsr $1982 - draws sprite on the screen?
+-| jsr $1b01
+   input a (number to draw on the screen)
+   input x - x position
+   input y - y position
 
-$20 contains number of lives for the first player
-$50 contains level number (-1) for the first player
+-| $502 - next 6 bytes carry the player 1 score; each byte ranges from 0 to 9
+
+-| jsr $1982 - draws sprite on the screen?
+
+-| $20 contains number of lives for the first player
+-| $50 contains level number (-1) for the first player
