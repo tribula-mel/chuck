@@ -831,6 +831,8 @@ static bool jump_on_elevator (game_context_t *game, int8_t *dy)
    uint8_t ch_gfx_x = get_chuck_gfx_off_x (game);
    uint8_t ch_gfx_y = get_chuck_gfx_off_y (game);
 
+   if (get_chuck_vertical_count (game) <= 0x3)
+      return false;
 #if 0
    if ((ch_gfx_x > el_0_gfx_x - 1) && (ch_gfx_x <= el_0_gfx_x - 1 + 0xa))
       if (((ch_gfx_y - 0x11) == el_0_gfx_y) || ((ch_gfx_y - 0x11 - 0x2 + *dy) <= el_0_gfx_y))
@@ -848,14 +850,14 @@ static bool jump_on_elevator (game_context_t *game, int8_t *dy)
 #endif
 
    if ((ch_gfx_x > el_0_gfx_x - 1) && (ch_gfx_x < el_0_gfx_x + 0x9))
-      if ((ch_gfx_y - 0x10 > el_0_gfx_y) && (ch_gfx_y - 0x11 - el_0_gfx_y < abs(*dy)))
+      if ((ch_gfx_y - 0x10 >= el_0_gfx_y) && (ch_gfx_y - 0x11 - el_0_gfx_y <= abs(*dy)))
       {
          *dy = el_0_gfx_y - ch_gfx_y + 0x11;
          return true;
       }
 
    if ((ch_gfx_x > el_1_gfx_x - 1) && (ch_gfx_x < el_1_gfx_x + 0x9))
-      if ((ch_gfx_y - 0x10 > el_1_gfx_y) && (ch_gfx_y - 0x11 - el_1_gfx_y < abs(*dy)))
+      if ((ch_gfx_y - 0x10 >= el_1_gfx_y) && (ch_gfx_y - 0x11 - el_1_gfx_y <= abs(*dy)))
       {
          *dy = el_1_gfx_y - ch_gfx_y + 0x11;
          return true;
@@ -889,7 +891,7 @@ static int animate_chuck_jump (game_context_t *game)
             dy = (-1) * get_chuck_tile_rel_off_y (game);
 
       // same as above but this time we check for the elevator paddles
-      if ((dy <= 0) && jump_on_elevator (game, &dy))
+      if (jump_on_elevator (game, &dy))
          set_chuck_vertical_state (game, on_elevator);
 
       // platform above our head ?
@@ -1487,30 +1489,38 @@ static bool adj_chuck_all_off_y (game_context_t *game, int8_t change)
    return (set_chuck_tile_off_y (game, tile_y));
 }
 
-static void move_chuck_left (game_context_t *game)
+static bool move_chuck_left_elevator (game_context_t *game)
 {
-   if (get_chuck_vertical_state (game) == in_jump)
-      return;
+   uint8_t el_0_gfx_x = game->elevator_state[0].gfx_offset.x;
+   uint8_t ch_gfx_x = get_chuck_gfx_off_x (game);
 
-   if (get_chuck_vertical_state (game) == on_elevator)
+   if (ch_gfx_x == el_0_gfx_x)
    {
-      adj_chuck_all_off_x (game, -1);
-      return;
+      // we are entering the fall
+      reset_chuck_vertical_state (game);
+      return false;
    }
 
+   adj_chuck_all_off_x (game, -1);
+
+   return true;
+}
+
+static bool move_chuck_left_ladder (game_context_t *game)
+{
    // platform on the left ?
    if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game) - 1,
                      get_chuck_tile_off_y (game)) == 0x1) &&
        (get_chuck_tile_rel_off_x (game) == 0x1))
-      return;
+      return false;
 
    if (get_chuck_vertical_state (game) == on_ladder)
    {
       if (get_chuck_tile_rel_off_y (game) != 0)
-         return;
+         return false;
       if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game) - 1) & 0x1) != 1)
-         return;
+         return false;
    }
 
    set_chuck_vertical_state (game, horizontal);
@@ -1522,24 +1532,35 @@ static void move_chuck_left (game_context_t *game)
       {
          // we are entering the fall
          reset_chuck_vertical_state (game);
-         return;
+         return false;
       }
       if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game)) & 0x8))
-      {
          // collect a seed
          chuck_collect_seed (game);
-         return;
-      }
       if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game)) & 0x4))
-      {
          // collect a egg
          chuck_collect_egg (game, get_chuck_tile_off_x (game),
                             get_chuck_tile_off_y (game));
-         return;
-      }
    }
+
+   return true;
+}
+
+static void move_chuck_left (game_context_t *game)
+{
+   if (get_chuck_vertical_state (game) == in_jump)
+      return;
+
+   if (get_chuck_vertical_state (game) == on_elevator)
+   {
+      if (false == move_chuck_left_elevator (game))
+         return;
+   }
+   else
+      if (false == move_chuck_left_ladder (game))
+         return;
 
    if (game->chuck_state.el.direction == left)
    {
@@ -1554,30 +1575,38 @@ static void move_chuck_left (game_context_t *game)
    }
 }
 
-static void move_chuck_right (game_context_t *game)
+static bool move_chuck_right_elevator (game_context_t *game)
 {
-   if (get_chuck_vertical_state (game) == in_jump)
-      return;
+   uint8_t el_0_gfx_x = game->elevator_state[0].gfx_offset.x;
+   uint8_t ch_gfx_x = get_chuck_gfx_off_x (game);
 
-   if (get_chuck_vertical_state (game) == on_elevator)
+   if (ch_gfx_x == (el_0_gfx_x + 0x9))
    {
-      adj_chuck_all_off_x (game, 1);
-      return;
+      // we are entering the fall
+      reset_chuck_vertical_state (game);
+      return false;
    }
 
+   adj_chuck_all_off_x (game, 1);
+
+   return true;
+}
+
+static bool move_chuck_right_ladder (game_context_t *game)
+{
    // platform on the right ?
    if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game) + 1,
                      get_chuck_tile_off_y (game)) == 0x1) &&
        (get_chuck_tile_rel_off_x (game) == 0x5))
-      return;
+      return false;
 
    if (get_chuck_vertical_state (game) == on_ladder)
    {
       if (get_chuck_tile_rel_off_y (game) != 0)
-         return;
+         return false;
       if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game) - 1) & 0x1) != 1)
-         return;
+         return false;
    }
 
    set_chuck_vertical_state (game, horizontal);
@@ -1589,14 +1618,13 @@ static void move_chuck_right (game_context_t *game)
       {
          // we are entering the fall
          reset_chuck_vertical_state (game);
-         return;
+         return false;
       }
       if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game)) & 0x8))
       {
          // collect a seed
          chuck_collect_seed (game);
-         return;
       }
       if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game)) & 0x4))
@@ -1604,9 +1632,25 @@ static void move_chuck_right (game_context_t *game)
          // collect a egg
          chuck_collect_egg (game, get_chuck_tile_off_x (game),
                             get_chuck_tile_off_y (game));
-         return;
       }
    }
+
+   return true;
+}
+
+static void move_chuck_right (game_context_t *game)
+{
+   if (get_chuck_vertical_state (game) == in_jump)
+      return;
+
+   if (get_chuck_vertical_state (game) == on_elevator)
+   {
+      if (false == move_chuck_right_elevator (game))
+         return;
+   }
+   else
+      if (false == move_chuck_right_ladder (game))
+         return;
 
    if (game->chuck_state.el.direction == right)
    {
