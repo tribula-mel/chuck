@@ -6,9 +6,9 @@
 + title screen                            [ ]
 + collision check                         [ ]
 + game loop initialization                [ ]
-+ chuck movement: up jump on elevator     [ ]
++ chuck movement: up jump on elevator     [x]
 + chuck movement: left/right edges
-     on elevator                          [ ]
+     on elevator                          [x]
 + 4 players support                       [ ]
 + animate score after level finished      [ ]
 + chuck movement: proper width check
