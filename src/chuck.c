@@ -1146,10 +1146,12 @@ static void draw_out_of_time (game_context_t *game)
    // original window is (0x6, 0xd), (0x9, 0xd)
    draw_red_box (game, 0x6, 0xd, 0x9, 0xd);
    al_draw_text (game->font, al_map_rgb (0xff, 0xff, 0xff),
-                 x_convert_to_sdl (0x8 * 0x7), y_convert_to_sdl (199 - 0x8 * 0xc),
-                          0, "Out of");
+                 x_convert_to_sdl (0x8 * 0x7),
+                 y_convert_to_sdl (199 - 0x8 * 0xa),
+                 0, "Out of");
    al_draw_text (game->font, al_map_rgb (0xff, 0xff, 0xff),
-                 x_convert_to_sdl (0x8 * 0x7), y_convert_to_sdl (199 - 0x8 * 0xa),
+                 x_convert_to_sdl (0x8 * 0x7),
+                 y_convert_to_sdl (199 - 0x8 * 0xc),
                  0, "Time !");
    al_flip_display ();
    // 3 seconds timeout
@@ -1161,10 +1163,12 @@ static void draw_game_over (game_context_t *game)
    // original window is (0x4, 0xf), (0x9, 0xd)
    draw_red_box (game, 0x4, 0xf, 0x9, 0xd);
    al_draw_text (game->font, al_map_rgb (0xff, 0xff, 0xff),
-                 x_convert_to_sdl (0x8 * 0x5), y_convert_to_sdl (199 - 0x8 * 0xc),
-                          0, "GAME  OVER");
+                 x_convert_to_sdl (0x8 * 0x5),
+                 y_convert_to_sdl (199 - 0x8 * 0xa),
+                 0, "GAME  OVER");
    al_draw_text (game->font, al_map_rgb (0xff, 0xff, 0xff),
-                 x_convert_to_sdl (0x8 * 0x6), y_convert_to_sdl (199 - 0x8 * 0xa),
+                 x_convert_to_sdl (0x8 * 0x6),
+                 y_convert_to_sdl (199 - 0x8 * 0xc),
                  0, "Player 1");
    al_flip_display ();
    // 3 seconds timeout
@@ -2155,6 +2159,19 @@ static void title_loop (title_context_t *title, uint32_t score)
 
    al_stop_timer (title->timer);
    al_unregister_event_source(title->queue, al_get_keyboard_event_source());
+
+   // show the ready message
+   al_clear_to_color (al_map_rgb (0, 0, 0));
+   al_draw_text (title->font, al_map_rgb (0xff, 0xff, 0x80),
+                 x_convert_to_sdl (0x8 * 0x5),
+                 y_convert_to_sdl (199 - 0x8 * 0xa),
+                 0, "Get  ready");
+   al_draw_text (title->font, al_map_rgb (0x00, 0xff, 0xff),
+                 x_convert_to_sdl (0x8 * 0x6),
+                 y_convert_to_sdl (199 - 0x8 * 0xc),
+                 0, "Player 1");
+   al_flip_display ();
+   al_rest (3);
 }
 
 #define KEY_SEEN     1
