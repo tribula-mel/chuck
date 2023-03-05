@@ -3,7 +3,8 @@
 -| Exec address: 0x9a97
 -| Length:       0x233e
 
--| 9aa0 call $bb4e - TXT Init
+-| title loop
+   9aa0 call $bb4e - TXT Init
    9aa3 call $bb6c - TXT Clear Window
         call $8cb9 - drawing func
            takes x, y in de (160 x 200)
@@ -1076,3 +1077,7 @@
 -| $7b99 carry number of players
 
 -| it seems that original game ran around 12 game loop frames per second
+
+-| $7b5e score for player 1
+   $7b9a players left to play
+   $7b5c current player copy of the table at $7a00

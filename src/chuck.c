@@ -1130,6 +1130,30 @@ static int move_elevator (game_context_t *game)
    return 0;
 }
 
+static void draw_game_over (game_context_t *game)
+{
+   uint16_t x = 0;
+   uint16_t y = 0;
+   uint16_t w = 0;
+   uint16_t h = 0;
+
+   // original window is (0x4, 0xf), (0x9, 0xd)
+   x = x_convert_to_sdl (0x8 * 0x4);
+   w = x_convert_to_sdl (0x8 * (0xf + 1));
+   h = y_convert_to_sdl (199 - 0x8 * 0x9);
+   y = y_convert_to_sdl (199 - (0x8 * (0xd + 1)));
+   al_draw_filled_rectangle(x, y, w, h, al_map_rgb (0xff, 0x00, 0x00));
+   al_draw_text (game->font, al_map_rgb (0xff, 0xff, 0xff),
+                 x_convert_to_sdl (0x8 * 0x5), y_convert_to_sdl (199 - 0x8 * 0xc),
+                          0, "GAME  OVER");
+   al_draw_text (game->font, al_map_rgb (0xff, 0xff, 0xff),
+                 x_convert_to_sdl (0x8 * 0x6), y_convert_to_sdl (199 - 0x8 * 0xa),
+                 0, "Player 1");
+   al_flip_display ();
+   // 3 seconds timeout
+   al_rest (3);
+}
+
 static void life_management (game_context_t *game)
 {
    // reduce number of lives for the current player
@@ -1139,9 +1163,12 @@ static void life_management (game_context_t *game)
    uint8_t lives = get_lives (game->player_context);
 
    if (lives == 0)
+   {
       // game over
       // TODO show Game Over banner
+      draw_game_over (game);
       set_back_to_title (game, true);
+   }
    else
    {
       set_lives (game->player_context, --lives);

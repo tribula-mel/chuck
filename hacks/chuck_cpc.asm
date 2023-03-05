@@ -4359,19 +4359,19 @@
 9B4C: 3A 00 7B    ld   a,($7B00)
 9B4F: CD BF 95    call $95BF
 9B52: C3 D8 9A    jp   $9AD8
-9B55: CD C4 A2    call $A2C4
+9B55: CD C4 A2    call $A2C4        # game lost tunes
 9B58: 3A 5C 7B    ld   a,($7B5C)
 9B5B: 3D          dec  a
-9B5C: 32 5C 7B    ld   ($7B5C),a
+9B5C: 32 5C 7B    ld   ($7B5C),a    # dec number of lives
 9B5F: F5          push af
-9B60: 3A 00 7B    ld   a,($7B00)
-9B63: CD BF 95    call $95BF
+9B60: 3A 00 7B    ld   a,($7B00)    # player number
+9B63: CD BF 95    call $95BF        # update the appropriate player table at $7A00
 9B66: F1          pop  af
 9B67: B7          or   a
-9B68: 20 40       jr   nz,$9BAA
-9B6A: CD D4 95    call $95D4
-9B6D: 1A          ld   a,(de)
-9B6E: 04          inc  b
+9B68: 20 40       jr   nz,$9BAA     # continue with the game
+9B6A: CD D4 95    call $95D4        # hl is somehow set to $9b6d ("GAME OVER PLAYER")
+9B6D: 1A          ld   a,(de)       # this is the actual string @ $9b6d
+9B6E: 04          inc  b            # so doing a pop hl would do the trick
 9B6F: 0F          rrca
 9B70: 09          add  hl,bc
 9B71: 0D          dec  c
@@ -4400,17 +4400,17 @@
 9B8B: 79          ld   a,c
 9B8C: 65          ld   h,l
 9B8D: 72          ld   (hl),d
-9B8E: 20 FF       jr   nz,$9B8F
-9B90: 3A 00 7B    ld   a,($7B00)
+9B8E: 20 FF       jr   nz,$9B8F  # the end of "GAME OVER PLAYER" string
+9B90: 3A 00 7B    ld   a,($7B00) # read the current player
 9B93: C6 31       add  a,$31
 9B95: CD 5A BB    call $BB5A     # TXT OUTPUT
 9B98: 06 C8       ld   b,$C8
-9B9A: CD 1C 9D    call $9D1C
-9B9D: CD F0 A0    call $A0F0
-9BA0: 3A 9A 7B    ld   a,($7B9A)
+9B9A: CD 1C 9D    call $9D1C     # time out (wait for flyback $c8 times)
+9B9D: CD F0 A0    call $A0F0     # update the high score table if needed
+9BA0: 3A 9A 7B    ld   a,($7B9A) # are there players left to play
 9BA3: 3D          dec  a
 9BA4: 32 9A 7B    ld   ($7B9A),a
-9BA7: CA 9A 9A    jp   z,$9A9A
+9BA7: CA 9A 9A    jp   z,$9A9A   # go back to the title loop
 9BAA: 3A 99 7B    ld   a,($7B99)
 9BAD: 47          ld   b,a
 9BAE: 3A 00 7B    ld   a,($7B00)
@@ -4419,7 +4419,7 @@
 9BB4: 32 00 7B    ld   ($7B00),a
 9BB7: B8          cp   b
 9BB8: 30 F0       jr   nc,$9BAA
-9BBA: CD BC 95    call $95BC
+9BBA: CD BC 95    call $95BC     # copies the player table to $7b5c
 9BBD: 3A 5C 7B    ld   a,($7B5C)
 9BC0: B7          or   a
 9BC1: 28 E7       jr   z,$9BAA
@@ -5489,15 +5489,15 @@ A2D4: CB 3A       srl  d
 A2D6: CB 1B       rr   e
 A2D8: CB 3A       srl  d
 A2DA: CB 1B       rr   e
-A2DC: ED 53 08 A3 ld   ($A308),de
-A2E0: 32 03 A3    ld   ($A303),a
+A2DC: ED 53 08 A3 ld   ($A308),de   # tone period
+A2E0: 32 03 A3    ld   ($A303),a    # duration
 A2E3: 32 0C A3    ld   ($A30C),a
 A2E6: E5          push hl
 A2E7: 21 FC A2    ld   hl,$A2FC
-A2EA: CD AA BC    call $BCAA
+A2EA: CD AA BC    call $BCAA        # SOUND QUEUE
 A2ED: 30 FB       jr   nc,$A2EA
 A2EF: 21 05 A3    ld   hl,$A305
-A2F2: CD AA BC    call $BCAA
+A2F2: CD AA BC    call $BCAA        # SOUND QUEUE
 A2F5: 30 FB       jr   nc,$A2F2
 A2F7: E1          pop  hl
 A2F8: C1          pop  bc
