@@ -18,6 +18,8 @@
 #include "title_context.h"
 #include "game_context.h"
 
+#undef DEBUG
+
 extern void set_chuck_tile_rel_off_x (game_context_t *game, uint8_t off);
 extern void set_chuck_tile_rel_off_y (game_context_t *game, uint8_t off);
 extern uint8_t adjust_n_ducks (uint8_t n_ducks, uint8_t level);
@@ -1211,7 +1213,6 @@ static int move_time (game_context_t *game)
       ticks = get_time_off (game);
       if (ticks == 0)
       {
-         set_time (game->player_context, --time);
          if (time == 0)
          {
             draw_out_of_time (game);
@@ -1219,6 +1220,7 @@ static int move_time (game_context_t *game)
 
             return 0;
          }
+         set_time (game->player_context, --time);
 
          time_gfx = get_time_gfx (game->player_context);
          if ((time_gfx[2] == 0x0) || (time_gfx[2] == 0x5))
@@ -2185,7 +2187,9 @@ static uint32_t game_loop (game_context_t *game)
    int8_t dy = 0;
    bool done = false;
    bool redraw = true;
+#ifdef DEBUG
    bool dump_sandbox = true;
+#endif
 
    memset (key, 0, sizeof (key));
 
@@ -2209,6 +2213,7 @@ static uint32_t game_loop (game_context_t *game)
          // show it in the window
          al_flip_display ();
 
+#ifdef DEBUG
          if (dump_sandbox == true)
          {
             for (int i = OFFSET_Y_MAX - 1; i >= 0; i--)
@@ -2219,6 +2224,7 @@ static uint32_t game_loop (game_context_t *game)
             }
             dump_sandbox = false;
          }
+#endif
 
          redraw = false;
       }
@@ -2250,7 +2256,9 @@ static uint32_t game_loop (game_context_t *game)
             {
                game->player_context->current_level++;
                init_game_next_level (game);
+#ifdef DEBUG
                dump_sandbox = true;
+#endif
             }
 #endif
             if (key[ALLEGRO_KEY_ESCAPE])
@@ -2281,7 +2289,9 @@ static uint32_t game_loop (game_context_t *game)
       {
          game->player_context->current_level++;
          init_game_next_level (game);
+#ifdef DEBUG
          dump_sandbox = true;
+#endif
       }
 
       if ((redraw == true) && al_is_event_queue_empty (game->queue))
@@ -2300,7 +2310,9 @@ static uint32_t game_loop (game_context_t *game)
          if (get_life_lost (game))
          {
             init_game_restart_level (game);
+#ifdef DEBUG
             dump_sandbox = true;
+#endif
          }
       }
    }
