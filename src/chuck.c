@@ -2298,14 +2298,37 @@ static uint32_t game_loop (game_context_t *game)
    return get_score (game->player_context);
 }
 
-int main (void)
+int main (int argc, char *argv[])
 {
    ALLEGRO_FONT *font;
    title_context_t title;
    player_context_t player;
    game_context_t game;
    uint32_t score = 0;
+   int opt = -1;
  
+   // default graphics scaling
+   scale = 2;
+
+   while ((opt = getopt (argc, argv, "s:")) != -1)
+   {
+      switch (opt)
+      {
+         case 's':
+            scale = strtoul (optarg, NULL, 0);
+            if ((scale > 10) || (scale == 0))
+            {
+               fprintf (stderr, "warning: scale %d out of range\n", scale);
+               fprintf (stderr, "         using default value\n");
+               scale = 2;
+            }
+            break;
+         default: /* '?' */
+            fprintf (stderr, "Usage: %s [-s <scale>]\n", argv[0]);
+            exit (EXIT_FAILURE);
+      }
+   }
+
    must_init (al_init (), "allegro");
    must_init (al_install_keyboard (), "keyboard");
 
@@ -2319,7 +2342,12 @@ int main (void)
    al_init_font_addon ();
    must_init (al_init_ttf_addon(), "ttf addon");
 
-   font = al_load_ttf_font_stretch ("amstrad_cpc464.ttf", 64, 32, 0);
+   // original font size is 8x8
+   //    we take into account scale factor
+   //    we also have 4 dots per original pixel on x
+   //    and 2 dots per original pixel on y side
+   font = al_load_ttf_font_stretch ("amstrad_cpc464.ttf",
+                                    8 * 4 * scale, 8 * 2 * scale, 0);
    must_init (font, "cpc464 ttf font");
 
    init_title_context (&title);

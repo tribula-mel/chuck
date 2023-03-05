@@ -10,8 +10,7 @@
 #include "player_context.h"
 
 // running the game in original resolution would result in tiny graphics
-// for now this will be hard coded
-static const uint8_t scale = 2;
+uint8_t scale;
 
 #define DOTS_PER_PIXEL_X (4)
 #define DOTS_PER_PIXEL_Y (2)
