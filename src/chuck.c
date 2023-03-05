@@ -1130,19 +1130,36 @@ static int move_elevator (game_context_t *game)
    return 0;
 }
 
+static void draw_red_box (game_context_t *game,
+                          uint16_t x_left, uint16_t x_right,
+                          uint16_t y_top, uint16_t y_bottom)
+{
+   al_draw_filled_rectangle(x_convert_to_sdl (0x8 * x_left),
+                            y_convert_to_sdl (199 - (0x8 * y_top)),
+                            x_convert_to_sdl (0x8 * (x_right + 1)),
+                            y_convert_to_sdl (199 - 0x8 * (y_bottom + 1)),
+                            al_map_rgb (0xff, 0x00, 0x00));
+}
+
+static void draw_out_of_time (game_context_t *game)
+{
+   // original window is (0x6, 0xd), (0x9, 0xd)
+   draw_red_box (game, 0x6, 0xd, 0x9, 0xd);
+   al_draw_text (game->font, al_map_rgb (0xff, 0xff, 0xff),
+                 x_convert_to_sdl (0x8 * 0x7), y_convert_to_sdl (199 - 0x8 * 0xc),
+                          0, "Out of");
+   al_draw_text (game->font, al_map_rgb (0xff, 0xff, 0xff),
+                 x_convert_to_sdl (0x8 * 0x7), y_convert_to_sdl (199 - 0x8 * 0xa),
+                 0, "Time !");
+   al_flip_display ();
+   // 3 seconds timeout
+   al_rest (3);
+}
+
 static void draw_game_over (game_context_t *game)
 {
-   uint16_t x = 0;
-   uint16_t y = 0;
-   uint16_t w = 0;
-   uint16_t h = 0;
-
    // original window is (0x4, 0xf), (0x9, 0xd)
-   x = x_convert_to_sdl (0x8 * 0x4);
-   w = x_convert_to_sdl (0x8 * (0xf + 1));
-   h = y_convert_to_sdl (199 - 0x8 * 0x9);
-   y = y_convert_to_sdl (199 - (0x8 * (0xd + 1)));
-   al_draw_filled_rectangle(x, y, w, h, al_map_rgb (0xff, 0x00, 0x00));
+   draw_red_box (game, 0x4, 0xf, 0x9, 0xd);
    al_draw_text (game->font, al_map_rgb (0xff, 0xff, 0xff),
                  x_convert_to_sdl (0x8 * 0x5), y_convert_to_sdl (199 - 0x8 * 0xc),
                           0, "GAME  OVER");
@@ -1165,7 +1182,6 @@ static void life_management (game_context_t *game)
    if (lives == 0)
    {
       // game over
-      // TODO show Game Over banner
       draw_game_over (game);
       set_back_to_title (game, true);
    }
@@ -1194,7 +1210,7 @@ static int move_time (game_context_t *game)
          set_time (game->player_context, --time);
          if (time == 0)
          {
-            // TODO show Timeout banner
+            draw_out_of_time (game);
             life_management (game);
 
             return 0;
