@@ -3749,111 +3749,111 @@
 96DD: B8          cp   b
 96DE: 38 01       jr   c,$96E1
 96E0: C9          ret
-96E1: CD E3 8B    call $8BE3        # duck update
-96E4: FD 56 02    ld   d,(iy+$02)
-96E7: FD 5E 03    ld   e,(iy+$03)
-96EA: FD 66 04    ld   h,(iy+$04)
-96ED: FD 6E 06    ld   l,(iy+$06)
+96E1: CD E3 8B    call $8BE3      # duck update; return a pointer to duck state
+96E4: FD 56 02    ld   d,(iy+$02) # tile x
+96E7: FD 5E 03    ld   e,(iy+$03) # tile y
+96EA: FD 66 04    ld   h,(iy+$04) # alternating index
+96ED: FD 6E 06    ld   l,(iy+$06) # state for left/right/up/down
 96F0: 7C          ld   a,h
 96F1: FE 01       cp   $01
-96F3: CA AE 97    jp   z,$97AE
-96F6: D2 84 97    jp   nc,$9784
-96F9: D5          push de
+96F3: CA AE 97    jp   z,$97AE    # for spread legs jump
+96F6: D2 84 97    jp   nc,$9784   # seed picking states (jump to $9784)
+96F9: D5          push de         # straight legs (0 state)
 96FA: 15          dec  d
 96FB: 1D          dec  e
-96FC: CD FE 8B    call $8BFE
+96FC: CD FE 8B    call $8BFE      # is there a tile on the left ?
 96FF: D1          pop  de
-9700: E6 01       and  $01
+9700: E6 01       and  $01        # platform only
 9702: 4F          ld   c,a
 9703: D5          push de
 9704: 14          inc  d
 9705: 1D          dec  e
-9706: CD FE 8B    call $8BFE
+9706: CD FE 8B    call $8BFE      # is there a tile on the right ?
 9709: D1          pop  de
-970A: E6 01       and  $01
+970A: E6 01       and  $01        # we are interested in a platform
 970C: 28 04       jr   z,$9712
 970E: 79          ld   a,c
-970F: F6 02       or   $02
+970F: F6 02       or   $02        # right is a possible move
 9711: 4F          ld   c,a
 9712: D5          push de
 9713: 1D          dec  e
-9714: CD FE 8B    call $8BFE
+9714: CD FE 8B    call $8BFE      # is there a tile under the duck
 9717: D1          pop  de
-9718: E6 02       and  $02
+9718: E6 02       and  $02        # we are interested in a ladder
 971A: 28 04       jr   z,$9720
 971C: 79          ld   a,c
 971D: F6 08       or   $08
-971F: 4F          ld   c,a
+971F: 4F          ld   c,a        # if so set $8
 9720: D5          push de
 9721: 1C          inc  e
 9722: 1C          inc  e
-9723: CD FE 8B    call $8BFE
+9723: CD FE 8B    call $8BFE      # is there a tile two offsets above
 9726: D1          pop  de
-9727: E6 02       and  $02
+9727: E6 02       and  $02        # ladder please
 9729: 28 04       jr   z,$972F
 972B: 79          ld   a,c
 972C: F6 04       or   $04
-972E: 4F          ld   c,a
-972F: CD 4C 98    call $984C
+972E: 4F          ld   c,a        # if so set $4
+972F: CD 4C 98    call $984C      # a = number of possible moves
 9732: FE 01       cp   $01
 9734: 20 04       jr   nz,$973A
 9736: 69          ld   l,c
 9737: C3 60 97    jp   $9760
-973A: 7D          ld   a,l
-973B: FE 04       cp   $04
-973D: 30 04       jr   nc,$9743
-973F: EE FC       xor  $FC
+973A: 7D          ld   a,l       # more than one move possible
+973B: FE 04       cp   $04       # compare direction state
+973D: 30 04       jr   nc,$9743  # if up/down direction jump
+973F: EE FC       xor  $FC       # only for letf/right direction
 9741: 18 02       jr   $9745
-9743: EE F3       xor  $F3
+9743: EE F3       xor  $F3       # up/down direction case
 9745: A1          and  c
 9746: 4F          ld   c,a
-9747: CD 4C 98    call $984C
+9747: CD 4C 98    call $984C     # number of possible moves
 974A: FE 01       cp   $01
 974C: 20 04       jr   nz,$9752
 974E: 69          ld   l,c
 974F: C3 60 97    jp   $9760
 9752: 41          ld   b,c
-9753: CD 5C 9A    call $9A5C
+9753: CD 5C 9A    call $9A5C     # randomizer
 9756: A0          and  b
 9757: 4F          ld   c,a
-9758: CD 4C 98    call $984C
+9758: CD 4C 98    call $984C     # number of possible moves
 975B: FE 01       cp   $01
-975D: 20 F4       jr   nz,$9753
+975D: 20 F4       jr   nz,$9753  # randomize til we get only one possible move
 975F: 69          ld   l,c
-9760: 7D          ld   a,l
+9760: 7D          ld   a,l       # one move possible
 9761: E6 03       and  $03
 9763: 28 49       jr   z,$97AE
-9765: E6 01       and  $01
+9765: E6 01       and  $01       # left/right move possible
 9767: 28 09       jr   z,$9772
-9769: D5          push de
+9769: D5          push de        # left
 976A: 15          dec  d
-976B: CD FE 8B    call $8BFE
+976B: CD FE 8B    call $8BFE     # seed on the left
 976E: D1          pop  de
 976F: C3 78 97    jp   $9778
-9772: D5          push de
+9772: D5          push de        # right
 9773: 14          inc  d
-9774: CD FE 8B    call $8BFE
+9774: CD FE 8B    call $8BFE     # look into the sandbox for seed on the right
 9777: D1          pop  de
-9778: E6 08       and  $08
+9778: E6 08       and  $08       # seed please
 977A: 28 32       jr   z,$97AE
-977C: 26 02       ld   h,$02
-977E: FD 74 04    ld   (iy+$04),h
+977C: 26 02       ld   h,$02      # seed animation start
+977E: FD 74 04    ld   (iy+$04),h # no seed
 9781: C3 AE 97    jp   $97AE
-9784: FE 04       cp   $04
+9784: FE 04       cp   $04        # seed picking animation states
 9786: 20 26       jr   nz,$97AE
-9788: 7D          ld   a,l
+9788: 7D          ld   a,l        # 04 state; potentially pick up the seed
 9789: D5          push de
-978A: 15          dec  d
+978A: 15          dec  d          # prepare check on left
 978B: E6 01       and  $01
-978D: 20 02       jr   nz,$9791
+978D: 20 02       jr   nz,$9791   # jump if duck facing left
 978F: 14          inc  d
-9790: 14          inc  d
-9791: CD FE 8B    call $8BFE
+9790: 14          inc  d          # otherwise prepare for check on right
+9791: CD FE 8B    call $8BFE      # sandbox lookup
 9794: 4F          ld   c,a
 9795: E6 08       and  $08
-9797: 28 14       jr   z,$97AD
+9797: 28 14       jr   z,$97AD    # jump if no seed found
 9799: E5          push hl
-979A: 21 76 7B    ld   hl,$7B76
+979A: 21 76 7B    ld   hl,$7B76   # seed table
 979D: 79          ld   a,c
 979E: CB 3F       srl  a
 97A0: CB 3F       srl  a
@@ -3861,26 +3861,26 @@
 97A4: CB 3F       srl  a
 97A6: 85          add  a,l
 97A7: 6F          ld   l,a
-97A8: 35          dec  (hl)
+97A8: 35          dec  (hl)      # clear the seed in the table
 97A9: E1          pop  hl
-97AA: CD 07 9A    call $9A07
+97AA: CD 07 9A    call $9A07     # clear the seed off the screen
 97AD: D1          pop  de
-97AE: D5          push de
+97AE: D5          push de        # spead leg case; up/down possible
 97AF: E5          push hl
-97B0: CD E0 8B    call $8BE0
+97B0: CD E0 8B    call $8BE0     # clear duck off the screen
 97B3: E1          pop  hl
 97B4: D1          pop  de
-97B5: 7C          ld   a,h
+97B5: 7C          ld   a,h       # animation state
 97B6: FE 02       cp   $02
-97B8: 30 69       jr   nc,$9823
+97B8: 30 69       jr   nc,$9823  # jump if seed picking animation
 97BA: 7D          ld   a,l
 97BB: CB 3F       srl  a
-97BD: 38 2C       jr   c,$97EB
+97BD: 38 2C       jr   c,$97EB   # if c set we are going left
 97BF: CB 3F       srl  a
-97C1: 38 3A       jr   c,$97FD
+97C1: 38 3A       jr   c,$97FD   # if c set we are going right
 97C3: CB 3F       srl  a
-97C5: 38 12       jr   c,$97D9
-97C7: FD 7E 01    ld   a,(iy+$01)
+97C5: 38 12       jr   c,$97D9   # if c set we are going up
+97C7: FD 7E 01    ld   a,(iy+$01) # moving down
 97CA: D6 04       sub  $04
 97CC: FD 77 01    ld   (iy+$01),a
 97CF: 7C          ld   a,h
@@ -3889,7 +3889,7 @@
 97D3: 1D          dec  e
 97D4: 0E 04       ld   c,$04
 97D6: C3 0C 98    jp   $980C
-97D9: FD 7E 01    ld   a,(iy+$01)
+97D9: FD 7E 01    ld   a,(iy+$01)   # moving up
 97DC: C6 04       add  a,$04
 97DE: FD 77 01    ld   (iy+$01),a
 97E1: 7C          ld   a,h
@@ -3898,7 +3898,7 @@
 97E5: 1C          inc  e
 97E6: 0E 04       ld   c,$04
 97E8: C3 0C 98    jp   $980C
-97EB: FD 7E 00    ld   a,(iy+$00)
+97EB: FD 7E 00    ld   a,(iy+$00)   # moving left
 97EE: D6 04       sub  $04
 97F0: FD 77 00    ld   (iy+$00),a
 97F3: 7C          ld   a,h
@@ -3907,7 +3907,7 @@
 97F7: 15          dec  d
 97F8: 0E 02       ld   c,$02
 97FA: C3 0C 98    jp   $980C
-97FD: FD 7E 00    ld   a,(iy+$00)
+97FD: FD 7E 00    ld   a,(iy+$00)   # moving right
 9800: C6 04       add  a,$04
 9802: FD 77 00    ld   (iy+$00),a
 9805: 7C          ld   a,h
@@ -3923,9 +3923,9 @@
 9816: FD 72 02    ld   (iy+$02),d
 9819: FD 73 03    ld   (iy+$03),e
 981C: FD 75 06    ld   (iy+$06),l
-981F: CD E0 8B    call $8BE0
+981F: CD E0 8B    call $8BE0        # draw updated sprite
 9822: C9          ret
-9823: 7C          ld   a,h
+9823: 7C          ld   a,h          # seed picking animation
 9824: CB 27       sla  a
 9826: E6 1F       and  $1F
 9828: 67          ld   h,a
@@ -3946,7 +3946,7 @@
 983F: FD 77 05    ld   (iy+$05),a
 9842: FD 74 04    ld   (iy+$04),h
 9845: FD 75 06    ld   (iy+$06),l
-9848: CD E0 8B    call $8BE0
+9848: CD E0 8B    call $8BE0       # draw updated sprite
 984B: C9          ret
 984C: C5          push bc
 984D: 3E 00       ld   a,$00

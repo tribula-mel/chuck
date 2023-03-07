@@ -1372,32 +1372,20 @@ static int move_duck (game_context_t *game)
 
    // can move left (either platform or ladder over platform) ?
    if ((y >= 1) && (x >= 1))
-   {
-      if ((get_sandbox (game->player_context, x - 1, y - 1) == 0x01) ||
-          (get_sandbox (game->player_context, x - 1, y - 1) == 0x03))
+      if (((get_sandbox (game->player_context, x - 1 , y - 1) & 0x1) == 0x01))
          moves |= left;
-   }
    // can move right (either platform or ladder over platform) ?
    if ((y >= 1) && (x < 0x13))
-   {
-      if ((get_sandbox (game->player_context, x + 1, y - 1) == 0x01) ||
-          (get_sandbox (game->player_context, x + 1, y - 1) == 0x03))
+      if (((get_sandbox (game->player_context, x + 1 , y - 1) & 0x1) == 0x01))
          moves |= right;
-   }
    // can move up (either ladder or ladder over platform) ?
    if (x < 0x14)
-   {
-      if ((get_sandbox (game->player_context, x, y + 2) == 0x02) ||
-          (get_sandbox (game->player_context, x, y + 2) == 0x03))
+      if (((get_sandbox (game->player_context, x, y + 2) & 0x2) == 0x02))
          moves |= up;
-   }
    // can move down (either ladder or ladder over platform) ?
    if ((y >= 1) && (x < 0x14))
-   {
-      if ((get_sandbox (game->player_context, x, y - 1) == 0x02) ||
-          (get_sandbox (game->player_context, x, y - 1) == 0x03))
+      if (((get_sandbox (game->player_context, x, y - 1) & 0x2) == 0x02))
          moves |= down;
-   }
 
    if (number_of_moves (moves) == 1)
       goto one_move;

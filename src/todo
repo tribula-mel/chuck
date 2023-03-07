@@ -3,7 +3,7 @@
 + chuck movement: through the platforms   [ ]
 + chuck movement: limit upper y movement  [ ]
 + chuck movement: up/down rework          [ ]
-+ ducks movement: not as in original      [ ] 
++ ducks movement: not as in original      [x] 
 + title screen                            [ ]
 + collision check                         [ ]
 + game loop initialization                [ ]
