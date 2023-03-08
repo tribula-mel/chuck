@@ -8,5 +8,7 @@
 + collision check                         [ ]
 + game loop initialization                [ ]
 + 4 players support                       [ ]
-+ animate score after level finished      [ ]
++ animate score after level finished      [x]
 + sound support                           [ ]
++ new life                                [ ]
++ limit flying duck movement at x = 0     [ ]

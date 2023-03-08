@@ -217,7 +217,6 @@ void init_game_next_level (game_context_t *game)
    set_time_off (game, 0);
 
    // init player status
-   set_score (player, get_score (player) + get_bonus (player));
    set_bonus (player, calc_level_bonus (level));
    set_time (player, calc_level_time (level));
    set_n_eggs (player, 0);

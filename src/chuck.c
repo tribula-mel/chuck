@@ -54,6 +54,8 @@ static bool adj_chuck_all_off_y (game_context_t *game, int8_t change);
 static void set_chuck_jump_dx (game_context_t *game, int8_t jump_dx);
 static int8_t get_chuck_jump_dx (game_context_t *game);
 static void life_management (game_context_t *game);
+static void draw_score (game_context_t *game);
+static void draw_bonus (game_context_t *game);
 
 /* chuck tile x offset to sdl */
 static uint16_t tile_x_convert_to_sdl (uint8_t offset)
@@ -237,23 +239,7 @@ static void draw_game_status (game_context_t *game)
    y = y_convert_to_sdl (0xc7);
    draw_element (&score_txt, x, y, set_colour (score_txt.colour));
 
-   // draw "red block" (chuck original $8d46 - $8d59)
-   //    this block is drawn for current active player
-   //    x = player_number * $22 - $07
-   //       player_number [1..4]
-   //    currently only one player supported
-   x = x_convert_to_sdl (0x1b);
-   y = y_convert_to_sdl (0xc7);
-   draw_element (&red_background, x, y, set_colour (red_background.colour));
-
-   // draw 6 score digits
-   y = y_convert_to_sdl (0xc6);
-   number = get_score_gfx (game->player_context);
-   for (int i = 0; i < 6; i++)
-   {
-      x = x_convert_to_sdl (0x1c + 5*i);
-      draw_digit (x, y, number[i]);
-   }
+   draw_score (game);
 
    // draw PLAYER (chuck original $8d67)
    x = x_convert_to_sdl (0x0);
@@ -280,20 +266,7 @@ static void draw_game_status (game_context_t *game)
       draw_digit (x, y, number[i]);
    }
 
-   // draw BONUS (chuck original $8db3)
-   x = x_convert_to_sdl (0x4e);
-   y = y_convert_to_sdl (0xb8);
-   draw_element (&bonus_txt, x, y, set_colour (bonus_txt.colour));
-
-   // draw bonus numbers
-   y = y_convert_to_sdl (0xb7);
-   set_bonus_gfx (game->player_context);
-   number = get_bonus_gfx (game->player_context);
-   for (int i = 0; i < 4; i++)
-   {
-      x = x_convert_to_sdl (0x66 + 5*i);
-      draw_digit (x, y, number[i]);
-   }
+   draw_bonus (game);
 
    // draw TIME (chuck original $8dda)
    x = x_convert_to_sdl (0x7e);
@@ -653,6 +626,75 @@ static void chuck_collect_egg (game_context_t *game,
    set_n_eggs (game->player_context, get_n_eggs (game->player_context) + 1);
    if (get_n_eggs (game->player_context) == MAX_N_EGGS)
       set_next_level (game, true);
+}
+
+static void draw_score (game_context_t *game)
+{
+   uint16_t x = 0;
+   uint16_t y = 0;
+   uint8_t *number = NULL;
+
+   // draw "red block" (chuck original $8d46 - $8d59)
+   //    this block is drawn for current active player
+   //    x = player_number * $22 - $07
+   //       player_number [1..4]
+   //    currently only one player supported
+   x = x_convert_to_sdl (0x1b);
+   y = y_convert_to_sdl (0xc7);
+   draw_element (&red_background, x, y, set_colour (red_background.colour));
+
+   // draw 6 score digits
+   y = y_convert_to_sdl (0xc6);
+   number = get_score_gfx (game->player_context);
+   for (int i = 0; i < 6; i++)
+   {
+      x = x_convert_to_sdl (0x1c + 5*i);
+      draw_digit (x, y, number[i]);
+   }
+}
+
+static void draw_bonus (game_context_t *game)
+{
+   uint16_t x = 0;
+   uint16_t y = 0;
+   uint8_t *number = NULL;
+
+   // draw BONUS (chuck original $8db3)
+   x = x_convert_to_sdl (0x4e);
+   y = y_convert_to_sdl (0xb8);
+   draw_element (&bonus_txt, x, y, set_colour (bonus_txt.colour));
+
+   // draw bonus numbers
+   y = y_convert_to_sdl (0xb7);
+   set_bonus_gfx (game->player_context);
+   number = get_bonus_gfx (game->player_context);
+   for (int i = 0; i < 4; i++)
+   {
+      x = x_convert_to_sdl (0x66 + 5*i);
+      draw_digit (x, y, number[i]);
+   }
+}
+
+static void animate_score (game_context_t *game)
+{
+   uint32_t score = get_score (game->player_context);
+   uint16_t bonus = get_bonus (game->player_context);
+
+   if (bonus == 0)
+      return;
+
+   do
+   {
+      bonus -= 10;
+      score += 10;
+      set_bonus (game->player_context, bonus);
+      set_score (game->player_context, score);
+      draw_bonus (game);
+      draw_score (game);
+      al_rest (0.02);
+      al_flip_display ();
+   }
+   while (bonus != 0);
 }
 
 static int animate_chuck_fall (game_context_t *game)
@@ -2275,8 +2317,10 @@ static uint32_t game_loop (game_context_t *game)
 
       if (get_next_level (game))
       {
+         animate_score (game);
          game->player_context->current_level++;
          init_game_next_level (game);
+         al_clear_to_color (al_map_rgb (0, 0, 0));
 #ifdef DEBUG
          dump_sandbox = true;
 #endif
