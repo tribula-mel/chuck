@@ -1,0 +1,9 @@
+This game is using the following libraries:
+
+   + https://liballeg.org
+     a game programming library
+     and while at it an excellent game programming library
+
+   + https://sourceforge.net/projects/libayemu
+     ay-3-8912 programable sound generator emulation library
+     without it original sounds would not be possible

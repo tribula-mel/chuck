@@ -4314,7 +4314,7 @@
 9AE4: CD E9 8B    call $8BE9
 9AE7: CD 2E A2    call $A22E
 9AEA: CD CB 95    call $95CB
-9AED: C4 AD A2    call nz,$A2AD
+9AED: C4 AD A2    call nz,$A2AD # if nz egg/seed collected so play sound
 9AF0: CD 4B 9C    call $9C4B
 9AF3: 3A 69 7B    ld   a,($7B69)
 9AF6: B7          or   a
@@ -4359,7 +4359,7 @@
 9B4C: 3A 00 7B    ld   a,($7B00)
 9B4F: CD BF 95    call $95BF
 9B52: C3 D8 9A    jp   $9AD8
-9B55: CD C4 A2    call $A2C4        # game lost tunes
+9B55: CD C4 A2    call $A2C4        # game over tunes
 9B58: 3A 5C 7B    ld   a,($7B5C)
 9B5B: 3D          dec  a
 9B5C: 32 5C 7B    ld   ($7B5C),a    # dec number of lives
@@ -5393,29 +5393,29 @@ A228: 75          ld   (hl),l
 A229: 67          ld   h,a
 A22A: 20 20       jr   nz,$A24C
 A22C: 20 20       jr   nz,$A24E
-A22E: FD 21 36 7B ld   iy,$7B36
-A232: FD 7E 06    ld   a,(iy+$06)
-A235: FD 4E 0A    ld   c,(iy+$0a)
-A238: FD B6 07    or   (iy+$07)
-A23B: C8          ret  z
-A23C: 3A 9B 7B    ld   a,($7B9B)
+A22E: FD 21 36 7B ld   iy,$7B36     # audio
+A232: FD 7E 06    ld   a,(iy+$06)   # load left/right key press status
+A235: FD 4E 0A    ld   c,(iy+$0a)   # jump sprite status
+A238: FD B6 07    or   (iy+$07)     # compare with up/down key press status
+A23B: C8          ret  z            # if none pressed go back
+A23C: 3A 9B 7B    ld   a,($7B9B)    # duck counter
 A23F: E6 01       and  $01
-A241: C0          ret  nz
-A242: FD 7E 04    ld   a,(iy+$04)
+A241: C0          ret  nz           # play sound every second key press ?
+A242: FD 7E 04    ld   a,(iy+$04)   # load vertical status
 A245: B7          or   a
 A246: 20 06       jr   nz,$A24E
-A248: 11 E0 01    ld   de,$01E0
+A248: 11 E0 01    ld   de,$01E0     # set tone period for left/right move
 A24B: C3 99 A2    jp   $A299
-A24E: FE 01       cp   $01
+A24E: FE 01       cp   $01          # moving up/down/falling/jumping
 A250: 20 06       jr   nz,$A258
-A252: 11 18 01    ld   de,$0118
+A252: 11 18 01    ld   de,$0118     # up/down move tone period
 A255: C3 99 A2    jp   $A299
 A258: FE 02       cp   $02
 A25A: 20 23       jr   nz,$A27F
-A25C: 79          ld   a,c
+A25C: 79          ld   a,c          # jump pressed
 A25D: FE 0B       cp   $0B
 A25F: 38 0E       jr   c,$A26F
-A261: 11 78 00    ld   de,$0078
+A261: 11 78 00    ld   de,$0078     # if beyond mid jump
 A264: 69          ld   l,c
 A265: 26 00       ld   h,$00
 A267: 29          add  hl,hl
@@ -5424,7 +5424,7 @@ A269: 29          add  hl,hl
 A26A: 19          add  hl,de
 A26B: EB          ex   de,hl
 A26C: C3 99 A2    jp   $A299
-A26F: 11 18 01    ld   de,$0118
+A26F: 11 18 01    ld   de,$0118     # pre mid jump
 A272: 69          ld   l,c
 A273: 26 00       ld   h,$00
 A275: 29          add  hl,hl
@@ -5436,7 +5436,7 @@ A27B: EB          ex   de,hl
 A27C: C3 99 A2    jp   $A299
 A27F: FE 03       cp   $03
 A281: 20 0E       jr   nz,$A291
-A283: 11 AA 01    ld   de,$01AA
+A283: 11 AA 01    ld   de,$01AA  # falling case
 A286: 69          ld   l,c
 A287: 26 00       ld   h,$00
 A289: 29          add  hl,hl
@@ -5448,10 +5448,10 @@ A28E: C3 99 A2    jp   $A299
 A291: FD 7E 06    ld   a,(iy+$06)
 A294: B7          or   a
 A295: C8          ret  z
-A296: 11 E0 01    ld   de,$01E0        # tone period
-A299: ED 53 A7 A2 ld   ($A2A7),de      # bytes 3..4 of sound program
-A29D: 21 A4 A2    ld   hl,$A2A4        # sound program address for $BCAA
-A2A0: CD AA BC    call $BCAA           # sound queue
+A296: 11 E0 01    ld   de,$01E0   # tone period
+A299: ED 53 A7 A2 ld   ($A2A7),de # left/right move (sound program bytes 3..4)
+A29D: 21 A4 A2    ld   hl,$A2A4   # sound program address for $BCAA
+A2A0: CD AA BC    call $BCAA      # sound queue
 A2A3: C9          ret
 A2A4: 83          add  a,e
 A2A5: 00          nop
@@ -5462,7 +5462,7 @@ A2A9: 00          nop
 A2AA: 05          dec  b
 A2AB: 02          ld   (bc),a
 A2AC: 00          nop
-A2AD: C6 14       add  a,$14
+A2AD: C6 14       add  a,$14        # see/egg sound
 A2AF: E6 1F       and  $1F
 A2B1: 32 C0 A2    ld   ($A2C0),a
 A2B4: 21 BB A2    ld   hl,$A2BB
@@ -5475,7 +5475,7 @@ A2C0: 15          dec  d
 A2C1: 0F          rrca
 A2C2: 14          inc  d
 A2C3: 00          nop
-A2C4: 21 0E A3    ld   hl,$A30E
+A2C4: 21 0E A3    ld   hl,$A30E    # play game over tunes
 A2C7: 06 10       ld   b,$10
 A2C9: C5          push bc
 A2CA: 5E          ld   e,(hl)

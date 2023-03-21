@@ -552,10 +552,11 @@
    9ae4 call $8be9
       takes into account chuck position and $7b56 content and does some
    9ae7 call $a22e
-      some to do with sound ?
+      sounds: left/right/up/down/jump/falling sounds
    9aea call $95cb
       egg and seed collection
    9aed call nz,$a2ad
+      sounds: egg/seed collection sounds
    9af0 call $9c4b
    9af3 ld a,($7b69)
       this is where the number of eggs is stored
