@@ -5451,7 +5451,7 @@ A295: C8          ret  z
 A296: 11 E0 01    ld   de,$01E0   # tone period
 A299: ED 53 A7 A2 ld   ($A2A7),de # left/right move (sound program bytes 3..4)
 A29D: 21 A4 A2    ld   hl,$A2A4   # sound program address for $BCAA
-A2A0: CD AA BC    call $BCAA      # sound queue
+A2A0: CD AA BC    call $BCAA      # SOUND QUEUE
 A2A3: C9          ret
 A2A4: 83          add  a,e
 A2A5: 00          nop

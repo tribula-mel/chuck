@@ -7,3 +7,7 @@ This game is using the following libraries:
    + https://sourceforge.net/projects/libayemu
      ay-3-8912 programable sound generator emulation library
      without it original sounds would not be possible
+
+Amstrad CPC true type font by Wesley Clarke:
+
+   + https://fonts2u.com/amstrad-cpc464-regular.font
