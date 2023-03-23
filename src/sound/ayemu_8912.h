@@ -5,6 +5,7 @@
 #ifndef _AYEMU_ay8912_h
 #define _AYEMU_ay8912_h
 
+#include <stdio.h>
 #include <stddef.h>
 
 BEGIN_C_DECLS

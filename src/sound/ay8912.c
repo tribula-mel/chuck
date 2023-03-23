@@ -6,8 +6,6 @@
 
 char *ayemu_err;
 
-static const char VERSION[] = "libayemu 0.9";
-
 const int MAGIC1 = 0xcdef;	/* for check ayemu_t structure inited */
 
 enum {
@@ -317,6 +315,7 @@ void ayemu_set_regs(ayemu_ay_t *ay, ayemu_ay_reg_frame_t regs)
 {
   if (!check_magic(ay)) return;
 
+#if 0
   if (ay->verbose) {
     WARN_IF_REGISTER_GREAT_THAN(1,15);
     WARN_IF_REGISTER_GREAT_THAN(3,15);
@@ -325,6 +324,7 @@ void ayemu_set_regs(ayemu_ay_t *ay, ayemu_ay_reg_frame_t regs)
     WARN_IF_REGISTER_GREAT_THAN(9,31);
     WARN_IF_REGISTER_GREAT_THAN(10,31);
   }
+#endif
 
   ay->regs.tone_a  = regs[0] + ((regs[1]&0x0f) << 8);
   ay->regs.tone_b  = regs[2] + ((regs[3]&0x0f) << 8);

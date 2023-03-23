@@ -17,6 +17,7 @@
 #include "player_context.h"
 #include "title_context.h"
 #include "game_context.h"
+#include "sound/sound.h"
 
 #undef DEBUG
 
@@ -56,6 +57,8 @@ static int8_t get_chuck_jump_dx (game_context_t *game);
 static void life_management (game_context_t *game);
 static void draw_score (game_context_t *game);
 static void draw_bonus (game_context_t *game);
+
+uint64_t snd_handle;
 
 /* chuck tile x offset to sdl */
 static uint16_t tile_x_convert_to_sdl (uint8_t offset)
@@ -1652,6 +1655,8 @@ static void move_chuck_left (game_context_t *game)
       game->chuck_state.el.sprite_state = chuck_standing_one;
       game->chuck_state.el.direction = left;
    }
+
+   sound_generate_event (snd_handle, SOUND_EVENT_PLAY_LEFT_RIGHT);
 }
 
 static bool move_chuck_right_elevator (game_context_t *game)
@@ -2416,6 +2421,7 @@ int main (int argc, char *argv[])
    init_game_context (&game, &player);
    set_game_font (&game, font);
    set_title_font (&title, font);
+   snd_handle = sound_init ();
 
    while (true)
    {
