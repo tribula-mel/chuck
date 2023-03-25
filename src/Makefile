@@ -1,4 +1,4 @@
-LIBS = -lallegro_image -lallegro_primitives -lallegro_font -lallegro_ttf \
+LIBS = -lallegro_primitives -lallegro_font -lallegro_ttf \
        -lallegro_audio -lallegro
 INCLUDE = -I/usr/include/x86_64-linux-gnu
 CHUCK_DEPS =  chuck.c game_types.h gfx_sprites.h \

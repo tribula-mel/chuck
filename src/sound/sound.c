@@ -29,8 +29,8 @@ typedef struct
 typedef struct
 {
    uint8_t num_sample;
-   ALLEGRO_SAMPLE *sample;
-   ALLEGRO_SAMPLE_INSTANCE *sample_inst[];
+   ALLEGRO_SAMPLE **sample;
+   ALLEGRO_SAMPLE_INSTANCE **sample_inst;
 } sample_t;
 
 typedef struct
@@ -40,6 +40,7 @@ typedef struct
    sample_t *vert_jump;
    sample_t *vert_fall;
    sample_t *life_lost;
+   sample_t *score_animation;
 } chuck_samples_t;
 
 typedef struct
@@ -53,7 +54,8 @@ typedef struct
 
 typedef struct
 {
-   sound_ayemu_t *ayemu;
+   sound_ayemu_t ayemu;
+   chuck_samples_t *chuck_samples;
    ALLEGRO_MIXER *mixer;
    ALLEGRO_VOICE *voice;
    ALLEGRO_EVENT_SOURCE user_src;
@@ -92,14 +94,14 @@ static void init_alleg (sound_control_t *control)
 
 static void init_ayemu (sound_control_t *control)
 {
-   control->ayemu->freq = 44100;
-   control->ayemu->chans = 2; /* 1=mono, 2=stereo */
-   control->ayemu->bits = 16; /* 16 or 8 bit */
+   control->ayemu.freq = 44100;
+   control->ayemu.chans = 2; /* 1=mono, 2=stereo */
+   control->ayemu.bits = 16; /* 16 or 8 bit */
 
-   ayemu_init(&control->ayemu->ay);
-   ayemu_set_chip_type (&control->ayemu->ay, AYEMU_AY_LION17, NULL);
+   ayemu_init(&control->ayemu.ay);
+   ayemu_set_chip_type (&control->ayemu.ay, AYEMU_AY_LION17, NULL);
    // cpc ay-3-8910 worked on 1MHz
-   ayemu_set_chip_freq (&control->ayemu->ay, 1000000);
+   ayemu_set_chip_freq (&control->ayemu.ay, 1000000);
 }
 
 static void set_ay_regs (sound_ayemu_t *ayemu, cpc_sound_queue_t *request, uint8_t channels)
@@ -134,7 +136,7 @@ static void set_ay_regs (sound_ayemu_t *ayemu, cpc_sound_queue_t *request, uint8
    regs[12] = 0;
    regs[13] = 0;
 
-  ayemu_set_regs (&ayemu->ay, regs);
+   ayemu_set_regs (&ayemu->ay, regs);
 }
 
 static ALLEGRO_SAMPLE *sound_gen_sample (sound_ayemu_t *ayemu, cpc_sound_queue_t *request)
@@ -174,7 +176,6 @@ static ALLEGRO_SAMPLE *sound_gen_sample (sound_ayemu_t *ayemu, cpc_sound_queue_t
 // 7E 02 14 38 02 0A 7E 02 14 CC 02 0A F6 02 14 BC
 // 03 0A 53 03 14 F4 03 0A BC 03 3C BC 03 05 53 03
 // 05 F6 02 05 CC 02 05 7E 02 05 FA 01 05 DE 01 05
-#if 00
 static void sound_init_life_lost_samples (sound_control_t *control)
 {
    ALLEGRO_SAMPLE *sample;
@@ -239,22 +240,25 @@ static void sound_init_life_lost_samples (sound_control_t *control)
       base_channel_b.ton_period = base_channel_a.ton_period / 4;
       base_channel_b.duration = tone_period_and_duration[3*i + 2];
 
-      set_ay_regs (control->ayemu, &base_channel_a, AY_CHAN_A);
-      sample  = sound_gen_sample (control->ayemu, &base_channel_a);
+      set_ay_regs (&control->ayemu, &base_channel_a, AY_CHAN_A);
+      sample  = sound_gen_sample (&control->ayemu, &base_channel_a);
       sample_inst = al_create_sample_instance(sample);
       sample_holder->sample[2*i] = sample;
       sample_holder->sample_inst[2*i] = sample_inst;
-      set_ay_regs (control->ayemu, &base_channel_b, AY_CHAN_B);
-      sample  = sound_gen_sample (control->ayemu, &base_channel_b);
+      set_ay_regs (&control->ayemu, &base_channel_b, AY_CHAN_B);
+      sample  = sound_gen_sample (&control->ayemu, &base_channel_b);
       sample_inst = al_create_sample_instance(sample);
       sample_holder->sample[2*i + 1] = sample;
       sample_holder->sample_inst[2*i + 1] = sample_inst;
    }
-}
-#endif
 
-static void sound_init_samples ()
+   sample_holder->num_sample = GAME_LOST_TONES;
+   control->chuck_samples->life_lost = sample_holder;
+}
+
+static void sound_init_samples (sound_control_t *control)
 {
+   sound_init_life_lost_samples (control);
 }
 
 void sound_generate_event (uint64_t handle, int data)
@@ -265,7 +269,6 @@ void sound_generate_event (uint64_t handle, int data)
    user_event.user.type = PSG_SUPPORT_EVENT_TYPE;
    user_event.user.data1 = data;
 
-   printf ("control pointer in gen event %p\n", control);
    al_emit_user_event (&control->user_src, &user_event, NULL);
 }
 
@@ -274,14 +277,12 @@ uint64_t sound_init (void)
    sound_control_t *control = NULL;
    ALLEGRO_THREAD *sound_thread_id = NULL;
 
-   printf ("sound_init called\n");
    control = al_malloc (sizeof (sound_control_t));
    if (control == NULL)
    {
       fprintf (stderr, "control type alloc failed\n");
       exit (EXIT_FAILURE);
    }
-   printf ("control pointer %p\n", control);
 
    al_init_user_event_source (&control->user_src);
 
@@ -290,7 +291,7 @@ uint64_t sound_init (void)
 
    // init sounds like left/right up/down life lost
    // we can't pregenerated jump/fall this has to be dynamic
-   sound_init_samples ();
+   //sound_init_samples (control);
 
    // create sound thread
    sound_thread_id = al_create_thread (sound_thread, control);
@@ -329,21 +330,23 @@ static void sound_play_life_lost (void)
    printf ("sound life_lost\n");
 }
 
+static void sound_play_score_animation (void)
+{
+   printf ("sound score_animation\n");
+}
+
 void *sound_thread (ALLEGRO_THREAD *thread, void *arg)
 {
    ALLEGRO_EVENT_QUEUE *queue;
    ALLEGRO_EVENT event;
    sound_control_t *control = (sound_control_t *) arg;
 
-   printf ("sound_thread started allegro init %d\n", al_is_system_installed ());
    queue = al_create_event_queue ();
    al_register_event_source(queue, &control->user_src);
 
    while (true) {
       al_wait_for_event (queue, &event);
 
-      printf ("rec event type %d\n", event.type);
-      printf ("expected event type %d\n", PSG_SUPPORT_EVENT_TYPE);
       if (event.type == PSG_SUPPORT_EVENT_TYPE) {
          switch (event.user.data1)
          {
@@ -361,6 +364,9 @@ void *sound_thread (ALLEGRO_THREAD *thread, void *arg)
                break;
             case SOUND_EVENT_PLAY_LIFE_LOST:
                sound_play_life_lost ();
+               break;
+            case SOUND_EVENT_PLAY_SCORE_ANIMATION:
+               sound_play_score_animation ();
                break;
             default:
                fprintf (stderr, "strange sound event %ld\n", event.user.data1);
