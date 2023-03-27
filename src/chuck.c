@@ -1230,6 +1230,10 @@ static void life_management (game_context_t *game)
 
    uint8_t lives = get_lives (game->player_context);
 
+   sound_generate_event (snd_handle, SOUND_EVENT_PLAY_LIFE_LOST);
+   // wait for the tune to finish which is 2.15 sec
+   al_rest (2.5);
+
    if (lives == 0)
    {
       // game over
