@@ -160,7 +160,9 @@ static ALLEGRO_SAMPLE *sound_gen_sample (sound_ayemu_t *ayemu, cpc_sound_queue_t
 
    /* generate sound */
    ayemu_gen_sound (&ayemu->ay, audio_buf, audio_bufsize);
-   al_sample = al_create_sample (audio_buf, (int)(ayemu->freq / frequency), ayemu->freq,
+   al_sample = al_create_sample (audio_buf,
+                                 (int)(ayemu->freq / frequency),
+                                 ayemu->freq,
                                  ALLEGRO_AUDIO_DEPTH_INT16,
                                  ALLEGRO_CHANNEL_CONF_2, true);
    if (al_sample == NULL)
@@ -170,6 +172,96 @@ static ALLEGRO_SAMPLE *sound_gen_sample (sound_ayemu_t *ayemu, cpc_sound_queue_t
    }
 
    return (al_sample);
+}
+
+static void sound_init_up_down_samples (sound_control_t *control)
+{
+   cpc_sound_queue_t base_channel_a_b =
+   {
+      .channels     = 0x83,
+      .amp_env      = 0x00,
+      .ton_env      = 0x00,
+      .ton_period   = 0x118,
+      .noise_period = 0x00,
+      .amplitude    = 0x05,
+      .duration     = 0x02,
+   };
+   sample_t *sample_holder = NULL;
+
+   sample_holder = al_malloc (sizeof (sample_t));
+   if (sample_holder == NULL)
+   {
+      fprintf (stderr, "l/r sample holder memory alloction failed\n");
+      exit (EXIT_FAILURE);
+   }
+   sample_holder->sample = al_malloc (sizeof (ALLEGRO_SAMPLE *));
+   if (sample_holder->sample == NULL)
+   {
+      fprintf (stderr, "l/r sample memory alloction failed\n");
+      exit (EXIT_FAILURE);
+   }
+   sample_holder->sample_inst = al_malloc (sizeof (ALLEGRO_SAMPLE_INSTANCE *));
+   if (sample_holder->sample_inst == NULL)
+   {
+      fprintf (stderr, "l/r sample instance memory alloction failed\n");
+      exit (EXIT_FAILURE);
+   }
+
+   set_ay_regs (&control->ayemu, &base_channel_a_b, AY_CHAN_A | AY_CHAN_B);
+   sample_holder->sample[0] =
+      sound_gen_sample (&control->ayemu, &base_channel_a_b);
+   sample_holder->sample_inst[0] =
+      al_create_sample_instance (sample_holder->sample[0]);
+   al_attach_sample_instance_to_mixer (sample_holder->sample_inst[0],
+                                       control->mixer);
+
+   sample_holder->num_sample = 1;
+   control->chuck_samples.up_down = sample_holder;
+}
+
+static void sound_init_left_right_samples (sound_control_t *control)
+{
+   cpc_sound_queue_t base_channel_a_b =
+   {
+      .channels     = 0x83,
+      .amp_env      = 0x00,
+      .ton_env      = 0x00,
+      .ton_period   = 0x1e0,
+      .noise_period = 0x00,
+      .amplitude    = 0x05,
+      .duration     = 0x02,
+   };
+   sample_t *sample_holder = NULL;
+
+   sample_holder = al_malloc (sizeof (sample_t));
+   if (sample_holder == NULL)
+   {
+      fprintf (stderr, "l/r sample holder memory alloction failed\n");
+      exit (EXIT_FAILURE);
+   }
+   sample_holder->sample = al_malloc (sizeof (ALLEGRO_SAMPLE *));
+   if (sample_holder->sample == NULL)
+   {
+      fprintf (stderr, "l/r sample memory alloction failed\n");
+      exit (EXIT_FAILURE);
+   }
+   sample_holder->sample_inst = al_malloc (sizeof (ALLEGRO_SAMPLE_INSTANCE *));
+   if (sample_holder->sample_inst == NULL)
+   {
+      fprintf (stderr, "l/r sample instance memory alloction failed\n");
+      exit (EXIT_FAILURE);
+   }
+
+   set_ay_regs (&control->ayemu, &base_channel_a_b, AY_CHAN_A | AY_CHAN_B);
+   sample_holder->sample[0] =
+      sound_gen_sample (&control->ayemu, &base_channel_a_b);
+   sample_holder->sample_inst[0] =
+      al_create_sample_instance (sample_holder->sample[0]);
+   al_attach_sample_instance_to_mixer (sample_holder->sample_inst[0],
+                                       control->mixer);
+
+   sample_holder->num_sample = 1;
+   control->chuck_samples.left_right = sample_holder;
 }
 
 #define GAME_LOST_TONES 0x10
@@ -245,7 +337,7 @@ static void sound_init_life_lost_samples (sound_control_t *control)
       sample_holder->sample[2*i] =
          sound_gen_sample (&control->ayemu, &base_channel_a);
       sample_holder->sample_inst[2*i] =
-         al_create_sample_instance(sample_holder->sample[2*i]);
+         al_create_sample_instance (sample_holder->sample[2*i]);
       al_attach_sample_instance_to_mixer (sample_holder->sample_inst[2*i],
                                           control->mixer);
 
@@ -253,7 +345,7 @@ static void sound_init_life_lost_samples (sound_control_t *control)
       sample_holder->sample[2*i + 1] =
          sound_gen_sample (&control->ayemu, &base_channel_b);
       sample_holder->sample_inst[2*i + 1] =
-         al_create_sample_instance(sample_holder->sample[2*i + 1]);
+         al_create_sample_instance (sample_holder->sample[2*i + 1]);
       al_attach_sample_instance_to_mixer (sample_holder->sample_inst[2*i + 1],
                                           control->mixer);
    }
@@ -264,6 +356,8 @@ static void sound_init_life_lost_samples (sound_control_t *control)
 
 static void sound_init_samples (sound_control_t *control)
 {
+   sound_init_up_down_samples (control);
+   sound_init_left_right_samples (control);
    sound_init_life_lost_samples (control);
 }
 
@@ -308,12 +402,16 @@ uint64_t sound_init (void)
    return (uint64_t) control;
 }
 
-static void sound_play_left_right (void)
+static void sound_play_up_down (sample_t *up_down)
 {
+   al_play_sample_instance (up_down->sample_inst[0]);
+   al_rest (al_get_sample_instance_time (up_down->sample_inst[0]));
 }
 
-static void sound_play_up_down (void)
+static void sound_play_left_right (sample_t *left_right)
 {
+   al_play_sample_instance (left_right->sample_inst[0]);
+   al_rest (al_get_sample_instance_time (left_right->sample_inst[0]));
 }
 
 static void sound_play_jump (void)
@@ -354,11 +452,11 @@ void *sound_thread (ALLEGRO_THREAD *thread, void *arg)
       if (event.type == PSG_SUPPORT_EVENT_TYPE) {
          switch (event.user.data1)
          {
-            case SOUND_EVENT_PLAY_LEFT_RIGHT:
-               sound_play_left_right ();
-               break;
             case SOUND_EVENT_PLAY_UP_DOWN:
-               sound_play_up_down ();
+               sound_play_up_down (control->chuck_samples.up_down);
+               break;
+            case SOUND_EVENT_PLAY_LEFT_RIGHT:
+               sound_play_left_right (control->chuck_samples.left_right);
                break;
             case SOUND_EVENT_PLAY_FALL:
                sound_play_fall ();

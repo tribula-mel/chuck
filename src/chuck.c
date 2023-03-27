@@ -1751,6 +1751,8 @@ static void move_chuck_right (game_context_t *game)
       game->chuck_state.el.sprite_state = chuck_standing_one;
       game->chuck_state.el.direction = right;
    }
+
+   sound_generate_event (snd_handle, SOUND_EVENT_PLAY_LEFT_RIGHT);
 }
 
 static void move_chuck_up (game_context_t *game)
@@ -1775,6 +1777,7 @@ static void move_chuck_up (game_context_t *game)
       {
          adj_chuck_all_off_y (game, 2);
          set_chuck_vertical_state (game, on_ladder);
+         sound_generate_event (snd_handle, SOUND_EVENT_PLAY_UP_DOWN);
 
          if (game->chuck_state.el.direction == up)
          {
@@ -1824,6 +1827,7 @@ static void move_chuck_down (game_context_t *game)
             adj_chuck_all_off_y (game, -2);
 
          set_chuck_vertical_state (game, on_ladder);
+         sound_generate_event (snd_handle, SOUND_EVENT_PLAY_UP_DOWN);
 
          if (game->chuck_state.el.direction == down)
          {
