@@ -14,6 +14,8 @@ typedef enum {
    SOUND_EVENT_PLAY_JUMP,
    SOUND_EVENT_PLAY_LIFE_LOST,
    SOUND_EVENT_PLAY_SCORE_ANIMATION,
+   SOUND_EVENT_PLAY_EGG,
+   SOUND_EVENT_PLAY_SEED,
 } sound_event_play_t;
 
 uint64_t sound_init (void);

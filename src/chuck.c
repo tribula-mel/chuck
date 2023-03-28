@@ -596,6 +596,9 @@ static void chuck_collect_seed (game_context_t *game)
    uint8_t x = get_chuck_tile_off_x (game);
    uint8_t y = get_chuck_tile_off_y (game);
 
+   // play sound
+   sound_generate_event (snd_handle, SOUND_EVENT_PLAY_SEED);
+
    // clear a seed
    game->seed_state[get_sandbox (game->player_context, x, y) >> 4].present = false;
    set_sandbox (game->player_context, x, y, 0);
@@ -616,6 +619,9 @@ static uint16_t adjust_egg_score (uint8_t level)
 static void chuck_collect_egg (game_context_t *game,
                                uint8_t x, uint8_t y)
 {
+   // play sound
+   sound_generate_event (snd_handle, SOUND_EVENT_PLAY_EGG);
+
    // clear an egg
    game->egg_state[get_sandbox (game->player_context, x, y) >> 4].present = false;
    set_sandbox (game->player_context, x, y, 0);
@@ -694,6 +700,7 @@ static void animate_score (game_context_t *game)
       set_score (game->player_context, score);
       draw_bonus (game);
       draw_score (game);
+      sound_generate_event (snd_handle, SOUND_EVENT_PLAY_SCORE_ANIMATION);
       al_rest (0.02);
       al_flip_display ();
    }

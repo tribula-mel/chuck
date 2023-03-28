@@ -5462,7 +5462,7 @@ A2A9: 00          nop
 A2AA: 05          dec  b
 A2AB: 02          ld   (bc),a
 A2AC: 00          nop
-A2AD: C6 14       add  a,$14        # see/egg sound
+A2AD: C6 14       add  a,$14        # seed/egg sound
 A2AF: E6 1F       and  $1F
 A2B1: 32 C0 A2    ld   ($A2C0),a
 A2B4: 21 BB A2    ld   hl,$A2BB
