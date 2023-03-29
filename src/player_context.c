@@ -83,7 +83,15 @@ uint8_t *get_score_gfx (player_context_t *player)
 
 void set_score_gfx (player_context_t *player)
 {
+   uint8_t prior = player->gfx_score[1];
+
    convert_num_to_gfx (player->score, &player->gfx_score[0], 100000, 6);
+
+   // new life every 10000 points
+   if (prior != player->gfx_score[1])
+      // max is 255 lives
+      if (get_lives (player) < 0xff)
+         set_lives (player, get_lives (player) + 1);
 }
 
 // time related setters and getters

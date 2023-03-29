@@ -8,7 +8,7 @@
 + game loop initialization                [ ]
 + 4 players support                       [ ]
 + sound support                           [ ]
-+ new life                                [ ]
++ new life                                [x]
 + limit flying duck movement at x = 0     [ ]
 + pause support                           [ ]
 + chuck bug: 3rd level chuck bellow       [ ]
