@@ -123,7 +123,6 @@ void init_game_context (game_context_t *game, player_context_t *player)
    ALLEGRO_TIMER *timer;
    ALLEGRO_EVENT_QUEUE *queue;
    ALLEGRO_DISPLAY* disp;
-   uint8_t level = player->current_level;
    int width = x_res * scale, height = y_res * scale;
 
    memset (game, 0, sizeof (game_context_t));
@@ -138,6 +137,26 @@ void init_game_context (game_context_t *game, player_context_t *player)
    game->levels[5] = level_classic_six;
    game->levels[6] = level_classic_seven;
    game->levels[7] = level_classic_eight;
+
+   disp = al_create_display (width, height);
+   must_init (disp, "display");
+
+   timer = al_create_timer (1.0 / 30.0);
+   must_init (timer, "game timer");
+
+   queue = al_create_event_queue ();
+   must_init (queue, "game queue");
+
+   al_register_event_source (queue, al_get_display_event_source (disp));
+   al_register_event_source (queue, al_get_timer_event_source (timer));
+
+   set_game_queue (game, queue);
+   set_game_timer (game, timer);
+}
+
+void init_game_play (game_context_t *game)
+{
+   uint8_t level = game->player_context->current_level;
 
    init_duck_state (game);
    init_flying_duck_state (game);
@@ -155,21 +174,7 @@ void init_game_context (game_context_t *game, player_context_t *player)
    set_bonus (game->player_context, 1000);
    set_time (game->player_context, 900);
    set_current_level (game->player_context, level);
-
-   disp = al_create_display (width, height);
-   must_init (disp, "display");
-
-   timer = al_create_timer (1.0 / 30.0);
-   must_init (timer, "game timer");
-
-   queue = al_create_event_queue ();
-   must_init (queue, "game queue");
-
-   al_register_event_source (queue, al_get_display_event_source (disp));
-   al_register_event_source (queue, al_get_timer_event_source (timer));
-
-   set_game_queue (game, queue);
-   set_game_timer (game, timer);
+   set_back_to_title (game, false);
 }
 
 void init_game_next_level (game_context_t *game)

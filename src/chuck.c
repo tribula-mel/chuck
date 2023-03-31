@@ -2015,8 +2015,8 @@ static void draw_high_score (title_context_t *title)
 
 static void make_highscore_room (title_context_t *title, uint8_t index)
 {
-   for (int i = index; i < 10; i++)
-      set_high_score (title, get_high_score (title, i), i + 1);
+   for (int i = 9; i > index; i--)
+      set_high_score (title, get_high_score (title, i - 1), i);
 }
 
 static void manage_highscore (title_context_t *title, uint32_t score)
@@ -2432,7 +2432,6 @@ int main (int argc, char *argv[])
    must_init (font, "cpc464 ttf font");
 
    init_title_context (&title);
-   init_player_context (&player);
    init_game_context (&game, &player);
    set_game_font (&game, font);
    set_title_font (&title, font);
@@ -2441,6 +2440,8 @@ int main (int argc, char *argv[])
    while (true)
    {
       title_loop (&title, score);
+      init_player_context (&player);
+      init_game_play (&game);
       score = game_loop (&game);
    }
 

@@ -46,6 +46,7 @@ typedef struct __game_context
 } game_context_t;
 
 void init_game_context (game_context_t *game, player_context_t *player);
+void init_game_play (game_context_t *game);
 void deinit_game_context (game_context_t *game);
 void init_game_next_level (game_context_t *game);
 void init_game_restart_level (game_context_t *game);
