@@ -33,15 +33,98 @@ static uint16_t calc_level_bonus (uint8_t level)
    return bonus;
 }
 
+static void init_duck_state (game_context_t *game)
+{
+   player_context_t *player = game->player_context;
+   uint8_t n_ducks = 0;
+   uint8_t level = player->current_level;
+
+   n_ducks = adjust_n_ducks (game->levels[level % 8].n_ducks, level);
+   game->ducks_state.n_ducks = n_ducks;
+
+   for (int i = 0; i < n_ducks; i++)
+   {
+      game->ducks_state.ducks_state[i].tile_offset.x = game->levels[level % 8].duck_offsets[i].x;
+      game->ducks_state.ducks_state[i].tile_offset.y = game->levels[level % 8].duck_offsets[i].y;
+      game->ducks_state.ducks_state[i].gfx_offset.x = 8 * game->ducks_state.ducks_state[i].tile_offset.x;
+      game->ducks_state.ducks_state[i].gfx_offset.y = 8 * game->ducks_state.ducks_state[i].tile_offset.y + 0x14;
+      game->ducks_state.ducks_state[i].direction = right;
+      game->ducks_state.ducks_state[i].sprite_state = 0;
+   }
+   game->ducks_state.duck_to_move = adjust_duck_speed (level, 8);
+}
+
+static void init_flying_duck_state (game_context_t *game)
+{
+   game->flying_duck_state.el.gfx_offset.x = 0x04;
+   game->flying_duck_state.el.gfx_offset.y = 0x9e;
+   game->flying_duck_state.el.direction = right;
+   game->flying_duck_state.el.sprite_state = 0;
+   game->flying_duck_state.dx = 0;
+   game->flying_duck_state.dy = 0;
+}
+
+static void init_elevator_state (game_context_t *game)
+{
+   uint8_t level = game->player_context->current_level;
+
+   for (int i = 0; i < N_PADDLES; i++)
+   {
+      game->elevator_state[i].gfx_offset.x = game->levels[level % 8].elevator_offset[i].x;
+      game->elevator_state[i].gfx_offset.y = game->levels[level % 8].elevator_offset[i].y;
+   }
+}
+
+static void init_seed_state (game_context_t *game)
+{
+   uint8_t level = game->player_context->current_level;
+
+   for (int i = 0; i < game->levels[level % 8].n_seeds; i++)
+   {
+      game->seed_state[i].tile_offset.x = game->levels[level % 8].seed_offsets[i].x;
+      game->seed_state[i].tile_offset.y = game->levels[level % 8].seed_offsets[i].y;
+      game->seed_state[i].present = true;
+   }
+}
+
+static void init_egg_state (game_context_t *game)
+{
+   uint8_t level = game->player_context->current_level;
+
+   for (int i = 0; i < game->levels[level % 8].n_eggs; i++)
+   {
+      game->egg_state[i].tile_offset.x = game->levels[level % 8].egg_offsets[i].x;
+      game->egg_state[i].tile_offset.y = game->levels[level % 8].egg_offsets[i].y;
+      game->egg_state[i].present = true;
+   }
+}
+
+static void init_chuck_state (game_context_t *game)
+{
+   game->chuck_state.el.gfx_offset.x = 0x3c;
+   game->chuck_state.el.gfx_offset.y = 0x18;
+   game->chuck_state.el.tile_offset.x = 0x7;
+   game->chuck_state.el.tile_offset.y = 0x1;
+   game->chuck_state.el.direction = right;
+   game->chuck_state.el.sprite_state = chuck_standing_one;
+   set_chuck_tile_rel_off_x (game, on_the_right_edge);
+   set_chuck_tile_rel_off_y (game, on_the_bottom_edge);
+   game->chuck_state.vertical_state = 0;
+   game->chuck_state.vertical_counter = 0;
+}
+
+static void init_random_number_state (game_context_t *game)
+{
+   game->random.number = 0x76767676;
+}
+
 void init_game_context (game_context_t *game, player_context_t *player)
 {
    ALLEGRO_TIMER *timer;
    ALLEGRO_EVENT_QUEUE *queue;
    ALLEGRO_DISPLAY* disp;
-   uint8_t n_ducks = 0;
    uint8_t level = player->current_level;
    int width = x_res * scale, height = y_res * scale;
-   int i = 0;
 
    memset (game, 0, sizeof (game_context_t));
 
@@ -56,66 +139,13 @@ void init_game_context (game_context_t *game, player_context_t *player)
    game->levels[6] = level_classic_seven;
    game->levels[7] = level_classic_eight;
 
-   n_ducks = adjust_n_ducks (game->levels[level % 8].n_ducks, level);
-   game->ducks_state.n_ducks = n_ducks;
-
-   // initialize ducks state
-   for (i = 0; i < n_ducks; i++)
-   {
-      game->ducks_state.ducks_state[i].tile_offset.x = game->levels[level % 8].duck_offsets[i].x;
-      game->ducks_state.ducks_state[i].tile_offset.y = game->levels[level % 8].duck_offsets[i].y;
-      game->ducks_state.ducks_state[i].gfx_offset.x = 8 * game->ducks_state.ducks_state[i].tile_offset.x;
-      game->ducks_state.ducks_state[i].gfx_offset.y = 8 * game->ducks_state.ducks_state[i].tile_offset.y + 0x14;
-      game->ducks_state.ducks_state[i].direction = right;
-      game->ducks_state.ducks_state[i].sprite_state = 0;
-   }
-   game->ducks_state.duck_to_move = adjust_duck_speed (level, 8);
-
-   // initialize flying duck state
-   game->flying_duck_state.el.gfx_offset.x = 0x04;
-   game->flying_duck_state.el.gfx_offset.y = 0x9e;
-   game->flying_duck_state.el.direction = right;
-   game->flying_duck_state.el.sprite_state = 0;
-   game->flying_duck_state.dx = 0;
-   game->flying_duck_state.dy = 0;
-
-   // initialize elevator state
-   for (i = 0; i < N_PADDLES; i++)
-   {
-      game->elevator_state[i].gfx_offset.x = game->levels[level % 8].elevator_offset[i].x;
-      game->elevator_state[i].gfx_offset.y = game->levels[level % 8].elevator_offset[i].y;
-   }
-
-   // initialize seed state
-   for (i = 0; i < game->levels[level % 8].n_seeds; i++)
-   {
-      game->seed_state[i].tile_offset.x = game->levels[level % 8].seed_offsets[i].x;
-      game->seed_state[i].tile_offset.y = game->levels[level % 8].seed_offsets[i].y;
-      game->seed_state[i].present = true;
-   }
-
-   // initialize eggs state
-   for (i = 0; i < game->levels[level % 8].n_eggs; i++)
-   {
-      game->egg_state[i].tile_offset.x = game->levels[level % 8].egg_offsets[i].x;
-      game->egg_state[i].tile_offset.y = game->levels[level % 8].egg_offsets[i].y;
-      game->egg_state[i].present = true;
-   }
-
-   // initialize chuck state
-   game->chuck_state.el.gfx_offset.x = 0x3c;
-   game->chuck_state.el.gfx_offset.y = 0x18;
-   game->chuck_state.el.tile_offset.x = 0x7;
-   game->chuck_state.el.tile_offset.y = 0x1;
-   game->chuck_state.el.direction = right;
-   game->chuck_state.el.sprite_state = chuck_standing_one;
-   set_chuck_tile_rel_off_x (game, on_the_right_edge);
-   set_chuck_tile_rel_off_y (game, on_the_bottom_edge);
-   game->chuck_state.vertical_state = 0;
-   game->chuck_state.vertical_counter = 0;
-
-   // radnom number for duck movements
-   game->random.number = 0x76767676;
+   init_duck_state (game);
+   init_flying_duck_state (game);
+   init_elevator_state (game);
+   init_seed_state (game);
+   init_egg_state (game);
+   init_chuck_state (game);
+   init_random_number_state (game);
 
    // clear the sandbox
    memset (game->player_context->sandbox, 0, OFFSET_X_MAX * OFFSET_Y_MAX);
@@ -145,70 +175,15 @@ void init_game_context (game_context_t *game, player_context_t *player)
 void init_game_next_level (game_context_t *game)
 {
    player_context_t *player = game->player_context;
-   int i = 0;
-   uint8_t n_ducks = 0;
    uint8_t level = player->current_level;
 
-   n_ducks = adjust_n_ducks (game->levels[level % 8].n_ducks, level);
-   game->ducks_state.n_ducks = n_ducks;
-
-   // initialize ducks state
-   for (i = 0; i < n_ducks; i++)
-   {
-      game->ducks_state.ducks_state[i].tile_offset.x = game->levels[level % 8].duck_offsets[i].x;
-      game->ducks_state.ducks_state[i].tile_offset.y = game->levels[level % 8].duck_offsets[i].y;
-      game->ducks_state.ducks_state[i].gfx_offset.x = 8 * game->ducks_state.ducks_state[i].tile_offset.x;
-      game->ducks_state.ducks_state[i].gfx_offset.y = 8 * game->ducks_state.ducks_state[i].tile_offset.y + 0x14;
-      game->ducks_state.ducks_state[i].direction = right;
-      game->ducks_state.ducks_state[i].sprite_state = 0;
-   }
-   game->ducks_state.duck_to_move = adjust_duck_speed (level, 8);
-
-   // initialize flying duck state
-   game->flying_duck_state.el.gfx_offset.x = 0x04;
-   game->flying_duck_state.el.gfx_offset.y = 0x9e;
-   game->flying_duck_state.el.direction = right;
-   game->flying_duck_state.el.sprite_state = 0;
-   game->flying_duck_state.dx = 0;
-   game->flying_duck_state.dy = 0;
-
-   // initialize elevator state
-   for (i = 0; i < N_PADDLES; i++)
-   {
-      game->elevator_state[i].gfx_offset.x = game->levels[level % 8].elevator_offset[i].x;
-      game->elevator_state[i].gfx_offset.y = game->levels[level % 8].elevator_offset[i].y;
-   }
-
-   // initialize seed state
-   for (i = 0; i < game->levels[level % 8].n_seeds; i++)
-   {
-      game->seed_state[i].tile_offset.x = game->levels[level % 8].seed_offsets[i].x;
-      game->seed_state[i].tile_offset.y = game->levels[level % 8].seed_offsets[i].y;
-      game->seed_state[i].present = true;
-   }
-
-   // initialize eggs state
-   for (i = 0; i < game->levels[level % 8].n_eggs; i++)
-   {
-      game->egg_state[i].tile_offset.x = game->levels[level % 8].egg_offsets[i].x;
-      game->egg_state[i].tile_offset.y = game->levels[level % 8].egg_offsets[i].y;
-      game->egg_state[i].present = true;
-   }
-
-   // initialize chuck state
-   game->chuck_state.el.gfx_offset.x = 0x3c;
-   game->chuck_state.el.gfx_offset.y = 0x18;
-   game->chuck_state.el.tile_offset.x = 0x7;
-   game->chuck_state.el.tile_offset.y = 0x1;
-   game->chuck_state.el.direction = right;
-   game->chuck_state.el.sprite_state = chuck_standing_one;
-   set_chuck_tile_rel_off_x (game, on_the_right_edge);
-   set_chuck_tile_rel_off_y (game, on_the_bottom_edge);
-   game->chuck_state.vertical_state = 0;
-   game->chuck_state.vertical_counter = 0;
-
-   // radnom number for duck movements
-   game->random.number = 0x76767676;
+   init_duck_state (game);
+   init_flying_duck_state (game);
+   init_elevator_state (game);
+   init_seed_state (game);
+   init_egg_state (game);
+   init_chuck_state (game);
+   init_random_number_state (game);
 
    set_back_to_title (game, false);
    set_next_level (game, false);
@@ -227,54 +202,13 @@ void init_game_next_level (game_context_t *game)
 void init_game_restart_level (game_context_t *game)
 {
    player_context_t *player = game->player_context;
-   int i = 0;
-   uint8_t n_ducks = 0;
    uint8_t level = player->current_level;
 
-   n_ducks = adjust_n_ducks (game->levels[level % 8].n_ducks, level);
-   game->ducks_state.n_ducks = n_ducks;
-
-   // initialize ducks state
-   for (i = 0; i < n_ducks; i++)
-   {
-      game->ducks_state.ducks_state[i].tile_offset.x = game->levels[level % 8].duck_offsets[i].x;
-      game->ducks_state.ducks_state[i].tile_offset.y = game->levels[level % 8].duck_offsets[i].y;
-      game->ducks_state.ducks_state[i].gfx_offset.x = 8 * game->ducks_state.ducks_state[i].tile_offset.x;
-      game->ducks_state.ducks_state[i].gfx_offset.y = 8 * game->ducks_state.ducks_state[i].tile_offset.y + 0x14;
-      game->ducks_state.ducks_state[i].direction = right;
-      game->ducks_state.ducks_state[i].sprite_state = 0;
-   }
-   game->ducks_state.duck_to_move = adjust_duck_speed (level, 8);
-
-   // initialize flying duck state
-   game->flying_duck_state.el.gfx_offset.x = 0x04;
-   game->flying_duck_state.el.gfx_offset.y = 0x9e;
-   game->flying_duck_state.el.direction = right;
-   game->flying_duck_state.el.sprite_state = 0;
-   game->flying_duck_state.dx = 0;
-   game->flying_duck_state.dy = 0;
-
-   // initialize elevator state
-   for (i = 0; i < N_PADDLES; i++)
-   {
-      game->elevator_state[i].gfx_offset.x = game->levels[level % 8].elevator_offset[i].x;
-      game->elevator_state[i].gfx_offset.y = game->levels[level % 8].elevator_offset[i].y;
-   }
-
-   // initialize chuck state
-   game->chuck_state.el.gfx_offset.x = 0x3c;
-   game->chuck_state.el.gfx_offset.y = 0x18;
-   game->chuck_state.el.tile_offset.x = 0x7;
-   game->chuck_state.el.tile_offset.y = 0x1;
-   game->chuck_state.el.direction = right;
-   game->chuck_state.el.sprite_state = chuck_standing_one;
-   set_chuck_tile_rel_off_x (game, on_the_right_edge);
-   set_chuck_tile_rel_off_y (game, on_the_bottom_edge);
-   game->chuck_state.vertical_state = 0;
-   game->chuck_state.vertical_counter = 0;
-
-   // radnom number for duck movements
-   game->random.number = 0x76767676;
+   init_duck_state (game);
+   init_flying_duck_state (game);
+   init_elevator_state (game);
+   init_chuck_state (game);
+   init_random_number_state (game);
 
    set_back_to_title (game, false);
    set_next_level (game, false);
