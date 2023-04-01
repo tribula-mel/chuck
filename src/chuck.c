@@ -1107,7 +1107,7 @@ static int move_flying_duck (game_context_t *game)
       if (flying_duck_free (game->player_context->current_level) == false)
          goto skip_flying;
 
-      if ((flyd_x + 0x4) >= chuck_x)
+      if ((uint8_t)(flyd_x + 0x4) >= chuck_x)
       {
          // flying duck is to the chuck's right
          flyd_dx--;
@@ -1140,9 +1140,9 @@ static int move_flying_duck (game_context_t *game)
             flyd_dy--;
       }
 
-      if ((flyd_y + flyd_dy) < 0x20)
+      if ((uint8_t)(flyd_y + flyd_dy) < 0x20)
          flyd_dy = -flyd_dy;
-      if ((flyd_x + flyd_dx) >= 0x90)
+      if ((uint8_t)(flyd_x + flyd_dx) >= 0x90)
          flyd_dx = -flyd_dx;
 
 skip_flying:

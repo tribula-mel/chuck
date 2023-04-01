@@ -9,5 +9,5 @@
 + 4 players support                       [ ]
 + sound support                           [ ]
 + new life                                [x]
-+ limit flying duck movement at x = 0     [ ]
++ limit flying duck movement at x = 0     [x]
 + pause support                           [ ]
