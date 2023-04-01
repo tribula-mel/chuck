@@ -1229,6 +1229,55 @@ static void draw_game_over (game_context_t *game)
    al_rest (3);
 }
 
+// original chuck $9bc6
+static void chuck_collision_check (game_context_t *game)
+{
+   uint8_t duck_x = 0;
+   uint8_t duck_y = 0;
+   uint8_t n_ducks = 0;
+   uint8_t flyd_x = game->flying_duck_state.el.gfx_offset.x;
+   uint8_t flyd_y = game->flying_duck_state.el.gfx_offset.y;
+   uint8_t chuck_x = get_chuck_gfx_off_x (game);
+   uint8_t chuck_y = get_chuck_gfx_off_y (game);
+
+   // compare chuck y with $14
+   // compare chuck y with $b0
+   // time check
+
+   // if ducks present then check for collision
+   if (game->ducks_state.n_ducks != 0)
+   {
+      n_ducks = game->ducks_state.n_ducks;
+      for (int i = 0; i < n_ducks; i++)
+      {
+         duck_x = game->ducks_state.ducks_state[i].gfx_offset.x;
+         duck_y = game->ducks_state.ducks_state[i].gfx_offset.y;
+         if ((uint8_t)(duck_x - chuck_x + 0x5) < 0xb)
+         {
+            if ((uint8_t)(duck_y - chuck_y + 0xd) < 0x1d)
+            {
+               // life lost
+               life_management (game);
+               return;
+            }
+         }
+      }
+   }
+
+   // if flying duck free check for collision
+   if (flying_duck_free (game->player_context->current_level) == true)
+   {
+      flyd_x += 0x9;
+      if ((uint8_t)(flyd_x - chuck_x) < 0xb)
+      {
+         flyd_y += 0x9;
+         if ((uint8_t)(flyd_y - chuck_y) < 0x1d)
+            // life lost
+            life_management (game);
+      }
+   }
+}
+
 static void life_management (game_context_t *game)
 {
    // reduce number of lives for the current player
@@ -2355,6 +2404,7 @@ static uint32_t game_loop (game_context_t *game)
          move_time (game);
          move_chuck (game, dx, dy);
          dx = dy = 0;
+         chuck_collision_check (game);
 
          if (get_back_to_title (game))
             break;

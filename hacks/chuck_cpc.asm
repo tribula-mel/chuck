@@ -4328,8 +4328,8 @@
 9B08: FA 9A 9A    jp   m,$9A9A
 9B0B: FE 7F       cp   $7F
 9B0D: 28 33       jr   z,$9B42
-9B0F: CD C6 9B    call $9BC6
-9B12: 38 41       jr   c,$9B55
+9B0F: CD C6 9B    call $9BC6     # collision check routine
+9B12: 38 41       jr   c,$9B55   # if carry set life is lost
 9B14: CD D7 95    call $95D7
 9B17: C3 E1 9A    jp   $9AE1
 9B1A: 21 66 7B    ld   hl,$7B66
@@ -4424,50 +4424,50 @@
 9BC0: B7          or   a
 9BC1: 28 E7       jr   z,$9BAA
 9BC3: C3 A0 9A    jp   $9AA0
-9BC6: FD 21 36 7B ld   iy,$7B36
+9BC6: FD 21 36 7B ld   iy,$7B36    # collision check, load chuck table
 9BCA: FD 7E 01    ld   a,(iy+$01)
 9BCD: FE 14       cp   $14
 9BCF: 38 55       jr   c,$9C26
 9BD1: FE B0       cp   $B0
 9BD3: 30 51       jr   nc,$9C26
-9BD5: 21 96 7B    ld   hl,$7B96
+9BD5: 21 96 7B    ld   hl,$7B96    # time table
 9BD8: 7E          ld   a,(hl)
 9BD9: 23          inc  hl
 9BDA: B6          or   (hl)
 9BDB: 23          inc  hl
 9BDC: B6          or   (hl)
-9BDD: 28 49       jr   z,$9C28
-9BDF: 3A 36 7B    ld   a,($7B36)
-9BE2: 57          ld   d,a
+9BDD: 28 49       jr   z,$9C28     # if zero set then time is lost
+9BDF: 3A 36 7B    ld   a,($7B36)   # load chuck x
+9BE2: 57          ld   d,a         # move chuck x to d reg
 9BE3: 3A 37 7B    ld   a,($7B37)
-9BE6: 5F          ld   e,a
-9BE7: 3A 07 7B    ld   a,($7B07)
+9BE6: 5F          ld   e,a         # load e with chuck y
+9BE7: 3A 07 7B    ld   a,($7B07)   # load number of ducks into a
 9BEA: B7          or   a
-9BEB: 28 1C       jr   z,$9C09
+9BEB: 28 1C       jr   z,$9C09     # if zero skip duck collision check
 9BED: 47          ld   b,a
 9BEE: 78          ld   a,b
-9BEF: 3D          dec  a
-9BF0: CD E3 8B    call $8BE3
-9BF3: FD 7E 00    ld   a,(iy+$00)
+9BEF: 3D          dec  a           # start with last duck
+9BF0: CD E3 8B    call $8BE3       # set iy from the duck table
+9BF3: FD 7E 00    ld   a,(iy+$00)  # load duck x
 9BF6: 92          sub  d
 9BF7: C6 05       add  a,$05
 9BF9: FE 0B       cp   $0B
 9BFB: 30 0A       jr   nc,$9C07
-9BFD: FD 7E 01    ld   a,(iy+$01)
+9BFD: FD 7E 01    ld   a,(iy+$01)  # load duck y
 9C00: 93          sub  e
 9C01: C6 0D       add  a,$0D
 9C03: FE 1D       cp   $1D
 9C05: 38 1F       jr   c,$9C26
 9C07: 10 E5       djnz $9BEE
-9C09: 3A 52 7B    ld   a,($7B52)
+9C09: 3A 52 7B    ld   a,($7B52)  # load flying duck out of cage state
 9C0C: B7          or   a
-9C0D: 28 14       jr   z,$9C23
-9C0F: 3A 4E 7B    ld   a,($7B4E)
+9C0D: 28 14       jr   z,$9C23    # if in cage skip flying duck collision check
+9C0F: 3A 4E 7B    ld   a,($7B4E)  # flying duck x position
 9C12: C6 09       add  a,$09
 9C14: 92          sub  d
 9C15: FE 0B       cp   $0B
 9C17: 30 0A       jr   nc,$9C23
-9C19: 3A 4F 7B    ld   a,($7B4F)
+9C19: 3A 4F 7B    ld   a,($7B4F)  # flying duck y position
 9C1C: C6 09       add  a,$09
 9C1E: 93          sub  e
 9C1F: FE 1D       cp   $1D

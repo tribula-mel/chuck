@@ -4,7 +4,7 @@
 + chuck movement: limit upper y movement  [ ]
 + chuck movement: up/down rework          [ ]
 + title screen                            [ ]
-+ collision check                         [ ]
++ collision check                         [x]
 + game loop initialization                [x]
 + 4 players support                       [ ]
 + sound support                           [ ]
