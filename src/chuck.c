@@ -1827,6 +1827,11 @@ static void move_chuck_up (game_context_t *game)
          if ((get_chuck_tile_rel_off_y (game) % 2) == 1)
             adj_chuck_all_off_y (game, -1);
 
+      if (get_chuck_vertical_state (game) == in_jump)
+         if (get_sandbox (game->player_context, get_chuck_tile_off_x (game),
+                          get_chuck_tile_off_y (game) + 1) & 0x2)
+            printf ("mel\n");
+
       // is there ladder
       if (get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                        get_chuck_tile_off_y (game) + 2) & 0x2)
