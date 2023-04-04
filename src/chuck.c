@@ -1830,7 +1830,24 @@ static void move_chuck_up (game_context_t *game)
       if (get_chuck_vertical_state (game) == in_jump)
          if (get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                           get_chuck_tile_off_y (game) + 1) & 0x2)
-            printf ("mel\n");
+         {
+            adj_chuck_all_off_y (game, 2);
+            set_chuck_vertical_state (game, on_ladder);
+            sound_generate_event (snd_handle, SOUND_EVENT_PLAY_UP_DOWN);
+
+            if (game->chuck_state.el.direction == up)
+            {
+               game->chuck_state.el.sprite_state += 1;
+               if (game->chuck_state.el.sprite_state > chuck_back_max)
+                  game->chuck_state.el.sprite_state = chuck_back_one;
+            }
+            else
+            {
+               game->chuck_state.el.sprite_state = chuck_back_one;
+               game->chuck_state.el.direction = up;
+            }
+            return;
+         }
 
       // is there ladder
       if (get_sandbox (game->player_context, get_chuck_tile_off_x (game),

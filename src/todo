@@ -1,5 +1,5 @@
 + chuck movement: check edge cases        [ ]
-+ chuck movement: ladder tops             [ ]
++ chuck movement: ladder tops             [x]
 + chuck movement: through the platforms   [ ]
 + chuck movement: limit upper y movement  [ ]
 + chuck movement: up/down rework          [ ]

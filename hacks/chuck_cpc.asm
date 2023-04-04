@@ -3149,7 +3149,7 @@
 9206: C3 8E 94    jp   $948E
 9209: 3A 56 7B    ld   a,($7B56)
 920C: E6 10       and  $10          # check for jump press
-920E: C2 FA 92    jp   nz,$92FA
+920E: C2 FA 92    jp   nz,$92FA     # jump to $92FA if jump key pressed
 9211: 79          ld   a,c
 9212: B7          or   a
 9213: 28 2D       jr   z,$9242
@@ -3281,10 +3281,10 @@
 9325: 28 26       jr   z,$934D
 9327: FA 4D 93    jp   m,$934D
 932A: D5          push de
-932B: CD A3 8F    call $8FA3
+932B: CD A3 8F    call $8FA3           # load from sandbox
 932E: D1          pop  de
 932F: E6 01       and  $01
-9331: 20 0A       jr   nz,$933D
+9331: 20 0A       jr   nz,$933D        # if platform jump
 9333: D5          push de
 9334: 1C          inc  e
 9335: CD A3 8F    call $8FA3           # de carries chuck's tile offsets
@@ -3300,17 +3300,17 @@
 934D: 7C          ld   a,h
 934E: 80          add  a,b
 934F: FE 03       cp   $03
-9351: 20 52       jr   nz,$93A5
-9353: FD 7E 07    ld   a,(iy+$07)
+9351: 20 52       jr   nz,$93A5     # if not in the middle of the tile jump
+9353: FD 7E 07    ld   a,(iy+$07)   # up/down key press status
 9356: B7          or   a
-9357: 28 4C       jr   z,$93A5
-9359: FA 85 93    jp   m,$9385
-935C: D5          push de
+9357: 28 4C       jr   z,$93A5      # if not pressed jump
+9359: FA 85 93    jp   m,$9385      # for down jump
+935C: D5          push de           # up case
 935D: 1C          inc  e
 935E: CD A3 8F    call $8FA3
 9361: D1          pop  de
 9362: E6 02       and  $02
-9364: 20 10       jr   nz,$9376
+9364: 20 10       jr   nz,$9376     # if ladder present jump
 9366: D5          push de
 9367: 1C          inc  e
 9368: 7D          ld   a,l
@@ -3321,7 +3321,7 @@
 9371: D1          pop  de
 9372: E6 02       and  $02
 9374: 28 2F       jr   z,$93A5
-9376: FD 36 04 01 ld   (iy+$04),$01
+9376: FD 36 04 01 ld   (iy+$04),$01 # chuck is on the ladder
 937A: 7D          ld   a,l
 937B: 81          add  a,c
 937C: E6 01       and  $01
