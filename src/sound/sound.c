@@ -589,7 +589,7 @@ static void sound_play_egg (sample_t *egg)
 static void sound_play_seed (sample_t *seed)
 {
    al_play_sample_instance (seed->sample_inst[0]);
-   al_rest (al_get_sample_instance_time (seed->sample_inst[0]));
+   //al_rest (al_get_sample_instance_time (seed->sample_inst[0]));
 }
 
 void *sound_thread (ALLEGRO_THREAD *thread, void *arg)

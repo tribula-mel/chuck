@@ -941,7 +941,7 @@ static int animate_chuck_jump (game_context_t *game)
       //    so we must limit dy
       if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game) - 1) & 0x1) && (dy < 0))
-         if (get_chuck_tile_rel_off_y (game) < abs(dy))
+         if (get_chuck_tile_rel_off_y (game) < abs (dy))
             dy = (-1) * get_chuck_tile_rel_off_y (game);
 
       // same as above but this time we check for the elevator paddles
@@ -950,13 +950,15 @@ static int animate_chuck_jump (game_context_t *game)
 
       // platform above our head ?
       if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
-                        get_chuck_tile_off_y (game) + 1) == 0x1) &&
-          (get_chuck_tile_rel_off_y (game) == on_the_bottom_edge))
-      {
-         // if so change direction
-         set_chuck_vertical_count (game, 0xc);
-         dy = calc_chuck_jump_dy (game, get_chuck_vertical_count (game));
-      }
+                        get_chuck_tile_off_y (game)) != 0x1))
+         if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
+                           get_chuck_tile_off_y (game) + 1) == 0x1) &&
+             (get_chuck_tile_rel_off_y (game) == on_the_bottom_edge))
+         {
+            // if so change direction
+            set_chuck_vertical_count (game, 0xc);
+            dy = calc_chuck_jump_dy (game, get_chuck_vertical_count (game));
+         }
 
       adj_chuck_all_off_y (game, dy);
       adj_chuck_all_off_x (game, dx);
@@ -1960,7 +1962,7 @@ static chuck_vertical_t get_chuck_vertical_state (game_context_t *game)
    return (game->chuck_state.vertical_state);
 }
 
-// taken from the original chuck
+// taken from the original chuck $9312
 static int8_t calc_chuck_jump_dy (game_context_t *game,
                                   uint8_t count)
 {
@@ -2327,7 +2329,7 @@ static uint32_t game_loop (game_context_t *game)
          draw_flying_duck (game);
          draw_chuck (game);
          animate_chuck_fall (game);
-         animate_chuck_jump (game);
+         //animate_chuck_jump (game);
          if (game->levels[game->player_context->current_level % 8].elevator == true)
             draw_elevator (game);
 
@@ -2424,6 +2426,7 @@ static uint32_t game_loop (game_context_t *game)
          if (game->levels[game->player_context->current_level % 8].elevator == true)
             move_elevator (game);
          move_time (game);
+         animate_chuck_jump (game);
          move_chuck (game, dx, dy);
          dx = dy = 0;
          chuck_collision_check (game);

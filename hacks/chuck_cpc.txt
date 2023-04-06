@@ -1065,7 +1065,7 @@
              y = 8 * (tile y) + (offset $9) + 0x10 (chuck height)
    offset $a jump sprite sequence $0, $1, $2 .. $14
    offset $b dx for jump (copy of $6 at the start of the jump)
-   offset $c ?
+   offset $c same as $b but only set if left/right key pressed
 
 -| call $8fa3
    checks chuck's tile position for limits

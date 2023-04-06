@@ -3134,11 +3134,11 @@
 91DF: 0C          inc  c
 91E0: FD 70 06    ld   (iy+$06),b   # store the status in the table
 91E3: FD 71 07    ld   (iy+$07),c
-91E6: FD 56 02    ld   d,(iy+$02)
-91E9: FD 5E 03    ld   e,(iy+$03)
-91EC: FD 66 08    ld   h,(iy+$08)
-91EF: FD 6E 09    ld   l,(iy+$09)
-91F2: FD 7E 04    ld   a,(iy+$04)
+91E6: FD 56 02    ld   d,(iy+$02)   # x tile
+91E9: FD 5E 03    ld   e,(iy+$03)   # y tile
+91EC: FD 66 08    ld   h,(iy+$08)   # tile x relative
+91EF: FD 6E 09    ld   l,(iy+$09)   # tile y relative
+91F2: FD 7E 04    ld   a,(iy+$04)   # up/down status
 91F5: B7          or   a
 91F6: CA 09 92    jp   z,$9209
 91F9: FE 02       cp   $02
@@ -3147,7 +3147,7 @@
 9201: FE 03       cp   $03
 9203: CA 45 94    jp   z,$9445
 9206: C3 8E 94    jp   $948E
-9209: 3A 56 7B    ld   a,($7B56)
+9209: 3A 56 7B    ld   a,($7B56)    # chuck is not moving vertically
 920C: E6 10       and  $10          # check for jump press
 920E: C2 FA 92    jp   nz,$92FA     # jump to $92FA if jump key pressed
 9211: 79          ld   a,c
@@ -3260,11 +3260,11 @@
 92F3: FD 36 0C 00 ld   (iy+$0c),$00
 92F7: C3 22 95    jp   $9522
 92FA: FD 36 0A 00 ld   (iy+$0a),$00    # jump key pressed
-92FE: FD 36 04 02 ld   (iy+$04),$02
+92FE: FD 36 04 02 ld   (iy+$04),$02    # update vertical status
 9302: 78          ld   a,b
 9303: FD 77 0B    ld   (iy+$0b),a      # copy offset $6 in here
 9306: B7          or   a
-9307: 28 03       jr   z,$930C
+9307: 28 03       jr   z,$930C         # if left/right key not pressed jump
 9309: FD 77 0C    ld   (iy+$0c),a
 930C: FD 46 0B    ld   b,(iy+$0b)      # offset $b carries dx
 930F: FD 7E 0A    ld   a,(iy+$0a)      # jump sequence number
@@ -3280,13 +3280,13 @@
 9324: B7          or   a
 9325: 28 26       jr   z,$934D
 9327: FA 4D 93    jp   m,$934D
-932A: D5          push de
+932A: D5          push de              # is chuck in the tile ?
 932B: CD A3 8F    call $8FA3           # load from sandbox
 932E: D1          pop  de
 932F: E6 01       and  $01
 9331: 20 0A       jr   nz,$933D        # if platform jump
 9333: D5          push de
-9334: 1C          inc  e
+9334: 1C          inc  e               # one tile above check
 9335: CD A3 8F    call $8FA3           # de carries chuck's tile offsets
 9338: D1          pop  de
 9339: FE 01       cp   $01
@@ -3305,30 +3305,30 @@
 9356: B7          or   a
 9357: 28 4C       jr   z,$93A5      # if not pressed jump
 9359: FA 85 93    jp   m,$9385      # for down jump
-935C: D5          push de           # up case
+935C: D5          push de           # up case and lined up with the ladder
 935D: 1C          inc  e
 935E: CD A3 8F    call $8FA3
 9361: D1          pop  de
-9362: E6 02       and  $02
+9362: E6 02       and  $02          # ladder above chuck ?
 9364: 20 10       jr   nz,$9376     # if ladder present jump
 9366: D5          push de
-9367: 1C          inc  e
-9368: 7D          ld   a,l
+9367: 1C          inc  e            # inc tile y
+9368: 7D          ld   a,l          # relative tile y
 9369: FE 04       cp   $04
 936B: 38 01       jr   c,$936E
-936D: 1C          inc  e
+936D: 1C          inc  e            # if relative tile y >= 4 inc tile y
 936E: CD A3 8F    call $8FA3
 9371: D1          pop  de
 9372: E6 02       and  $02
-9374: 28 2F       jr   z,$93A5
+9374: 28 2F       jr   z,$93A5      # if no ladder jump
 9376: FD 36 04 01 ld   (iy+$04),$01 # chuck is on the ladder
 937A: 7D          ld   a,l
 937B: 81          add  a,c
 937C: E6 01       and  $01
 937E: CA 3C 94    jp   z,$943C
-9381: 0C          inc  c
+9381: 0C          inc  c            # if dy odd make it even
 9382: C3 3C 94    jp   $943C
-9385: CD A3 8F    call $8FA3
+9385: CD A3 8F    call $8FA3        # down key pressed and lined up with the ladder
 9388: E6 02       and  $02
 938A: 28 19       jr   z,$93A5
 938C: D5          push de
@@ -3337,32 +3337,32 @@
 9391: D1          pop  de
 9392: E6 02       and  $02
 9394: 28 0F       jr   z,$93A5
-9396: FD 36 04 01 ld   (iy+$04),$01
+9396: FD 36 04 01 ld   (iy+$04),$01 # vertical status on the ladder
 939A: 7D          ld   a,l
 939B: 81          add  a,c
 939C: E6 01       and  $01
 939E: CA 3C 94    jp   z,$943C
-93A1: 0D          dec  c
+93A1: 0D          dec  c            # if dy odd make it even
 93A2: C3 3C 94    jp   $943C
 93A5: 79          ld   a,c
-93A6: 85          add  a,l
+93A6: 85          add  a,l          # dy + tile relative y
 93A7: 28 03       jr   z,$93AC
 93A9: F2 C1 93    jp   p,$93C1
-93AC: D5          push de
+93AC: D5          push de           # attempting to move down
 93AD: 1D          dec  e
 93AE: CD A3 8F    call $8FA3
 93B1: D1          pop  de
 93B2: E6 01       and  $01
 93B4: 28 1A       jr   z,$93D0
-93B6: FD 36 04 00 ld   (iy+$04),$00
+93B6: FD 36 04 00 ld   (iy+$04),$00 # we ran into the platform
 93BA: 7D          ld   a,l
 93BB: ED 44       neg
 93BD: 4F          ld   c,a
 93BE: C3 D0 93    jp   $93D0
-93C1: FE 08       cp   $08
-93C3: 20 0B       jr   nz,$93D0
+93C1: FE 08       cp   $08          # attempting to move up
+93C3: 20 0B       jr   nz,$93D0     # jump if relative tile y not equal to 8
 93C5: CD A3 8F    call $8FA3
-93C8: E6 01       and  $01
+93C8: E6 01       and  $01          # check for platform
 93CA: 28 04       jr   z,$93D0
 93CC: FD 36 04 00 ld   (iy+$04),$00    # clear up/down state
 93D0: 3A 05 7B    ld   a,($7B05)       # is elevator working
