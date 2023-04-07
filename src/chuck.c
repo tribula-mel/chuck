@@ -1830,8 +1830,10 @@ static void move_chuck_up (game_context_t *game)
             adj_chuck_all_off_y (game, -1);
 
       if (get_chuck_vertical_state (game) == in_jump)
-         if (get_sandbox (game->player_context, get_chuck_tile_off_x (game),
-                          get_chuck_tile_off_y (game) + 1) & 0x2)
+         if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
+                          get_chuck_tile_off_y (game) + 1) & 0x2) &&
+             (get_sandbox (game->player_context, get_chuck_tile_off_x (game),
+                          get_chuck_tile_off_y (game) + 2) == 0x0))
          {
             adj_chuck_all_off_y (game, 2);
             set_chuck_vertical_state (game, on_ladder);
@@ -2329,7 +2331,7 @@ static uint32_t game_loop (game_context_t *game)
          draw_flying_duck (game);
          draw_chuck (game);
          animate_chuck_fall (game);
-         //animate_chuck_jump (game);
+         animate_chuck_jump (game);
          if (game->levels[game->player_context->current_level % 8].elevator == true)
             draw_elevator (game);
 
@@ -2426,7 +2428,7 @@ static uint32_t game_loop (game_context_t *game)
          if (game->levels[game->player_context->current_level % 8].elevator == true)
             move_elevator (game);
          move_time (game);
-         animate_chuck_jump (game);
+         //animate_chuck_jump (game);
          move_chuck (game, dx, dy);
          dx = dy = 0;
          chuck_collision_check (game);

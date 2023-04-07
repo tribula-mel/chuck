@@ -3415,7 +3415,7 @@
 942B: D1          pop  de
 942C: C3 3C 94    jp   $943C
 942F: D1          pop  de
-9430: CD CA 94    call $94CA              # could this be jump function ?
+9430: CD CA 94    call $94CA # check for collision with a platform during jump
 9433: 30 07       jr   nc,$943C
 9435: 78          ld   a,b
 9436: ED 44       neg
