@@ -2376,18 +2376,41 @@ static uint32_t game_loop (game_context_t *game)
                   set_chuck_jump_dx (game, dx);
                }
 
-#if 1
+#ifdef DEBUG
             if (key[ALLEGRO_KEY_SPACE])
             {
                game->player_context->current_level++;
                init_game_next_level (game);
-#ifdef DEBUG
                dump_sandbox = true;
-#endif
             }
 #endif
             if (key[ALLEGRO_KEY_ESCAPE])
                done = true;
+
+            // pause support
+            if (key[ALLEGRO_KEY_H])
+            {
+               al_stop_timer (game->timer);
+               while (true)
+               {
+                  bool done_inner_loop = false;
+
+                  al_wait_for_event (game->queue, &event);
+                  switch (event.type)
+                  {
+                     case ALLEGRO_EVENT_KEY_DOWN:
+                        key[event.keyboard.keycode] = KEY_SEEN;
+                        done_inner_loop = true;
+                        break;
+                     case ALLEGRO_EVENT_KEY_UP:
+                        key[event.keyboard.keycode] &= KEY_RELEASED;
+                        break;
+                  }
+                  if (done_inner_loop == true)
+                     break;
+               }
+               al_start_timer (game->timer);
+            }
 
             for (int i = 0; i < ALLEGRO_KEY_MAX; i++)
                key[i] &= KEY_SEEN;
