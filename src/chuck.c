@@ -964,6 +964,10 @@ static int animate_chuck_jump (game_context_t *game)
             dy = calc_chuck_jump_dy (game, get_chuck_vertical_count (game));
          }
 
+      if ((game->chuck_state.vertical_counter & 0x1) == 0x0)
+         sound_generate_event (snd_handle, SOUND_EVENT_PLAY_JUMP,
+                               get_chuck_vertical_count (game));
+
       adj_chuck_all_off_y (game, dy);
       adj_chuck_all_off_x (game, dx);
       set_chuck_vertical_count (game, get_chuck_vertical_count (game) + 1);

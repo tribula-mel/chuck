@@ -195,19 +195,19 @@ static void sound_init_up_down_samples (sound_control_t *control)
    sample_holder = al_malloc (sizeof (sample_t));
    if (sample_holder == NULL)
    {
-      fprintf (stderr, "u/d sample holder memory alloction failed\n");
+      fprintf (stderr, "u/d sample holder memory allocation failed\n");
       exit (EXIT_FAILURE);
    }
    sample_holder->sample = al_malloc (sizeof (ALLEGRO_SAMPLE *));
    if (sample_holder->sample == NULL)
    {
-      fprintf (stderr, "u/d sample memory alloction failed\n");
+      fprintf (stderr, "u/d sample memory allocation failed\n");
       exit (EXIT_FAILURE);
    }
    sample_holder->sample_inst = al_malloc (sizeof (ALLEGRO_SAMPLE_INSTANCE *));
    if (sample_holder->sample_inst == NULL)
    {
-      fprintf (stderr, "u/d sample instance memory alloction failed\n");
+      fprintf (stderr, "u/d sample instance memory allocation failed\n");
       exit (EXIT_FAILURE);
    }
 
@@ -240,19 +240,19 @@ static void sound_init_left_right_samples (sound_control_t *control)
    sample_holder = al_malloc (sizeof (sample_t));
    if (sample_holder == NULL)
    {
-      fprintf (stderr, "l/r sample holder memory alloction failed\n");
+      fprintf (stderr, "l/r sample holder memory allocation failed\n");
       exit (EXIT_FAILURE);
    }
    sample_holder->sample = al_malloc (sizeof (ALLEGRO_SAMPLE *));
    if (sample_holder->sample == NULL)
    {
-      fprintf (stderr, "l/r sample memory alloction failed\n");
+      fprintf (stderr, "l/r sample memory allocation failed\n");
       exit (EXIT_FAILURE);
    }
    sample_holder->sample_inst = al_malloc (sizeof (ALLEGRO_SAMPLE_INSTANCE *));
    if (sample_holder->sample_inst == NULL)
    {
-      fprintf (stderr, "l/r sample instance memory alloction failed\n");
+      fprintf (stderr, "l/r sample instance memory allocation failed\n");
       exit (EXIT_FAILURE);
    }
 
@@ -266,6 +266,67 @@ static void sound_init_left_right_samples (sound_control_t *control)
 
    sample_holder->num_sample = 1;
    control->chuck_samples.left_right = sample_holder;
+}
+
+// we have max number of 0x2e chuck vertical counts for
+//    the longest fall plus 0x15 counts for a jump
+// sound is played every second time
+#define JUMP_TONES 0x43
+
+static void sound_init_jump_samples (sound_control_t *control)
+{
+   cpc_sound_queue_t base_channel_a_b =
+   {
+      .channels     = 0x83,
+      .amp_env      = 0x00,
+      .ton_env      = 0x00,
+      .ton_period   = 0x00,
+      .noise_period = 0x00,
+      .amplitude    = 0x05,
+      .duration     = 0x02,
+   };
+   sample_t *sample_holder = NULL;
+
+   sample_holder = al_malloc (sizeof (sample_t));
+   if (sample_holder == NULL)
+   {
+      fprintf (stderr, "jump sample holder memory allocation failed\n");
+      exit (EXIT_FAILURE);
+   }
+   sample_holder->sample =
+      al_malloc (JUMP_TONES * sizeof (ALLEGRO_SAMPLE *));
+   if (sample_holder->sample == NULL)
+   {
+      fprintf (stderr, "jump sample memory allocation failed\n");
+      exit (EXIT_FAILURE);
+   }
+   sample_holder->sample_inst =
+      al_malloc (JUMP_TONES * sizeof (ALLEGRO_SAMPLE_INSTANCE *));
+   if (sample_holder->sample_inst == NULL)
+   {
+      fprintf (stderr, "jump sample instance memory allocation failed\n");
+      exit (EXIT_FAILURE);
+   }
+
+   for (int i = 0; i < JUMP_TONES; i++)
+   {
+      // chuck code $A261
+      if (i >= 0xb)
+         base_channel_a_b.ton_period = 0x78 + 8*i;
+      else
+         base_channel_a_b.ton_period = 0x118 + 8*i;
+
+      set_ay_regs (&control->ayemu, &base_channel_a_b, AY_CHAN_A | AY_CHAN_B);
+      sample_holder->sample[i] =
+         sound_gen_sample (&control->ayemu, &base_channel_a_b);
+      sample_holder->sample_inst[i] =
+         al_create_sample_instance (sample_holder->sample[i]);
+      al_attach_sample_instance_to_mixer (sample_holder->sample_inst[i],
+                                          control->mixer);
+   }
+
+   sample_holder->num_sample = JUMP_TONES;
+   control->chuck_samples.vert_jump = sample_holder;
 }
 
 // we have max number of 0x2e chuck vertical counts
@@ -289,21 +350,21 @@ static void sound_init_fall_samples (sound_control_t *control)
    sample_holder = al_malloc (sizeof (sample_t));
    if (sample_holder == NULL)
    {
-      fprintf (stderr, "sample holder memory alloction failed\n");
+      fprintf (stderr, "fall sample holder memory allocation failed\n");
       exit (EXIT_FAILURE);
    }
    sample_holder->sample =
       al_malloc (FALLING_TONES * sizeof (ALLEGRO_SAMPLE *));
    if (sample_holder->sample == NULL)
    {
-      fprintf (stderr, "sample memory alloction failed\n");
+      fprintf (stderr, "fall sample memory allocation failed\n");
       exit (EXIT_FAILURE);
    }
    sample_holder->sample_inst =
       al_malloc (FALLING_TONES * sizeof (ALLEGRO_SAMPLE_INSTANCE *));
    if (sample_holder->sample_inst == NULL)
    {
-      fprintf (stderr, "sample instance memory alloction failed\n");
+      fprintf (stderr, "fall sample instance memory allocation failed\n");
       exit (EXIT_FAILURE);
    }
 
@@ -368,21 +429,21 @@ static void sound_init_life_lost_samples (sound_control_t *control)
    sample_holder = al_malloc (sizeof (sample_t));
    if (sample_holder == NULL)
    {
-      fprintf (stderr, "sample holder memory alloction failed\n");
+      fprintf (stderr, "lf sample holder memory allocation failed\n");
       exit (EXIT_FAILURE);
    }
    sample_holder->sample =
       al_malloc (2 * GAME_LOST_TONES * sizeof (ALLEGRO_SAMPLE *));
    if (sample_holder->sample == NULL)
    {
-      fprintf (stderr, "sample memory alloction failed\n");
+      fprintf (stderr, "lf sample memory allocation failed\n");
       exit (EXIT_FAILURE);
    }
    sample_holder->sample_inst =
       al_malloc (2 * GAME_LOST_TONES * sizeof (ALLEGRO_SAMPLE_INSTANCE *));
    if (sample_holder->sample_inst == NULL)
    {
-      fprintf (stderr, "sample instance memory alloction failed\n");
+      fprintf (stderr, "lf sample instance memory allocation failed\n");
       exit (EXIT_FAILURE);
    }
 
@@ -432,19 +493,19 @@ static void sound_init_score_anim_samples (sound_control_t *control)
    sample_holder = al_malloc (sizeof (sample_t));
    if (sample_holder == NULL)
    {
-      fprintf (stderr, "score sample holder memory alloction failed\n");
+      fprintf (stderr, "score sample holder memory allocation failed\n");
       exit (EXIT_FAILURE);
    }
    sample_holder->sample = al_malloc (sizeof (ALLEGRO_SAMPLE *));
    if (sample_holder->sample == NULL)
    {
-      fprintf (stderr, "score sample memory alloction failed\n");
+      fprintf (stderr, "score sample memory allocation failed\n");
       exit (EXIT_FAILURE);
    }
    sample_holder->sample_inst = al_malloc (sizeof (ALLEGRO_SAMPLE_INSTANCE *));
    if (sample_holder->sample_inst == NULL)
    {
-      fprintf (stderr, "score sample instance memory alloction failed\n");
+      fprintf (stderr, "score sample instance memory allocation failed\n");
       exit (EXIT_FAILURE);
    }
 
@@ -460,7 +521,7 @@ static void sound_init_score_anim_samples (sound_control_t *control)
    control->chuck_samples.score_anim = sample_holder;
 }
 
-static void sound_init_score_egg_samples (sound_control_t *control)
+static void sound_init_egg_samples (sound_control_t *control)
 {
    cpc_sound_queue_t base_channel_c =
    {
@@ -477,19 +538,19 @@ static void sound_init_score_egg_samples (sound_control_t *control)
    sample_holder = al_malloc (sizeof (sample_t));
    if (sample_holder == NULL)
    {
-      fprintf (stderr, "score sample holder memory alloction failed\n");
+      fprintf (stderr, "egg sample holder memory allocation failed\n");
       exit (EXIT_FAILURE);
    }
    sample_holder->sample = al_malloc (sizeof (ALLEGRO_SAMPLE *));
    if (sample_holder->sample == NULL)
    {
-      fprintf (stderr, "score sample memory alloction failed\n");
+      fprintf (stderr, "egg sample memory allocation failed\n");
       exit (EXIT_FAILURE);
    }
    sample_holder->sample_inst = al_malloc (sizeof (ALLEGRO_SAMPLE_INSTANCE *));
    if (sample_holder->sample_inst == NULL)
    {
-      fprintf (stderr, "score sample instance memory alloction failed\n");
+      fprintf (stderr, "egg sample instance memory allocation failed\n");
       exit (EXIT_FAILURE);
    }
 
@@ -505,7 +566,7 @@ static void sound_init_score_egg_samples (sound_control_t *control)
    control->chuck_samples.egg = sample_holder;
 }
 
-static void sound_init_score_seed_samples (sound_control_t *control)
+static void sound_init_seed_samples (sound_control_t *control)
 {
    cpc_sound_queue_t base_channel_c =
    {
@@ -522,19 +583,19 @@ static void sound_init_score_seed_samples (sound_control_t *control)
    sample_holder = al_malloc (sizeof (sample_t));
    if (sample_holder == NULL)
    {
-      fprintf (stderr, "score sample holder memory alloction failed\n");
+      fprintf (stderr, "seed sample holder memory allocation failed\n");
       exit (EXIT_FAILURE);
    }
    sample_holder->sample = al_malloc (sizeof (ALLEGRO_SAMPLE *));
    if (sample_holder->sample == NULL)
    {
-      fprintf (stderr, "score sample memory alloction failed\n");
+      fprintf (stderr, "seed sample memory allocation failed\n");
       exit (EXIT_FAILURE);
    }
    sample_holder->sample_inst = al_malloc (sizeof (ALLEGRO_SAMPLE_INSTANCE *));
    if (sample_holder->sample_inst == NULL)
    {
-      fprintf (stderr, "score sample instance memory alloction failed\n");
+      fprintf (stderr, "seed sample instance memory allocation failed\n");
       exit (EXIT_FAILURE);
    }
 
@@ -554,11 +615,12 @@ static void sound_init_samples (sound_control_t *control)
 {
    sound_init_up_down_samples (control);
    sound_init_left_right_samples (control);
+   sound_init_jump_samples (control);
    sound_init_fall_samples (control);
    sound_init_life_lost_samples (control);
    sound_init_score_anim_samples (control);
-   sound_init_score_egg_samples (control);
-   sound_init_score_seed_samples (control);
+   sound_init_egg_samples (control);
+   sound_init_seed_samples (control);
 }
 
 void sound_generate_event (uint64_t handle, int data1, int data2)
@@ -615,8 +677,13 @@ static void sound_play_left_right (sample_t *left_right)
    al_rest (al_get_sample_instance_time (left_right->sample_inst[0]));
 }
 
-static void sound_play_jump (void)
+static void sound_play_jump (sample_t *jump, uint8_t index)
 {
+   if (index < jump->num_sample)
+   {
+      al_play_sample_instance (jump->sample_inst[index]);
+      al_rest (al_get_sample_instance_time (jump->sample_inst[index]));
+   }
 }
 
 static void sound_play_fall (sample_t *falling, uint8_t index)
@@ -678,12 +745,13 @@ void *sound_thread (ALLEGRO_THREAD *thread, void *arg)
             case SOUND_EVENT_PLAY_LEFT_RIGHT:
                sound_play_left_right (control->chuck_samples.left_right);
                break;
+            case SOUND_EVENT_PLAY_JUMP:
+               sound_play_jump (control->chuck_samples.vert_jump,
+                                event.user.data2);
+               break;
             case SOUND_EVENT_PLAY_FALL:
                sound_play_fall (control->chuck_samples.vert_fall,
                                 event.user.data2);
-               break;
-            case SOUND_EVENT_PLAY_JUMP:
-               sound_play_jump ();
                break;
             case SOUND_EVENT_PLAY_LIFE_LOST:
                sound_play_life_lost (control->chuck_samples.life_lost);
