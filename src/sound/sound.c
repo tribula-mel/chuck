@@ -268,6 +268,63 @@ static void sound_init_left_right_samples (sound_control_t *control)
    control->chuck_samples.left_right = sample_holder;
 }
 
+// we have max number of 0x2e chuck vertical counts
+// sound is played every second time
+#define FALLING_TONES 0x2e
+
+static void sound_init_fall_samples (sound_control_t *control)
+{
+   cpc_sound_queue_t base_channel_a_b =
+   {
+      .channels     = 0x83,
+      .amp_env      = 0x00,
+      .ton_env      = 0x00,
+      .ton_period   = 0x00,
+      .noise_period = 0x00,
+      .amplitude    = 0x05,
+      .duration     = 0x02,
+   };
+   sample_t *sample_holder = NULL;
+
+   sample_holder = al_malloc (sizeof (sample_t));
+   if (sample_holder == NULL)
+   {
+      fprintf (stderr, "sample holder memory alloction failed\n");
+      exit (EXIT_FAILURE);
+   }
+   sample_holder->sample =
+      al_malloc (FALLING_TONES * sizeof (ALLEGRO_SAMPLE *));
+   if (sample_holder->sample == NULL)
+   {
+      fprintf (stderr, "sample memory alloction failed\n");
+      exit (EXIT_FAILURE);
+   }
+   sample_holder->sample_inst =
+      al_malloc (FALLING_TONES * sizeof (ALLEGRO_SAMPLE_INSTANCE *));
+   if (sample_holder->sample_inst == NULL)
+   {
+      fprintf (stderr, "sample instance memory alloction failed\n");
+      exit (EXIT_FAILURE);
+   }
+
+   for (int i = 0; i < FALLING_TONES; i++)
+   {
+      // chuck code $A283
+      base_channel_a_b.ton_period = 0x1aa + 8*i;
+
+      set_ay_regs (&control->ayemu, &base_channel_a_b, AY_CHAN_A | AY_CHAN_B);
+      sample_holder->sample[i] =
+         sound_gen_sample (&control->ayemu, &base_channel_a_b);
+      sample_holder->sample_inst[i] =
+         al_create_sample_instance (sample_holder->sample[i]);
+      al_attach_sample_instance_to_mixer (sample_holder->sample_inst[i],
+                                          control->mixer);
+   }
+
+   sample_holder->num_sample = FALLING_TONES;
+   control->chuck_samples.vert_fall = sample_holder;
+}
+
 #define GAME_LOST_TONES 0x10
 
 // 11 00 00 00 00 00 0F 00 00
@@ -497,19 +554,21 @@ static void sound_init_samples (sound_control_t *control)
 {
    sound_init_up_down_samples (control);
    sound_init_left_right_samples (control);
+   sound_init_fall_samples (control);
    sound_init_life_lost_samples (control);
    sound_init_score_anim_samples (control);
    sound_init_score_egg_samples (control);
    sound_init_score_seed_samples (control);
 }
 
-void sound_generate_event (uint64_t handle, int data)
+void sound_generate_event (uint64_t handle, int data1, int data2)
 {
    sound_control_t *control = (sound_control_t *) handle;
    ALLEGRO_EVENT user_event;
 
    user_event.user.type = PSG_SUPPORT_EVENT_TYPE;
-   user_event.user.data1 = data;
+   user_event.user.data1 = data1;
+   user_event.user.data2 = data2;
 
    al_emit_user_event (&control->user_src, &user_event, NULL);
 }
@@ -560,8 +619,13 @@ static void sound_play_jump (void)
 {
 }
 
-static void sound_play_fall (void)
+static void sound_play_fall (sample_t *falling, uint8_t index)
 {
+   if (index < falling->num_sample)
+   {
+      al_play_sample_instance (falling->sample_inst[index]);
+      al_rest (al_get_sample_instance_time (falling->sample_inst[index]));
+   }
 }
 
 static void sound_play_life_lost (sample_t *life_lost)
@@ -589,7 +653,8 @@ static void sound_play_egg (sample_t *egg)
 static void sound_play_seed (sample_t *seed)
 {
    al_play_sample_instance (seed->sample_inst[0]);
-   //al_rest (al_get_sample_instance_time (seed->sample_inst[0]));
+   // seed duration is very long and code doesn't do
+   //    software envelopes so don't al_rest
 }
 
 void *sound_thread (ALLEGRO_THREAD *thread, void *arg)
@@ -614,7 +679,8 @@ void *sound_thread (ALLEGRO_THREAD *thread, void *arg)
                sound_play_left_right (control->chuck_samples.left_right);
                break;
             case SOUND_EVENT_PLAY_FALL:
-               sound_play_fall ();
+               sound_play_fall (control->chuck_samples.vert_fall,
+                                event.user.data2);
                break;
             case SOUND_EVENT_PLAY_JUMP:
                sound_play_jump ();

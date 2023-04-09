@@ -597,7 +597,7 @@ static void chuck_collect_seed (game_context_t *game)
    uint8_t y = get_chuck_tile_off_y (game);
 
    // play sound
-   sound_generate_event (snd_handle, SOUND_EVENT_PLAY_SEED);
+   sound_generate_event (snd_handle, SOUND_EVENT_PLAY_SEED, 0);
 
    // clear a seed
    game->seed_state[get_sandbox (game->player_context, x, y) >> 4].present = false;
@@ -620,7 +620,7 @@ static void chuck_collect_egg (game_context_t *game,
                                uint8_t x, uint8_t y)
 {
    // play sound
-   sound_generate_event (snd_handle, SOUND_EVENT_PLAY_EGG);
+   sound_generate_event (snd_handle, SOUND_EVENT_PLAY_EGG, 0);
 
    // clear an egg
    game->egg_state[get_sandbox (game->player_context, x, y) >> 4].present = false;
@@ -700,7 +700,7 @@ static void animate_score (game_context_t *game)
       set_score (game->player_context, score);
       draw_bonus (game);
       draw_score (game);
-      sound_generate_event (snd_handle, SOUND_EVENT_PLAY_SCORE_ANIMATION);
+      sound_generate_event (snd_handle, SOUND_EVENT_PLAY_SCORE_ANIMATION, 0);
       al_rest (0.02);
       al_flip_display ();
    }
@@ -766,6 +766,10 @@ static int animate_chuck_fall (game_context_t *game)
       draw_element (&chuck_l, x, y, set_colour (chuck_r.colour));
    else if (game->chuck_state.el.direction == right)
       draw_element (&chuck_r, x, y, set_colour (chuck_r.colour));
+
+   if ((game->chuck_state.vertical_counter & 0x1) == 0x0)
+      sound_generate_event (snd_handle, SOUND_EVENT_PLAY_FALL,
+                            game->chuck_state.vertical_counter);
 
    set_chuck_gfx_off_x (game, gfx_x);
    set_chuck_gfx_off_y (game, gfx_y);
@@ -1288,7 +1292,7 @@ static void life_management (game_context_t *game)
 
    uint8_t lives = get_lives (game->player_context);
 
-   sound_generate_event (snd_handle, SOUND_EVENT_PLAY_LIFE_LOST);
+   sound_generate_event (snd_handle, SOUND_EVENT_PLAY_LIFE_LOST, 0);
    // wait for the tune to finish which is 2.15 sec
    al_rest (2.5);
 
@@ -1718,7 +1722,7 @@ static void move_chuck_left (game_context_t *game)
       game->chuck_state.el.direction = left;
    }
 
-   sound_generate_event (snd_handle, SOUND_EVENT_PLAY_LEFT_RIGHT);
+   sound_generate_event (snd_handle, SOUND_EVENT_PLAY_LEFT_RIGHT, 0);
 }
 
 static bool move_chuck_right_elevator (game_context_t *game)
@@ -1810,7 +1814,7 @@ static void move_chuck_right (game_context_t *game)
       game->chuck_state.el.direction = right;
    }
 
-   sound_generate_event (snd_handle, SOUND_EVENT_PLAY_LEFT_RIGHT);
+   sound_generate_event (snd_handle, SOUND_EVENT_PLAY_LEFT_RIGHT, 0);
 }
 
 static void move_chuck_up (game_context_t *game)
@@ -1837,7 +1841,7 @@ static void move_chuck_up (game_context_t *game)
          {
             adj_chuck_all_off_y (game, 2);
             set_chuck_vertical_state (game, on_ladder);
-            sound_generate_event (snd_handle, SOUND_EVENT_PLAY_UP_DOWN);
+            sound_generate_event (snd_handle, SOUND_EVENT_PLAY_UP_DOWN, 0);
 
             if (game->chuck_state.el.direction == up)
             {
@@ -1859,7 +1863,7 @@ static void move_chuck_up (game_context_t *game)
       {
          adj_chuck_all_off_y (game, 2);
          set_chuck_vertical_state (game, on_ladder);
-         sound_generate_event (snd_handle, SOUND_EVENT_PLAY_UP_DOWN);
+         sound_generate_event (snd_handle, SOUND_EVENT_PLAY_UP_DOWN, 0);
 
          if (game->chuck_state.el.direction == up)
          {
@@ -1909,7 +1913,7 @@ static void move_chuck_down (game_context_t *game)
             adj_chuck_all_off_y (game, -2);
 
          set_chuck_vertical_state (game, on_ladder);
-         sound_generate_event (snd_handle, SOUND_EVENT_PLAY_UP_DOWN);
+         sound_generate_event (snd_handle, SOUND_EVENT_PLAY_UP_DOWN, 0);
 
          if (game->chuck_state.el.direction == down)
          {

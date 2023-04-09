@@ -4312,7 +4312,7 @@
 9ADE: CD F2 8B    call $8BF2
 9AE1: CD EC 8B    call $8BEC
 9AE4: CD E9 8B    call $8BE9
-9AE7: CD 2E A2    call $A22E
+9AE7: CD 2E A2    call $A22E    # sound support
 9AEA: CD CB 95    call $95CB
 9AED: C4 AD A2    call nz,$A2AD # if nz egg/seed collected so play sound
 9AF0: CD 4B 9C    call $9C4B

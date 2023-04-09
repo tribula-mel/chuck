@@ -20,6 +20,6 @@ typedef enum {
 
 uint64_t sound_init (void);
 void *sound_thread (ALLEGRO_THREAD *thread, void *arg);
-void sound_generate_event (uint64_t handle, int data);
+void sound_generate_event (uint64_t handle, int data1, int data2);
 
 #endif // __SOUND_H_
