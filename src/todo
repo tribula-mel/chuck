@@ -1,6 +1,5 @@
 + chuck movement: check edge cases        [ ]
-+ chuck movement: limit upper y movement  [x]
 + chuck movement: up/down rework          [ ]
-+ chuck movement: in between levels       [ ]
-+ title screen                            [p]
 + 4 players support                       [ ]
++ title screen                            [p]
++ chuck movement: in between levels       [x]

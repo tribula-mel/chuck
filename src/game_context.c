@@ -122,8 +122,6 @@ void init_game_context (game_context_t *game, player_context_t *player)
 {
    ALLEGRO_TIMER *timer;
    ALLEGRO_EVENT_QUEUE *queue;
-   ALLEGRO_DISPLAY* disp;
-   int width = x_res * scale, height = y_res * scale;
 
    memset (game, 0, sizeof (game_context_t));
 
@@ -138,16 +136,12 @@ void init_game_context (game_context_t *game, player_context_t *player)
    game->levels[6] = level_classic_seven;
    game->levels[7] = level_classic_eight;
 
-   disp = al_create_display (width, height);
-   must_init (disp, "display");
-
    timer = al_create_timer (1.0 / 30.0);
    must_init (timer, "game timer");
 
    queue = al_create_event_queue ();
    must_init (queue, "game queue");
 
-   al_register_event_source (queue, al_get_display_event_source (disp));
    al_register_event_source (queue, al_get_timer_event_source (timer));
 
    set_game_queue (game, queue);
@@ -269,6 +263,16 @@ void set_game_timer (game_context_t *game, ALLEGRO_TIMER *timer)
 ALLEGRO_TIMER *get_game_timer (game_context_t *game)
 {
    return (game->timer);
+}
+
+void set_game_display (game_context_t *game, ALLEGRO_DISPLAY *display)
+{
+   game->display = display;
+}
+
+ALLEGRO_DISPLAY *get_game_display (game_context_t *game)
+{
+   return (game->display);
 }
 
 void set_back_to_title (game_context_t *game, bool value)

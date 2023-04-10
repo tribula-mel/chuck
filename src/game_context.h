@@ -9,16 +9,6 @@
 #include "game_types.h"
 #include "player_context.h"
 
-// running the game in original resolution would result in tiny graphics
-uint8_t scale;
-
-#define DOTS_PER_PIXEL_X (4)
-#define DOTS_PER_PIXEL_Y (2)
-
-// original game on cpc464 ran in mode 0
-static const uint16_t x_res = DOTS_PER_PIXEL_X * 160;
-static const uint16_t y_res = DOTS_PER_PIXEL_Y * 200;
-
 typedef struct __game_context
 {
    bool back_to_title;
@@ -43,6 +33,7 @@ typedef struct __game_context
    ALLEGRO_FONT *font;
    ALLEGRO_EVENT_QUEUE *queue;
    ALLEGRO_TIMER *timer;
+   ALLEGRO_DISPLAY *display;
 } game_context_t;
 
 void init_game_context (game_context_t *game, player_context_t *player);
@@ -58,6 +49,8 @@ void set_game_queue (game_context_t *game, ALLEGRO_EVENT_QUEUE *queue);
 ALLEGRO_EVENT_QUEUE *get_game_queue (game_context_t *game);
 void set_game_timer (game_context_t *game, ALLEGRO_TIMER *timer);
 ALLEGRO_TIMER *get_game_timer (game_context_t *game);
+void set_game_display (game_context_t *game, ALLEGRO_DISPLAY *display);
+ALLEGRO_DISPLAY *get_game_display (game_context_t *game);
 void set_back_to_title (game_context_t *game, bool value);
 bool get_back_to_title (game_context_t *game);
 void set_next_level (game_context_t *game, bool value);

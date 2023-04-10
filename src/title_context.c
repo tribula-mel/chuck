@@ -63,6 +63,16 @@ ALLEGRO_TIMER *get_title_timer (title_context_t *title)
    return (title->timer);
 }
 
+void set_title_display (title_context_t *title, ALLEGRO_DISPLAY *display)
+{
+   title->display = display;
+}
+
+ALLEGRO_DISPLAY *get_title_display (title_context_t *title)
+{
+   return (title->display);
+}
+
 void init_title_context (title_context_t *title)
 {
    ALLEGRO_TIMER *timer;

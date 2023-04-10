@@ -58,6 +58,16 @@ static void life_management (game_context_t *game);
 static void draw_score (game_context_t *game);
 static void draw_bonus (game_context_t *game);
 
+// running the game in original resolution would result in tiny graphics
+static uint8_t scale;
+
+#define DOTS_PER_PIXEL_X (4)
+#define DOTS_PER_PIXEL_Y (2)
+
+// original game on cpc464 ran in mode 0
+static const uint16_t x_res = DOTS_PER_PIXEL_X * 160;
+static const uint16_t y_res = DOTS_PER_PIXEL_Y * 200;
+
 uint64_t snd_handle;
 
 /* chuck tile x offset to sdl */
@@ -2188,6 +2198,10 @@ static void title_loop (title_context_t *title, uint32_t score)
    bool done = false;
 
    al_register_event_source (title->queue, al_get_keyboard_event_source ());
+   al_register_event_source (
+         get_title_queue (title),
+         al_get_display_event_source (get_title_display (title))
+   );
 
    if (score > 1000)
       manage_highscore (title, score);
@@ -2292,6 +2306,9 @@ static void title_loop (title_context_t *title, uint32_t score)
             if (event.keyboard.keycode == ALLEGRO_KEY_S)
                done = true;
             break;
+         case ALLEGRO_EVENT_DISPLAY_CLOSE:
+            assert (false);
+            break;
       }
 
       if (done)
@@ -2299,7 +2316,12 @@ static void title_loop (title_context_t *title, uint32_t score)
    }
 
    al_stop_timer (title->timer);
-   al_unregister_event_source(title->queue, al_get_keyboard_event_source());
+   al_unregister_event_source (title->queue, al_get_keyboard_event_source());
+   al_unregister_event_source (
+         get_title_queue (title),
+         al_get_display_event_source (get_title_display (title))
+   );
+   al_flush_event_queue (get_title_queue (title));
 
    // show the ready message
    al_clear_to_color (al_map_rgb (0, 0, 0));
@@ -2332,6 +2354,10 @@ static uint32_t game_loop (game_context_t *game)
 
    memset (key, 0, sizeof (key));
 
+   al_register_event_source (
+         get_game_queue (game),
+         al_get_display_event_source (get_game_display (game))
+   );
    al_register_event_source (game->queue, al_get_keyboard_event_source ());
    al_start_timer (game->timer);
 
@@ -2368,7 +2394,9 @@ static uint32_t game_loop (game_context_t *game)
          redraw = false;
       }
 
-      al_wait_for_event (game->queue, &event);
+      //al_wait_for_event (game->queue, &event);
+      if (false == al_get_next_event (game->queue, &event))
+         continue;
 
       switch (event.type)
       {
@@ -2447,17 +2475,6 @@ static uint32_t game_loop (game_context_t *game)
       if (done)
          break;
 
-      if (get_next_level (game))
-      {
-         animate_score (game);
-         game->player_context->current_level++;
-         init_game_next_level (game);
-         al_clear_to_color (al_map_rgb (0, 0, 0));
-#ifdef DEBUG
-         dump_sandbox = true;
-#endif
-      }
-
       if ((redraw == true) && al_is_event_queue_empty (game->queue))
       {
          move_duck (game);
@@ -2468,17 +2485,33 @@ static uint32_t game_loop (game_context_t *game)
          move_chuck (game, dx, dy);
          dx = dy = 0;
          chuck_collision_check (game);
+      }
 
-         if (get_back_to_title (game))
-            break;
+      if (get_back_to_title (game))
+         break;
 
-         if (get_life_lost (game))
-         {
-            init_game_restart_level (game);
+      if (get_life_lost (game))
+      {
+         init_game_restart_level (game);
 #ifdef DEBUG
-            dump_sandbox = true;
+         dump_sandbox = true;
 #endif
-         }
+         al_flush_event_queue (get_game_queue (game));
+         memset (key, 0, sizeof (key));
+         continue;
+      }
+
+      if (get_next_level (game))
+      {
+         animate_score (game);
+         game->player_context->current_level++;
+         init_game_next_level (game);
+         al_clear_to_color (al_map_rgb (0, 0, 0));
+#ifdef DEBUG
+         dump_sandbox = true;
+#endif
+         al_flush_event_queue (get_game_queue (game));
+         memset (key, 0, sizeof (key));
       }
    }
 
@@ -2486,21 +2519,27 @@ static uint32_t game_loop (game_context_t *game)
    al_clear_to_color (al_map_rgb (0, 0, 0));
    draw_game_status (game);
 
-   al_stop_timer (game->timer);
+   al_stop_timer (get_game_timer (game));
    al_unregister_event_source (game->queue, al_get_keyboard_event_source ());
-   al_flush_event_queue (game->queue);
+   al_unregister_event_source (
+         get_game_queue (game),
+         al_get_display_event_source (get_game_display (game))
+   );
+   al_flush_event_queue (get_game_queue (game));
 
    return get_score (game->player_context);
 }
 
 int main (int argc, char *argv[])
 {
+   ALLEGRO_DISPLAY *disp;
    ALLEGRO_FONT *font;
    title_context_t title;
    player_context_t player;
    game_context_t game;
    uint32_t score = 0;
    int opt = -1;
+   int width = 0, height = 0;
  
    // default graphics scaling
    scale = 2;
@@ -2533,6 +2572,10 @@ int main (int argc, char *argv[])
 
    must_init (al_init_primitives_addon(), "primitives");
 
+   width = x_res * scale, height = y_res * scale;
+   disp = al_create_display (width, height);
+   must_init (disp, "display");
+
    // doesn't have a return value in allegro 5
    al_init_font_addon ();
    must_init (al_init_ttf_addon(), "ttf addon");
@@ -2549,6 +2592,8 @@ int main (int argc, char *argv[])
    init_game_context (&game, &player);
    set_game_font (&game, font);
    set_title_font (&title, font);
+   set_game_display (&game, disp);
+   set_title_display (&title, disp);
    snd_handle = sound_init ();
 
    while (true)
@@ -2559,7 +2604,7 @@ int main (int argc, char *argv[])
       score = game_loop (&game);
    }
 
-   //al_destroy_display (disp);
+   al_destroy_display (disp);
    deinit_title_context (&title);
    deinit_game_context (&game);
 

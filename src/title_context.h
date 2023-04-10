@@ -15,6 +15,7 @@ typedef struct __title_context
    ALLEGRO_FONT *font;
    ALLEGRO_EVENT_QUEUE *queue;
    ALLEGRO_TIMER *timer;
+   ALLEGRO_DISPLAY *display;
    high_score_t high_score[10];
 } title_context_t;
 
@@ -28,6 +29,8 @@ void set_title_queue (title_context_t *title, ALLEGRO_EVENT_QUEUE *queue);
 ALLEGRO_EVENT_QUEUE *get_title_queue (title_context_t *title);
 void set_title_timer (title_context_t *title, ALLEGRO_TIMER *timer);
 ALLEGRO_TIMER *get_title_timer (title_context_t *title);
+void set_title_display (title_context_t *title, ALLEGRO_DISPLAY *display);
+ALLEGRO_DISPLAY *get_title_display (title_context_t *title);
 void init_title_context (title_context_t *title);
 void deinit_title_context (title_context_t *title);
 
