@@ -737,13 +737,6 @@ static int animate_chuck_fall (game_context_t *game)
       tile_rel_x += get_chuck_dvx (game);
    }
 
-   if (gfx_y < 0x10)
-   {
-      // height of the chuck sprite
-      // this would also be condition for lost life
-      gfx_y = 0x10;
-      life_management (game);
-   }
    if (tile_rel_x < 0)
    {
       tile_rel_x = 7;
@@ -1251,7 +1244,21 @@ static void chuck_collision_check (game_context_t *game)
    uint8_t chuck_y = get_chuck_gfx_off_y (game);
 
    // compare chuck y with $14
+   if (chuck_y < 0x14)
+   {
+      // life lost
+      life_management (game);
+      return;
+   }
+
    // compare chuck y with $b0
+   if (chuck_y >= 0xb0)
+   {
+      // life lost
+      life_management (game);
+      return;
+   }
+
    // time check
 
    // if ducks present then check for collision
@@ -1636,7 +1643,6 @@ static bool adj_chuck_all_off_y (game_context_t *game, int8_t change)
 
    tile_y = get_chuck_gfx_off_y (game) - 0x10 - get_chuck_tile_rel_off_y (game);
    tile_y /= 8;
-   assert (tile_y < 0x16);
 
    return (set_chuck_tile_off_y (game, tile_y));
 }
@@ -2459,7 +2465,6 @@ static uint32_t game_loop (game_context_t *game)
          if (game->levels[game->player_context->current_level % 8].elevator == true)
             move_elevator (game);
          move_time (game);
-         //animate_chuck_jump (game);
          move_chuck (game, dx, dy);
          dx = dy = 0;
          chuck_collision_check (game);
@@ -2483,6 +2488,7 @@ static uint32_t game_loop (game_context_t *game)
 
    al_stop_timer (game->timer);
    al_unregister_event_source (game->queue, al_get_keyboard_event_source ());
+   al_flush_event_queue (game->queue);
 
    return get_score (game->player_context);
 }
