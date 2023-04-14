@@ -480,6 +480,9 @@ static int draw_flying_duck (game_context_t *game)
 
 static void set_chuck_gfx_off_x (game_context_t *game, uint8_t off)
 {
+#ifdef DEBUG
+   printf ("gfx x %x\n", off);
+#endif
    game->chuck_state.el.gfx_offset.x = off;
 }
 
@@ -490,6 +493,9 @@ static uint8_t get_chuck_gfx_off_x (game_context_t *game)
 
 static void set_chuck_gfx_off_y (game_context_t *game, uint8_t off)
 {
+#ifdef DEBUG
+   printf ("gfx y %x\n", off);
+#endif
    game->chuck_state.el.gfx_offset.y = off;
 }
 
@@ -501,7 +507,9 @@ static uint8_t get_chuck_gfx_off_y (game_context_t *game)
 void set_chuck_tile_rel_off_x (game_context_t *game, uint8_t off)
 {
    game->chuck_state.tile_rel_off_x = off & 0x7;
-   // printf ("chuck tile_rel_off_x %x\n", off & 0x7);
+#ifdef DEBUG
+   printf ("chuck tile_rel_off_x %x\n", off & 0x7);
+#endif
 }
 
 static uint8_t get_chuck_tile_rel_off_x (game_context_t *game)
@@ -512,7 +520,9 @@ static uint8_t get_chuck_tile_rel_off_x (game_context_t *game)
 void set_chuck_tile_rel_off_y (game_context_t *game, uint8_t off)
 {
    game->chuck_state.tile_rel_off_y = (off & 0x7);
-   // printf ("chuck tile_rel_off_y %x\n", off & 0x7);
+#ifdef DEBUG
+   printf ("chuck tile_rel_off_y %x\n", off & 0x7);
+#endif
 }
 
 static uint8_t get_chuck_tile_rel_off_y (game_context_t *game)
@@ -525,7 +535,9 @@ static bool set_chuck_tile_off_x (game_context_t *game, uint8_t off)
    uint8_t tile_off_x = game->chuck_state.el.tile_offset.x;
 
    game->chuck_state.el.tile_offset.x = off;
-   // printf ("chuck tile_off_x %x\n", off);
+#ifdef DEBUG
+   printf ("chuck tile_off_x %x\n", off);
+#endif
 
    return (tile_off_x == off);
 }
@@ -540,7 +552,9 @@ static bool set_chuck_tile_off_y (game_context_t *game, uint8_t off)
    uint8_t tile_off_y = game->chuck_state.el.tile_offset.y;
 
    game->chuck_state.el.tile_offset.y = off;
-   // printf ("chuck tile_off_y %x\n", off);
+#ifdef DEBUG
+   printf ("chuck tile_off_y %x\n", off);
+#endif
 
    return (tile_off_y == off);
 }
@@ -1693,7 +1707,7 @@ static bool move_chuck_left_ladder (game_context_t *game)
 
    set_chuck_vertical_state (game, horizontal);
 
-   if (adj_chuck_all_off_x (game, -1))
+   if (false == adj_chuck_all_off_x (game, -1))
    {
       if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game) - 1) & 0x1) == 0)
@@ -1702,6 +1716,9 @@ static bool move_chuck_left_ladder (game_context_t *game)
          reset_chuck_vertical_state (game);
          return false;
       }
+   }
+   else
+   {
       if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game)) & 0x8))
          // collect a seed
@@ -1781,7 +1798,7 @@ static bool move_chuck_right_ladder (game_context_t *game)
 
    set_chuck_vertical_state (game, horizontal);
 
-   if (adj_chuck_all_off_x (game, 1))
+   if (false == adj_chuck_all_off_x (game, 1))
    {
       if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game) - 1) & 0x1) == 0)
@@ -1790,6 +1807,9 @@ static bool move_chuck_right_ladder (game_context_t *game)
          reset_chuck_vertical_state (game);
          return false;
       }
+   }
+   else
+   {
       if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
                         get_chuck_tile_off_y (game)) & 0x8))
       {
