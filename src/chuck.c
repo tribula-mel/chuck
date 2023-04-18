@@ -58,6 +58,8 @@ static void life_management (game_context_t *game);
 static void draw_score (game_context_t *game);
 static void draw_bonus (game_context_t *game);
 
+static void chuck_state_exp (game_context_t *game);
+
 // running the game in original resolution would result in tiny graphics
 static uint8_t scale;
 
@@ -941,6 +943,50 @@ static bool jump_on_elevator (game_context_t *game, int8_t *dy)
    return false;
 }
 
+static void chuck_state_exp (game_context_t *game)
+{
+   uint8_t image_base = 0x0;
+   uint8_t var_base = 0x0;
+   uint8_t image = 0x0;
+
+   if (game->chuck_state.offc == 0x0)
+   {
+      image_base = 0x6;
+      var_base = get_chuck_tile_rel_off_y (game);
+   }
+   else
+   {
+      if (game->chuck_state.offc > 0x0)
+         image_base = 0x0;
+      else
+         image_base = 0x3;
+      var_base = get_chuck_tile_rel_off_x (game);
+   }
+
+   var_base >>= 0x1;
+   if (var_base & 0x2)
+   {
+      var_base &= 0x1;
+      var_base <<= 0x1;
+   }
+
+   if (get_chuck_vertical_state (game) != on_ladder)
+   {
+      if (game->chuck_state.dx != 0x0)
+         image = image_base + var_base;
+      else
+         image = image_base;
+   }
+   else
+   {
+      if (game->chuck_state.dy != 0x0)
+         image = image_base + var_base;
+      else
+         image = image_base;
+   }
+   game->chuck_state.exp_state = image;
+}
+
 static int animate_chuck_jump (game_context_t *game)
 {
    if (get_chuck_vertical_state (game) == in_jump)
@@ -988,6 +1034,9 @@ static int animate_chuck_jump (game_context_t *game)
       adj_chuck_all_off_y (game, dy);
       adj_chuck_all_off_x (game, dx);
       set_chuck_vertical_count (game, get_chuck_vertical_count (game) + 1);
+      game->chuck_state.dx = dx;
+      game->chuck_state.dy = dy;
+      chuck_state_exp (game);
 
       // check if should collect a seed
       if ((get_sandbox (game->player_context, get_chuck_tile_off_x (game),
@@ -1029,6 +1078,42 @@ static int draw_chuck (game_context_t *game)
 
    x = x_convert_to_sdl (game->chuck_state.el.gfx_offset.x);
    y = y_convert_to_sdl (game->chuck_state.el.gfx_offset.y);
+
+   if (get_chuck_vertical_state (game) == in_jump)
+   {
+      switch (game->chuck_state.exp_state)
+      {
+         case chuck_right:
+            draw_element (&chuck_r, x, y, set_colour (chuck_r.colour));
+            break;
+         case chuck_right_ars:
+            draw_element (&chuck_rslar, x, y, set_colour (chuck_r.colour));
+            break;
+         case chuck_right_als:
+            draw_element (&chuck_rslal, x, y, set_colour (chuck_r.colour));
+            break;
+         case chuck_left:
+            draw_element (&chuck_l, x, y, set_colour (chuck_r.colour));
+            break;
+         case chuck_left_als:
+            draw_element (&chuck_lslal, x, y, set_colour (chuck_r.colour));
+            break;
+         case chuck_left_ars:
+            draw_element (&chuck_lslar, x, y, set_colour (chuck_r.colour));
+            break;
+         case chuck_back:
+            draw_element (&chuck_b, x, y, set_colour (chuck_r.colour));
+            break;
+         case chuck_back_ladlls:
+            draw_element (&chuck_bldru, x, y, set_colour (chuck_r.colour));
+            break;
+         case chuck_back_laullb:
+            draw_element (&chuck_blurd, x, y, set_colour (chuck_r.colour));
+            break;
+      }
+
+      return 0;
+   }
 
    switch (game->chuck_state.el.sprite_state)
    {
@@ -2389,11 +2474,11 @@ static uint32_t game_loop (game_context_t *game)
          draw_level (game);
          draw_ducks (game);
          draw_flying_duck (game);
-         draw_chuck (game);
-         animate_chuck_fall (game);
-         animate_chuck_jump (game);
          if (game->levels[game->player_context->current_level % 8].elevator == true)
             draw_elevator (game);
+         animate_chuck_fall (game);
+         animate_chuck_jump (game);
+         draw_chuck (game);
 
          // show it in the window
          al_flip_display ();
@@ -2429,6 +2514,12 @@ static uint32_t game_loop (game_context_t *game)
                dx += -1;
             if (key[ALLEGRO_KEY_RIGHT])
                dx += 1;
+
+            game->chuck_state.dx = dx;
+            game->chuck_state.dy = dy;
+            if (dx != 0)
+               game->chuck_state.offc = dx;
+
             if (key[ALLEGRO_KEY_LCTRL])
                // jump
                if ((get_chuck_vertical_state (game) != in_jump) &&
@@ -2504,6 +2595,8 @@ static uint32_t game_loop (game_context_t *game)
          move_time (game);
          move_chuck (game, dx, dy);
          dx = dy = 0;
+         game->chuck_state.dx = 0;
+         game->chuck_state.dy = 0;
          chuck_collision_check (game);
       }
 

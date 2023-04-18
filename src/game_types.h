@@ -149,6 +149,22 @@ typedef enum {
    on_elevator = 0x4,
 } chuck_vertical_t;
 
+typedef enum {
+   chuck_right       = 0x0,
+   // arm right legs spread
+   chuck_right_ars   = 0x1,
+   // arm left legs spread
+   chuck_right_als   = 0x2,
+   chuck_left        = 0x3,
+   chuck_left_als    = 0x4,
+   chuck_left_ars    = 0x5,
+   chuck_back        = 0x6,
+   // left arm down right arm up left leg straight right leg bent
+   chuck_back_ladlls = 0x7,
+   // left arm up right arm down left leg bent right leg straight
+   chuck_back_laullb = 0x8,
+} exp_state_t;
+
 typedef struct __chuck_state
 {
    element_state_t el;
@@ -158,7 +174,11 @@ typedef struct __chuck_state
    uint8_t vertical_counter;
    uint8_t dvx;
    uint8_t dvy;
+   uint8_t exp_state;
    int8_t jump_dx;
+   int8_t offc;
+   int8_t dx;
+   int8_t dy;
 } chuck_state_t;
 
 typedef struct __flying_duck_state

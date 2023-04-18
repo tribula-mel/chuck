@@ -3202,7 +3202,7 @@
 9272: C3 7D 92    jp   $927D
 9275: FD 36 0B 01 ld   (iy+$0b),$01
 9279: FD 36 0A 01 ld   (iy+$0a),$01
-927D: CD CA 94    call $94CA
+927D: CD CA 94    call $94CA        # check collision with a platform (carry set if true)
 9280: 30 04       jr   nc,$9286
 9282: FD 36 06 00 ld   (iy+$06),$00
 9286: FD 7E 06    ld   a,(iy+$06)
@@ -3227,7 +3227,7 @@
 92AB: 28 15       jr   z,$92C2
 92AD: FD 36 07 00 ld   (iy+$07),$00
 92B1: FD 36 04 00 ld   (iy+$04),$00
-92B5: CD CA 94    call $94CA
+92B5: CD CA 94    call $94CA        # check collision with a platform (carry set if true)
 92B8: D2 F3 92    jp   nc,$92F3
 92BB: FD 36 06 00 ld   (iy+$06),$00
 92BF: C3 F3 92    jp   $92F3
@@ -3475,7 +3475,7 @@
 94B8: B7          or   a
 94B9: 28 03       jr   z,$94BE
 94BB: FD 77 0C    ld   (iy+$0c),a
-94BE: CD CA 94    call $94CA
+94BE: CD CA 94    call $94CA              # check collision with a platform (carry set if true)
 94C1: 30 04       jr   nc,$94C7
 94C3: FD 36 06 00 ld   (iy+$06),$00
 94C7: C3 22 95    jp   $9522
@@ -3568,15 +3568,15 @@
 956F: B7          or   a
 9570: 28 0F       jr   z,$9581
 9572: FA 7B 95    jp   m,$957B
-9575: 3E 00       ld   a,$00
+9575: 3E 00       ld   a,$00      # case right
 9577: 4F          ld   c,a
 9578: 7C          ld   a,h
 9579: 18 0A       jr   $9585
-957B: 3E 03       ld   a,$03
+957B: 3E 03       ld   a,$03      # case left
 957D: 4F          ld   c,a
 957E: 7C          ld   a,h
 957F: 18 04       jr   $9585
-9581: 3E 06       ld   a,$06
+9581: 3E 06       ld   a,$06      # case up/down
 9583: 4F          ld   c,a
 9584: 7D          ld   a,l
 9585: CB 3F       srl  a

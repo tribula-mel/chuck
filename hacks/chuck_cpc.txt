@@ -1066,6 +1066,7 @@
    offset $a jump sprite sequence $0, $1, $2 .. $2d
    offset $b dx for jump (copy of $6 at the start of the jump)
    offset $c same as $b but only set if left/right key pressed
+             if on ladder this is $0
 
 -| call $8fa3
    checks chuck's tile position for limits
