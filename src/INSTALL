@@ -1,0 +1,13 @@
+-| Dependecies
+   |- Allegro - A game programming library
+      + liballeg.org
+      + Debian/Ubuntu :
+        sudo apt install liballegro5.2 liballegro5-dev \
+                         liballegro-audio5.2 liballegro-audio5-dev \
+                         liballegro-ttf5.2 liballegro-ttf5-dev
+
+-| The code
+   |- git clone https://github.com/tribula-mel/chuck.git
+   |- Build :
+      cd src
+      make
