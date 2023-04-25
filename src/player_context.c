@@ -60,7 +60,7 @@ void convert_num_to_gfx (uint32_t num, uint8_t *gfx,
 
 void set_current_level_gfx (player_context_t *player)
 {
-   convert_num_to_gfx (player->current_level,
+   convert_num_to_gfx (player->current_level + 1,
                        &player->gfx_current_level[0], 100, 3);
 }
 

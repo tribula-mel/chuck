@@ -639,7 +639,10 @@ static void chuck_collect_seed (game_context_t *game)
 
 static uint16_t adjust_egg_score (uint8_t level)
 {
-   return (100 + 100 * (level % 4));
+   if (level < 36)
+      return (100 + 100 * (level / 4));
+   else
+      return (1000);
 }
 
 static void chuck_collect_egg (game_context_t *game,
