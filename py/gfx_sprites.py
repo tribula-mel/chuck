@@ -1,82 +1,7 @@
-import pygame
+from game_types import sprite_t
 
-from enum import Enum
-
-class color_t (Enum):
-   pastel_yellow  = 0x02
-   bright_magenta = 0x08
-   bright_cyan    = 0x20
-   green          = 0x80
-   bright_white   = 0x88
-   bright_red     = 0xa0
-   pastel_blue    = 0xa1
-
-scale = 3
-
-DOTS_PER_PIXEL_X = 4
-DOTS_PER_PIXEL_Y = 2
-
-# original game on cpc464 ran in mode 0
-x_res = DOTS_PER_PIXEL_X * 160
-y_res = DOTS_PER_PIXEL_Y * 200
-
-# chuck x offset to pygame
-def x_convert_to_pygame (x):
-   return DOTS_PER_PIXEL_X * scale * x
-
-# chuck tile y offset to sdl
-def y_convert_to_pygame (y):
-   # plus difference between top and bottom left
-   # plus we need to make a room for the sprite
-   return (scale * y_res - (DOTS_PER_PIXEL_Y * scale * (y + 1)) + 1)
-
-def set_colour (color):
-   if color == color_t.pastel_yellow.value:
-      return (0xff, 0xff, 0x80)
-   elif color == color_t.bright_magenta.value:
-      return (0xff, 0x00, 0xff)
-   elif color == color_t.bright_cyan.value:
-      return (0x00, 0xff, 0xff)
-   elif color == color_t.green.value:
-      return (0x00, 0x80, 0x00)
-   elif color == color_t.bright_white.value:
-      return (0xff, 0xff, 0xff)
-   elif color == color_t.bright_red.value:
-      return (0xff, 0x00, 0x00)
-   elif color == color_t.pastel_blue.value:
-      return (0x80, 0x80, 0xff)
-   else:
-      # black
-      return (0x00, 0x00, 0x00)
-
-def draw_element (screen, element, x, y, colour):
-   index = 0
-   x_backup = x
-   mask = 0x80
-
-   for i in range (0, element.height):
-      for j in range (0, element.width):
-         for k in range (0, 8):
-            if element.sprite[index] & mask:
-               w = DOTS_PER_PIXEL_X * scale
-               h = DOTS_PER_PIXEL_Y * scale
-               #al_draw_filled_rectangle(x, y, x + w, y + h, colour);
-               pygame.draw.rect(screen, colour, [x, y, w, h])
-            x += DOTS_PER_PIXEL_X * scale
-            mask = mask >> 1
-         mask = 0x80
-         index += 1
-      x = x_backup
-      y += DOTS_PER_PIXEL_Y * scale
-
-class sprite_t:
-   def __init__ (self, width, height, colour, sprite):
-      self.width = width
-      self.height = height
-      self.colour = colour
-      self.sprite = sprite
-
-platform = sprite_t (0x01, 0x08, 0x80, [
+platform = sprite_t (0x01, 0x08, 0x80,
+      [
          0xfb,
          0x00,
          0xbf,
@@ -84,9 +9,11 @@ platform = sprite_t (0x01, 0x08, 0x80, [
          0xef,
          0x00,
          0x00,
-         0x00])
+         0x00
+      ])
 
-ladder = sprite_t (0x01, 0x08, 0x08, [
+ladder = sprite_t (0x01, 0x08, 0x08,
+      [
          0x42,
          0x42,
          0x42,
@@ -94,9 +21,11 @@ ladder = sprite_t (0x01, 0x08, 0x08, [
          0x7e,
          0x42,
          0x42,
-         0x42])
+         0x42
+      ])
 
-egg = sprite_t (0x01, 0x08, 0x88, [
+egg = sprite_t (0x01, 0x08, 0x88,
+      [
          0x00,
          0x38,
          0x6c,
@@ -104,9 +33,11 @@ egg = sprite_t (0x01, 0x08, 0x88, [
          0x7e,
          0x7c,
          0x38,
-         0x00])
+         0x00
+      ])
 
-cage = sprite_t (0x03, 0x30, 0xa1, [
+cage = sprite_t (0x03, 0x30, 0xa1,
+      [
          0x00, 0x38, 0x00,
          0x00, 0x44, 0x00,
          0x00, 0x44, 0x00,
@@ -1194,75 +1125,3 @@ title_g = sprite_t (0x02, 0x1e, 0x02,
          0x0f, 0xf8,
          0x03, 0xf0,
       ])
-
-def draw_level (screen):
-   '''
-   # draw game status at the top
-   draw_game_status ()
-
-   # draw platforms first
-   for (i = 0; i < game->levels[game->player_context->current_level % 8].n_platforms; i++)
-   {
-      off_x = game->levels[game->player_context->current_level % 8].platform_offsets[i].offset.x;
-      off_y = game->levels[game->player_context->current_level % 8].platform_offsets[i].offset.y;
-      x = tile_x_convert_to_sdl (off_x);
-      y = tile_y_convert_to_sdl (off_y);
-      n = game->levels[game->player_context->current_level % 8].platform_offsets[i].offset_x_end -
-          off_x + 1;
-      draw_platform (x, y, n);
-      for (int j = 0; j < n; j++)
-         set_sandbox (game->player_context, off_x + j, off_y, 0x01);
-   }
-
-   # next draw ladders
-   for (i = 0; i < game->levels[game->player_context->current_level % 8].n_ladders; i++)
-   {
-      off_x = game->levels[game->player_context->current_level % 8].ladder_offsets[i].offset.x;
-      off_y = game->levels[game->player_context->current_level % 8].ladder_offsets[i].offset.y;
-      x = tile_x_convert_to_sdl (off_x);
-      y = tile_y_convert_to_sdl (off_y);
-      n = game->levels[game->player_context->current_level % 8].ladder_offsets[i].offset_y_end -
-          off_y + 1;
-      draw_ladder (x, y, n);
-      for (int j = 0; j < n; j++)
-      {
-         if (get_sandbox (game->player_context, off_x, off_y + j) == 0x01)
-            set_sandbox (game->player_context, off_x, off_y + j, 0x03);
-         else
-            set_sandbox (game->player_context, off_x, off_y + j, 0x02);
-      }
-   }
-'''
-   # next draw cage
-   x = x_convert_to_pygame (0x00)
-   y = y_convert_to_pygame (0xae)
-   draw_element (screen, cage, x, y, set_colour (cage.colour))
-   #draw_element (screen, cage, x, y, (255, 255, 255))
-
-   return 0
-
-# pygame setup
-pygame.init()
-screen = pygame.display.set_mode((x_res * scale, y_res * scale))
-clock = pygame.time.Clock()
-running = True
-
-while running:
-    # poll for events
-    # pygame.QUIT event means the user clicked X to close your window
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-
-    # fill the screen with a color to wipe away anything from last frame
-    #screen.fill("purple")
-    draw_level (screen)
-
-    # RENDER YOUR GAME HERE
-
-    # flip() the display to put your work on screen
-    pygame.display.flip()
-
-    clock.tick(60)  # limits FPS to 60
-
-pygame.quit()
