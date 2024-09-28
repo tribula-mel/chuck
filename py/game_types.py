@@ -11,26 +11,13 @@ class colour_t (Enum):
 
 # tile based offsets for tiles 8x8
 # these include platforms, ladders, eggs, and seeds
-class offset_t:
-   def __init__ (self, x, y):
-      self.x = x
-      self.y = y
-
-class platform_offset_t:
-   def __init__ (self, offset, offset_x_end):
-      self.offset       = offset
-      self.offset_x_end = offset_x_end
-
-class ladder_offset_t:
-   def __init__ (self, offset, offset_t_end):
-      self.offset       = offset
-      self.offset_y_end = offset_y_end
 
 class level_t:
-   def __init__ (self, n_platforms, n_ladders, elevator, n_eggs, n_seeds, n_ducks, platform_offsets, ladder_offsets, elevator_offset, egg_offsets, seed_offsets, duck_offsets, max_bonus):
+   def __init__ (self, n_platforms, n_ladders, n_eggs, n_seeds, n_ducks,
+                 platform_offsets, ladder_offsets, elevator_offset,
+                 egg_offsets, seed_offsets, duck_offsets):
       self.n_platforms      = n_platforms
       self.n_ladders        = n_ladders
-      self.elevator         = elevator
       self.n_eggs           = n_eggs
       self.n_seeds          = n_seeds
       self.n_ducks          = n_ducks
@@ -38,9 +25,8 @@ class level_t:
       self.ladder_offsets   = ladder_offsets
       self.elevator_offset  = elevator_offset
       self.egg_offsets      = egg_offsets
-      selt.seed_offsets     = seed_offsets
+      self.seed_offsets     = seed_offsets
       self.duck_offsets     = duck_offsets
-      self.max_bonus        = max_bonus
 
 class sprite_t:
    def __init__ (self, width, height, colour, sprite):
@@ -140,7 +126,8 @@ class exp_state_t (Enum):
    chuck_back_laullb = 0x8
 
 class chuck_state_t:
-   def __init__ (self, el, tile_rel_off_x, tile_rel_off_y, vertical_state, vertical_counter, dvx, dvy, exp_state, jump_dx, offc, dx, dy):
+   def __init__ (self, el, tile_rel_off_x, tile_rel_off_y, vertical_state,
+                 vertical_counter, dvx, dvy, exp_state, jump_dx, offc, dx, dy):
       self.el               = el
       self.tile_rel_off_x   = tile_rel_off_x
       self.tile_rel_off_y   = tile_rel_off_y
