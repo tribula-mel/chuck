@@ -1,3 +1,5 @@
+from gfx_classic_levels import *
+
 # every finished 16 levels time drops by 100
 def calc_level_time (level):
    time = 900 - 100 * (level / 16)
@@ -78,30 +80,17 @@ def init_chuck_state (game):
 def init_random_number_state (game):
    game.random.number = 0x76767676
 
-def init_game_context (game, player):
-   memset (game, 0, sizeof (game_context_t))
-
-   game.number_of_players = 1
-   game.player_context = player
-   game.levels[0] = level_classic_one
-   game.levels[1] = level_classic_two
-   game.levels[2] = level_classic_three
-   game.levels[3] = level_classic_four
-   game.levels[4] = level_classic_five
-   game.levels[5] = level_classic_six
-   game.levels[6] = level_classic_seven
-   game.levels[7] = level_classic_eight
-
-   timer = al_create_timer (1.0 / 30.0)
-   must_init (timer, "game timer")
-
-   queue = al_create_event_queue ()
-   must_init (queue, "game queue")
-
-   al_register_event_source (queue, al_get_timer_event_source (timer))
-
-   set_game_queue (game, queue)
-   set_game_timer (game, timer)
+def init_game_context (player):
+   game = game_context_t (player)
+   game.add_level (level_classic_one)
+   game.add_level (level_classic_two)
+   game.add_level (level_classic_three)
+   game.add_level (level_classic_four)
+   game.add_level (level_classic_five)
+   game.add_level (level_classic_six)
+   game.add_level (level_classic_seven)
+   game.add_level (level_classic_eight)
+   return game
 
 def init_game_play (game):
    level = game.player_context.current_level
@@ -169,35 +158,34 @@ def init_game_restart_level (game):
    set_time (player, calc_level_time (level))
 
 class game_context_t:
-   def __init (self, back_to_title, next_level, restart_level, life_lost,
-	       number_of_players, current_player, player_context, levels,
-	       chuck_state, ducks_state, flying_duck_state, elevator_state,
-	       seed_state, egg_state, random, time_off_ticks, font, queue,
-	       timer, display):
-      self.back_to_title = back_to_title
-      self.next_level = next_level
-      self.restart_level = restart_level
-      self.life_lost = life_lost
-      self.number_of_player = number_of_players
-      self.current_player = current_player
+   def __init__ (self, player_context):
+      self.back_to_title = False
+      self.next_level = False
+      self.restart_level = False
+      self.life_lost = False
+      self.number_of_players = 1
+      self.current_player = 1
       self.player_context = player_context
-      self.levels = levels
-      self.chuck_state = chuck_state
-      self.ducks_state = ducks_state
-      self.flying_duck_state = flying_duck_state;
-      self.elevator_state = elevator_state
-      self.seed_state = seed_state
-      self.egg_state = egg_state
-      self.random = random
-      self.time_off_ticks = time_off_ticks
-      self.font = font
-      self.queue = queue
-      self.timer = timer
-      self.display = display
+      self.levels = []
+      self.chuck_state = None
+      self.ducks_state = None
+      self.flying_duck_state = None;
+      self.elevator_state = None
+      self.seed_state = None
+      self.egg_state = None
+      self.random = None
+      self.time_off_ticks = None
+      self.font = None
+      self.queue = None
+      self.timer = None
+      self.display = None
 
    def deinit_game_context (self):
       al_destroy_timer (get_game_timer (self))
       al_destroy_event_queue (get_game_queue (self))
+
+   def add_level (self, level):
+      self.levels.append (level)
 
    def set_time_off (self, ticks):
       self.time_off_ticks = ticks
@@ -239,7 +227,12 @@ class game_context_t:
    def get_restart_level (self):
       return self.restart_level
 
-   def set_life_lost (self, value)
+   def set_life_lost (self, value):
       self.life_lost = value
    def get_life_lost (self):
       return self.life_lost
+
+   def set_player_context (self, value):
+      self.player_context = value
+   def get_player_context (self):
+      return self.player_context
