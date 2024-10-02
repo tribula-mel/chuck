@@ -61,14 +61,14 @@ class ducks_state_t:
       self.n_ducks      = n_ducks
 
 class seed_state_t:
-   def __init__ (self, tile_offset, present):
-      self.tile_offset = tile_offset
-      self.present     = present
+   def __init__ (self):
+      self.tile_offset = None
+      self.present     = False
 
 class egg_state_t:
-   def __init__ (self, tile_offset, present):
-      self.tile_offset = tile_offset
-      self.present     = present
+   def __init__ (self):
+      self.tile_offset = None
+      self.present     = False
 
 class chuck_sprite_t (Enum):
    chuck_standing_one          = 0x1

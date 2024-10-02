@@ -1,4 +1,17 @@
 from gfx_classic_levels import *
+from game_types import *
+
+def adjust_n_ducks (n_ducks, level):
+   if (level >= 8) and (level <= 15):
+      return 0
+   if level >= 24:
+      return 5
+   return n_ducks
+
+def adjust_duck_speed (level, speed):
+   if level >= 32:
+      return 5
+   return speed
 
 # every finished 16 levels time drops by 100
 def calc_level_time (level):
@@ -26,54 +39,48 @@ def init_duck_state (game):
    game.ducks_state.n_ducks = n_ducks
 
    for i in range (0, n_ducks):
-      game.ducks_state.ducks_state[i].tile_offset.x = game.levels[level % 8].duck_offsets[i].x
-      game.ducks_state.ducks_state[i].tile_offset.y = game.levels[level % 8].duck_offsets[i].y
+      game.ducks_state.ducks_state[i].tile_offset = game.levels[level % 8].duck_offsets[i]
       game.ducks_state.ducks_state[i].gfx_offset.x = 8 * game.ducks_state.ducks_state[i].tile_offset.x
       game.ducks_state.ducks_state[i].gfx_offset.y = 8 * game.ducks_state.ducks_state[i].tile_offset.y + 0x14
-      game.ducks_state.ducks_state[i].direction = right
+      game.ducks_state.ducks_state[i].direction = direction_t.right
       game.ducks_state.ducks_state[i].sprite_state = 0
    game.ducks_state.duck_to_move = adjust_duck_speed (level, 8)
 
 def init_flying_duck_state (game):
-   game.flying_duck_state.el.gfx_offset.x = 0x04
-   game.flying_duck_state.el.gfx_offset.y = 0x9e
-   game.flying_duck_state.el.direction = right
+   game.flying_duck_state.el.gfx_offset = [0x04, 0x9e]
+   game.flying_duck_state.el.direction = direction_t.right
    game.flying_duck_state.el.sprite_state = 0
    game.flying_duck_state.dx = 0
    game.flying_duck_state.dy = 0
 
 def init_elevator_state (game):
    level = game.player_context.current_level
-
    for i in range (0, N_PADDLES):
-      game.elevator_state[i].gfx_offset.x = game.levels[level % 8].elevator_offset[i].x
-      game.elevator_state[i].gfx_offset.y = game.levels[level % 8].elevator_offset[i].y
+      game.elevator_state[i].gfx_offset = game.levels[level % 8].elevator_offset[i]
 
 def init_seed_state (game):
    level = game.player_context.current_level
-
    for i in range (0, game.levels[level % 8].n_seeds):
-      game.seed_state[i].tile_offset.x = game.levels[level % 8].seed_offsets[i].x
-      game.seed_state[i].tile_offset.y = game.levels[level % 8].seed_offsets[i].y
-      game.seed_state[i].present = true
+      seed_state = seed_state_t ()
+      seed_state.tile_offset = game.levels[level % 8].seed_offsets[i]
+      seed_state.present = True
+      game.seed_state.append (seed_state)
 
 def init_egg_state (game):
    level = game.player_context.current_level
-
    for i in range (0, game.levels[level % 8].n_eggs):
-      game.egg_state[i].tile_offset.x = game.levels[level % 8].egg_offsets[i].x
-      game.egg_state[i].tile_offset.y = game.levels[level % 8].egg_offsets[i].y
-      game.egg_state[i].present = true
+      egg_state = egg_state_t ()
+      egg_state.tile_offset = game.levels[level % 8].egg_offsets[i]
+      egg_state.present = True
+      game.egg_state.append (egg_state)
 
 def init_chuck_state (game):
-   game.chuck_state.el.gfx_offset.x = 0x3c
-   game.chuck_state.el.gfx_offset.y = 0x18
-   game.chuck_state.el.tile_offset.x = 0x7
-   game.chuck_state.el.tile_offset.y = 0x1
-   game.chuck_state.el.direction = right
-   game.chuck_state.el.sprite_state = chuck_standing_one
-   set_chuck_tile_rel_off_x (game, on_the_right_edge)
-   set_chuck_tile_rel_off_y (game, on_the_bottom_edge)
+   game.chuck_state.el.gfx_offset = [0x3c, 0x18]
+   game.chuck_state.el.tile_offset.x = [0x7, 0x1]
+   game.chuck_state.el.direction = direction_t.right
+   game.chuck_state.el.sprite_state = chuck_sprite_t.chuck_standing_one
+   set_chuck_tile_rel_off_x (game, chuck_relative_x_tile_t.on_the_right_edge)
+   set_chuck_tile_rel_off_y (game, chuck_relative_y_tile_t.on_the_bottom_edge)
    game.chuck_state.vertical_state = 0
    game.chuck_state.vertical_counter = 0
 
@@ -93,25 +100,25 @@ def init_game_context (player):
    return game
 
 def init_game_play (game):
-   level = game.player_context.current_level
+   player = game.get_player_context ()
+   level = player.get_current_level ()
 
-   init_duck_state (game)
-   init_flying_duck_state (game)
-   init_elevator_state (game)
+   #init_duck_state (game)
+   #init_flying_duck_state (game)
+   #init_elevator_state (game)
    init_seed_state (game)
    init_egg_state (game)
-   init_chuck_state (game)
-   init_random_number_state (game)
+   #init_chuck_state (game)
+   #init_random_number_state (game)
 
    # clear the sandbox
-   memset (game.player_context.sandbox, 0, OFFSET_X_MAX * OFFSET_Y_MAX)
 
    # init game status
-   set_score (game.player_context, 0)
-   set_bonus (game.player_context, 1000)
-   set_time (game.player_context, 900)
-   set_current_level (game.player_context, level)
-   set_back_to_title (game, false)
+   #set_score (game.player_context, 0)
+   #set_bonus (game.player_context, 1000)
+   #set_time (game.player_context, 900)
+   #player.set_current_level (level)
+   #set_back_to_title (game, False)
 
 def init_game_next_level (game):
    player = game.player_context
@@ -170,9 +177,9 @@ class game_context_t:
       self.chuck_state = None
       self.ducks_state = None
       self.flying_duck_state = None;
-      self.elevator_state = None
-      self.seed_state = None
-      self.egg_state = None
+      self.elevator_state = []
+      self.seed_state = []
+      self.egg_state = []
       self.random = None
       self.time_off_ticks = None
       self.font = None
