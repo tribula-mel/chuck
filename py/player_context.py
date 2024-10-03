@@ -29,7 +29,7 @@ class player_context_t:
       return self.current_level
    def set_current_level (self, num):
       self.current_level = num
-      set_current_level_gfx (self)
+      self.set_current_level_gfx ()
    def get_current_level_gfx (self):
       return self.gfx_current_level
    def set_current_level_gfx (self):

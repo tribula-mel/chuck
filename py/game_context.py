@@ -31,27 +31,34 @@ def calc_level_bonus (level):
    return bonus
 
 def init_duck_state (game):
-   player = game.player_context
-   n_ducks = 0
-   level = player.current_level
+   player = game.get_player_context ()
+   level = player.get_current_level ()
 
+   ducks_state = ducks_state_t ()
    n_ducks = adjust_n_ducks (game.levels[level % 8].n_ducks, level)
-   game.ducks_state.n_ducks = n_ducks
+   ducks_state.n_ducks = n_ducks
 
    for i in range (0, n_ducks):
-      game.ducks_state.ducks_state[i].tile_offset = game.levels[level % 8].duck_offsets[i]
-      game.ducks_state.ducks_state[i].gfx_offset.x = 8 * game.ducks_state.ducks_state[i].tile_offset.x
-      game.ducks_state.ducks_state[i].gfx_offset.y = 8 * game.ducks_state.ducks_state[i].tile_offset.y + 0x14
-      game.ducks_state.ducks_state[i].direction = direction_t.right
-      game.ducks_state.ducks_state[i].sprite_state = 0
-   game.ducks_state.duck_to_move = adjust_duck_speed (level, 8)
+      el = element_state_t ()
+      x, y = game.levels[level % 8].duck_offsets[i]
+      el.tile_offset = [x, y]
+      el.gfx_offset = [8 * x, 8 * y + 0x14]
+      el.direction = direction_t.right
+      el.sprite_state = 0
+      ducks_state.element.append (el)
+   ducks_state.duck_to_move = adjust_duck_speed (level, 8)
+   game.ducks_state = ducks_state
 
 def init_flying_duck_state (game):
-   game.flying_duck_state.el.gfx_offset = [0x04, 0x9e]
-   game.flying_duck_state.el.direction = direction_t.right
-   game.flying_duck_state.el.sprite_state = 0
-   game.flying_duck_state.dx = 0
-   game.flying_duck_state.dy = 0
+   flying_duck = flying_duck_state_t ()
+   element = element_state_t ()
+   element.gfx_offset = [0x04, 0x9e]
+   element.direction = direction_t.right
+   element.sprite_state = 0
+   flying_duck.dx = 0
+   flying_duck.dy = 0
+   flying_duck.el = element
+   game.flying_duck_state = flying_duck
 
 def init_elevator_state (game):
    level = game.player_context.current_level
@@ -103,8 +110,8 @@ def init_game_play (game):
    player = game.get_player_context ()
    level = player.get_current_level ()
 
-   #init_duck_state (game)
-   #init_flying_duck_state (game)
+   init_duck_state (game)
+   init_flying_duck_state (game)
    #init_elevator_state (game)
    init_seed_state (game)
    init_egg_state (game)

@@ -1,4 +1,5 @@
 import pygame
+#from pygame.locals import *
 
 from game_types import sprite_t
 from game_types import colour_t
@@ -199,66 +200,66 @@ def draw_level (screen, game):
             player.set_sandbox (off_x, off_y + j, 0x02)
    # eggs please
    for i in range (0, game.levels[current_level].n_eggs):
-      #if game.egg_state[i].present == True:
-      off_x, off_y = game.levels[current_level].egg_offsets[i]
-      x = tile_x_convert_to_pygame (off_x)
-      y = tile_y_convert_to_pygame (off_y)
-      draw_element (screen, egg, x, y, set_colour (egg.colour))
-      player.set_sandbox (off_x, off_y, 0x04 + i * 0x10)
+      if game.egg_state[i].present == True:
+         off_x, off_y = game.levels[current_level].egg_offsets[i]
+         x = tile_x_convert_to_pygame (off_x)
+         y = tile_y_convert_to_pygame (off_y)
+         draw_element (screen, egg, x, y, set_colour (egg.colour))
+         player.set_sandbox (off_x, off_y, 0x04 + i * 0x10)
    # add some seeds
    for i in range (0, game.levels[current_level].n_seeds):
-      #if game.seed_state[i].present == True:
-      off_x, off_y = game.seed_state[i].tile_offset
-      x = tile_x_convert_to_pygame (off_x)
-      y = tile_y_convert_to_pygame (off_y)
-      draw_element (screen, seed, x, y, set_colour (seed.colour))
-      player.set_sandbox (off_x, off_y, 0x08 + i * 0x10);
+      if game.seed_state[i].present == True:
+         off_x, off_y = game.levels[current_level].seed_offsets[i]
+         x = tile_x_convert_to_pygame (off_x)
+         y = tile_y_convert_to_pygame (off_y)
+         draw_element (screen, seed, x, y, set_colour (seed.colour))
+         player.set_sandbox (off_x, off_y, 0x08 + i * 0x10);
    # lastly draw cage
    x = x_convert_to_pygame (0x00)
    y = y_convert_to_pygame (0xae)
    draw_element (screen, cage, x, y, set_colour (cage.colour))
 
-def draw_ducks (game):
+def draw_ducks (screen, game):
    n_ducks = game.ducks_state.n_ducks
    for i in range (0, n_ducks):
-      off_x, off_y = game.ducks_state.ducks_state[i].gfx_offset
+      off_x, off_y = game.ducks_state.element[i].gfx_offset
       x = x_convert_to_pygame (off_x)
       y = y_convert_to_pygame (off_y)
-      direction = game.ducks_state.ducks_state[i].direction
+      direction = game.ducks_state.element[i].direction
       if direction == direction_t.right:
-         if game.ducks_state.ducks_state[i].sprite_state == 0:
+         if game.ducks_state.element[i].sprite_state == 0:
             draw_element (screen, duck_r, x, y, set_colour (duck_r.colour))
-         elif game.ducks_state.ducks_state[i].sprite_state == 1:
+         elif game.ducks_state.element[i].sprite_state == 1:
             draw_element (screen, duck_rs, x, y, set_colour (duck_r.colour))
-         elif game.ducks_state.ducks_state[i].sprite_state == duck_half_stoop_start:
+         elif game.ducks_state.element[i].sprite_state == duck_half_stoop_start:
             draw_element (screen, duck_rbs, x, y, set_colour (duck_r.colour))
-         elif game.ducks_state.ducks_state[i].sprite_state == duck_stoop:
+         elif game.ducks_state.element[i].sprite_state == duck_stoop:
             draw_element (screen, duck_res, x, y, set_colour (duck_r.colour))
-         elif game.ducks_state.ducks_state[i].sprite_state == duck_half_stoop_end:
+         elif game.ducks_state.element[i].sprite_state == duck_half_stoop_end:
             draw_element (screen, duck_rbs, x, y, set_colour (duck_r.colour))
       if direction == direction_t.left:
-         if game.ducks_state.ducks_state[i].sprite_state == 0:
+         if game.ducks_state.element[i].sprite_state == 0:
             draw_element (screen, duck_l, x, y, set_colour (duck_r.colour))
-         elif game.ducks_state.ducks_state[i].sprite_state == 1:
+         elif game.ducks_state.element[i].sprite_state == 1:
             draw_element (screen, duck_ls, x, y, set_colour (duck_r.colour))
-         elif game.ducks_state.ducks_state[i].sprite_state == duck_half_stoop_start:
+         elif game.ducks_state.element[i].sprite_state == duck_half_stoop_start:
             draw_element (screen, duck_lbs, x - x_convert_to_pygame (8), y, set_colour (duck_r.colour))
-         elif game.ducks_state.ducks_state[i].sprite_state == duck_stoop:
+         elif game.ducks_state.element[i].sprite_state == duck_stoop:
             draw_element (screen, duck_les, x - x_convert_to_pygame (8), y, set_colour (duck_r.colour))
-         elif game.ducks_state.ducks_state[i].sprite_state == duck_half_stoop_end:
+         elif game.ducks_state.element[i].sprite_state == duck_half_stoop_end:
             draw_element (screen, duck_lbs, x - x_convert_to_pygame (8), y, set_colour (duck_r.colour))
       if direction == direction_t.up:
-         if game.ducks_state.ducks_state[i].sprite_state == 1:
+         if game.ducks_state.element[i].sprite_state == 1:
             draw_element (screen, duck_brl, x, y, set_colour (duck_r.colour))
-         elif game.ducks_state.ducks_state[i].sprite_state == 0:
+         elif game.ducks_state.element[i].sprite_state == 0:
             draw_element (screen, duck_bll, x, y, set_colour (duck_r.colour))
       if direction == direction_t.down:
-         if game.ducks_state.ducks_state[i].sprite_state == 1:
+         if game.ducks_state.element[i].sprite_state == 1:
             draw_element (screen, duck_brl, x, y, set_colour (duck_r.colour))
-         elif game.ducks_state.ducks_state[i].sprite_state == 0:
+         elif game.ducks_state.element[i].sprite_state == 0:
             draw_element (screen, duck_bll, x, y, set_colour (duck_r.colour))
 
-def draw_flying_duck (game):
+def draw_flying_duck (screen, game):
    off_x, off_y = game.flying_duck_state.el.gfx_offset
    x = x_convert_to_pygame (off_x)
    y = y_convert_to_pygame (off_y)
@@ -326,18 +327,29 @@ game = init_game_context (player)
 init_game_play (game)
 
 while running:
-    # poll for events
-    # pygame.QUIT event means the user clicked X to close your window
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
+   # poll for events
+   # pygame.QUIT event means the user clicked X to close your window
+   for event in pygame.event.get ():
+      if event.type == pygame.QUIT:
+         running = False
+      elif event.type == pygame.KEYDOWN:
+         if event.key == pygame.K_ESCAPE:
             running = False
+            break
+         elif event.key == pygame.K_RIGHT:
+            level = player.get_current_level () + 1
+            player.set_current_level (level)
+            init_game_play (game)
+       
+   # RENDER YOUR GAME HERE
+   screen.fill((0,0,0))
+   draw_level (screen, game)
+   draw_ducks (screen, game)
+   draw_flying_duck (screen, game)
 
-    # RENDER YOUR GAME HERE
-    draw_level (screen, game)
+   # flip() the display to put your work on screen
+   pygame.display.flip ()
 
-    # flip() the display to put your work on screen
-    pygame.display.flip()
-
-    clock.tick(60)  # limits FPS to 60
+   clock.tick (60) # limits FPS to 60
 
 pygame.quit()

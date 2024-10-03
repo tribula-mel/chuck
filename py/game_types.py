@@ -43,11 +43,11 @@ class direction_t (Enum):
    jump  = 0x10
 
 class element_state_t:
-   def __init__ (self, tile_offset, gfx_offset, direction, sprite_state):
-      self.tile_offset  = tile_offset
-      self.gfx_offset   = gfx_offset
-      self.direction    = direction
-      self.sprite_state = sprite_state
+   def __init__ (self):
+      self.tile_offset  = 0
+      self.gfx_offset   = 0
+      self.direction    = None
+      self.sprite_state = None
 
 class duck_stoop_t (Enum):
    duck_half_stoop_start = 0x4
@@ -55,10 +55,10 @@ class duck_stoop_t (Enum):
    duck_half_stoop_end   = 0x10
 
 class ducks_state_t:
-   def __init__ (self, ducks_state, duck_to_move, n_ducks):
-      self.ducks_state  = ducks_state
-      self.duck_to_move = duck_to_move
-      self.n_ducks      = n_ducks
+   def __init__ (self):
+      self.element = []
+      self.duck_to_move = 0
+      self.n_ducks      = 0
 
 class seed_state_t:
    def __init__ (self):
@@ -142,7 +142,7 @@ class chuck_state_t:
       self.dy               = dy
 
 class flying_duck_state_t:
-   def __init__ (self, el, dx, dy):
-      self.el = el
-      self.dx = dx
-      self.dy = dy
+   def __init__ (self):
+      self.el = None
+      self.dx = 0
+      self.dy = 0
