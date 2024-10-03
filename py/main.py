@@ -8,6 +8,8 @@ from gfx_sprites import *
 from player_context import *
 from game_context import *
 
+N_PADDLES = 2
+
 scale = 2
 
 DOTS_PER_PIXEL_X = 4
@@ -316,6 +318,17 @@ def draw_bonus (screen, game):
       x = x_convert_to_pygame (0x66 + 5*i)
       draw_digit (screen, x, y, number[i])
 
+def draw_elevator (screen, game):
+   player = game.get_player_context ()
+   level = player.get_current_level () % 8
+   if game.levels[level].elevator_offset == None:
+      return
+   for i in range (0, N_PADDLES):
+      off_x, off_y = game.elevator_state[i]
+      x = x_convert_to_pygame (off_x)
+      y = y_convert_to_pygame (off_y)
+      draw_element (screen, elevator, x, y, set_colour (elevator.colour))
+
 # pygame setup
 pygame.init()
 screen = pygame.display.set_mode((x_res * scale, y_res * scale))
@@ -346,6 +359,7 @@ while running:
    draw_level (screen, game)
    draw_ducks (screen, game)
    draw_flying_duck (screen, game)
+   draw_elevator (screen, game)
 
    # flip() the display to put your work on screen
    pygame.display.flip ()

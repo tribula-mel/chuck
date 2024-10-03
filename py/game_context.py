@@ -62,8 +62,12 @@ def init_flying_duck_state (game):
 
 def init_elevator_state (game):
    level = game.player_context.current_level
-   for i in range (0, N_PADDLES):
-      game.elevator_state[i].gfx_offset = game.levels[level % 8].elevator_offset[i]
+   if game.levels[level % 8].elevator_offset == None:
+      return
+   game.elevator_state = []
+   for i in range (0, 2):
+      x, y = game.levels[level % 8].elevator_offset[i]
+      game.elevator_state.append ([x, y])
 
 def init_seed_state (game):
    level = game.player_context.current_level
@@ -112,7 +116,7 @@ def init_game_play (game):
 
    init_duck_state (game)
    init_flying_duck_state (game)
-   #init_elevator_state (game)
+   init_elevator_state (game)
    init_seed_state (game)
    init_egg_state (game)
    #init_chuck_state (game)
@@ -184,7 +188,7 @@ class game_context_t:
       self.chuck_state = None
       self.ducks_state = None
       self.flying_duck_state = None;
-      self.elevator_state = []
+      self.elevator_state = None
       self.seed_state = []
       self.egg_state = []
       self.random = None
