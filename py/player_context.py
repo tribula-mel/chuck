@@ -6,7 +6,7 @@ class player_context_t:
       self.gfx_current_level = []
       # score 0 .. 999990 inclusive
       self.score = 0
-      self.gfx_score = []
+      self.gfx_score = [0, 0, 0, 0, 0, 0]
       # time 0 .. 900 inclusive
       self.time = 1000
       self.gfx_time = []
@@ -28,6 +28,8 @@ class player_context_t:
    def get_current_level (self):
       return self.current_level
    def set_current_level (self, num):
+      if num > 255:
+         num = 0
       self.current_level = num
       self.set_current_level_gfx ()
    def get_current_level_gfx (self):
@@ -39,7 +41,7 @@ class player_context_t:
       return self.score
    def set_score (self, num):
       self.score = num
-      set_score_gfx (self)
+      self.set_score_gfx ()
    def get_score_gfx (self):
       return self.gfx_score
    def set_score_gfx (self):
@@ -55,7 +57,7 @@ class player_context_t:
       return self.time
    def set_time (self, num):
       self.time = num
-      set_time_gfx (self)
+      self.set_time_gfx ()
    def get_time_gfx (self):
       return self.gfx_time
    def set_time_gfx (self):
@@ -65,7 +67,7 @@ class player_context_t:
       return (self.bonus)
    def set_bonus (self, num):
       self.bonus = num
-      set_bonus_gfx (self)
+      self.set_bonus_gfx ()
    def get_bonus_gfx (self):
       return self.gfx_bonus
    def set_bonus_gfx (self):

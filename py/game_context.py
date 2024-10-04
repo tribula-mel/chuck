@@ -1,5 +1,6 @@
 from gfx_classic_levels import *
 from game_types import *
+from player_context import *
 
 def adjust_n_ducks (n_ducks, level):
    if (level >= 8) and (level <= 15):
@@ -15,7 +16,7 @@ def adjust_duck_speed (level, speed):
 
 # every finished 16 levels time drops by 100
 def calc_level_time (level):
-   time = 900 - 100 * (level / 16)
+   time = 900 - 100 * int (level / 16)
    # limit to 100
    if time <= 0:
       time = 100
@@ -125,9 +126,9 @@ def init_game_play (game):
    # clear the sandbox
 
    # init game status
-   #set_score (game.player_context, 0)
-   #set_bonus (game.player_context, 1000)
-   #set_time (game.player_context, 900)
+   player.set_score (0)
+   player.set_bonus (calc_level_bonus (level))
+   player.set_time (calc_level_time (level))
    #player.set_current_level (level)
    #set_back_to_title (game, False)
 
