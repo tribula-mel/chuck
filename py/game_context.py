@@ -62,7 +62,7 @@ def init_flying_duck_state (game):
    game.flying_duck_state = flying_duck
 
 def init_elevator_state (game):
-   level = game.player_context.current_level
+   level = game.get_player_context ().get_current_level ()
    if game.levels[level % 8].elevator_offset == None:
       return
    game.elevator_state = []

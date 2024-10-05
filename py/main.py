@@ -492,6 +492,30 @@ def move_duck (game):
 
    duck_one_move (game, moves, index)
 
+wait = 2
+
+def move_elevator (game):
+   global wait
+   level = game.get_player_context ().get_current_level ()
+   if game.levels[level % 8].elevator_offset == None:
+      return
+   if wait == 0:
+      wait = 2
+      x0, y0 = game.elevator_state[0]
+      y0 += 2
+      if y0 > 0xae:
+        y0 = 4
+      x1, y1 = game.elevator_state[1]
+      y1 += 2
+      if y1 > 0xae:
+         y1 = 4
+      game.elevator_state[0] = [x0, y0]
+      game.elevator_state[1] = [x1, y1]
+
+      #if get_chuck_vertical_state (game) == on_elevator:
+      #   adj_chuck_all_off_y (game, +2)
+   wait -= 1
+
 # pygame setup
 pygame.init()
 screen = pygame.display.set_mode((x_res * scale, y_res * scale))
@@ -526,6 +550,7 @@ while running:
    draw_elevator (screen, game)
 
    move_duck (game)
+   move_elevator (game)
 
    # flip() the display to put your work on screen
    pygame.display.flip ()
