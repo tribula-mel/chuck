@@ -574,6 +574,73 @@ def move_duck (game):
 
    duck_one_move (game, moves, index)
 
+def flying_duck_free (level):
+   if level >= 8:
+      return True
+
+   return False
+
+def skip_flying (game, flyd_x, flyd_y, flyd_dx, flyd_dy, state):
+   flyd_x += flyd_dx
+   flyd_y += flyd_dy
+   game.flying_duck_state.el.gfx_offset = [flyd_x, flyd_y]
+   game.flying_duck_state.dx = flyd_dx
+   game.flying_duck_state.dy = flyd_dy
+   state = (state & 0x1) ^ 0x1
+   game.flying_duck_state.el.sprite_state = state
+
+fd_wait = 8 # original chuck $96bb
+
+# original chuck $985a
+def move_flying_duck (game):
+   global fd_wait
+   flyd_x, flyd_y = game.flying_duck_state.el.gfx_offset
+   flyd_dx = game.flying_duck_state.dx
+   flyd_dy = game.flying_duck_state.dy
+   state = game.flying_duck_state.el.sprite_state
+   chuck_x, chuck_y = game.chuck_state.el.gfx_offset
+
+   if fd_wait == 0:
+      fd_wait = 8
+
+      if flying_duck_free (game.player_context.current_level) == False:
+         skip_flying (game, flyd_x, flyd_y, flyd_dx, flyd_dy, state)
+         return
+
+      if abs (flyd_x + 0x4) >= chuck_x:
+         # flying duck is to the chuck's right
+         flyd_dx -= 1
+         if (flyd_dx + 0x5) < 0:
+            flyd_dx += 1
+         game.flying_duck_state.el.direction = direction_t.left.value
+      else:
+         # flying duck is to the chuck's left
+         flyd_dx += 1
+         if (flyd_dx - 0x6) >= 0:
+            flyd_dx -= 1
+         game.flying_duck_state.el.direction = direction_t.right.value
+
+      chuck_y += 0x4
+      if chuck_y < flyd_y:
+         # flying duck is above chuck
+         flyd_dy -= 1
+         if (flyd_dy + 0x6) < 0:
+            flyd_dy += 1
+      else:
+         # flying duck is to the chuck's left
+         flyd_dy += 1
+         if (flyd_dy - 0x7) >= 0:
+            flyd_dy -= 1
+
+      if abs (flyd_y + flyd_dy) < 0x20:
+         flyd_dy = -flyd_dy
+      if abs (flyd_x + flyd_dx) >= 0x90:
+         flyd_dx = -flyd_dx
+
+      skip_flying (game, flyd_x, flyd_y, flyd_dx, flyd_dy, state)
+
+   fd_wait -= 1
+
 wait = 2
 
 def move_elevator (game):
@@ -633,6 +700,7 @@ while running:
    draw_chuck (screen, game)
 
    move_duck (game)
+   move_flying_duck (game)
    move_elevator (game)
 
    # flip() the display to put your work on screen
