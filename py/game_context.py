@@ -89,14 +89,16 @@ def init_egg_state (game):
       game.egg_state.append (egg_state)
 
 def init_chuck_state (game):
-   game.chuck_state.el.gfx_offset = [0x3c, 0x18]
-   game.chuck_state.el.tile_offset.x = [0x7, 0x1]
-   game.chuck_state.el.direction = direction_t.right.value
-   game.chuck_state.el.sprite_state = chuck_sprite_t.chuck_standing_one
-   set_chuck_tile_rel_off_x (game, chuck_relative_x_tile_t.on_the_right_edge)
-   set_chuck_tile_rel_off_y (game, chuck_relative_y_tile_t.on_the_bottom_edge)
-   game.chuck_state.vertical_state = 0
-   game.chuck_state.vertical_counter = 0
+   el = element_state_t ()
+   el.gfx_offset = [0x3c, 0x18]
+   el.tile_offset = [0x7, 0x1]
+   el.direction = direction_t.right.value
+   el.sprite_state = chuck_sprite_t.chuck_standing_one.value
+   #set_chuck_tile_rel_off_x (game, chuck_relative_x_tile_t.on_the_right_edge)
+   #set_chuck_tile_rel_off_y (game, chuck_relative_y_tile_t.on_the_bottom_edge)
+   cs = chuck_state_t ()
+   cs.el = el
+   game.chuck_state = cs
 
 def init_game_context (player):
    game = game_context_t (player)
@@ -119,7 +121,7 @@ def init_game_play (game):
    init_elevator_state (game)
    init_seed_state (game)
    init_egg_state (game)
-   #init_chuck_state (game)
+   init_chuck_state (game)
    game.set_random ()
 
    # clear the sandbox

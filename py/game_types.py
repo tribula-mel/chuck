@@ -126,20 +126,19 @@ class exp_state_t (Enum):
    chuck_back_laullb = 0x8
 
 class chuck_state_t:
-   def __init__ (self, el, tile_rel_off_x, tile_rel_off_y, vertical_state,
-                 vertical_counter, dvx, dvy, exp_state, jump_dx, offc, dx, dy):
-      self.el               = el
-      self.tile_rel_off_x   = tile_rel_off_x
-      self.tile_rel_off_y   = tile_rel_off_y
-      self.vertical_state   = vertical_state
-      self.vertical_counter = vertical_counter
-      self.dvx              = dvx
-      self.dvy              = dvy
-      self.exp_state        = exp_state
-      self.jump_dx          = jump_dx
-      self.offc             = offc
-      self.dx               = dx
-      self.dy               = dy
+   def __init__ (self):
+      self.el               = None
+      self.tile_rel_off_x   = 0
+      self.tile_rel_off_y   = 0
+      self.vertical_state   = 0
+      self.vertical_counter = 0
+      self.dvx              = 0
+      self.dvy              = 0
+      self.exp_state        = 0
+      self.jump_dx          = 0
+      self.offc             = 0
+      self.dx               = 0
+      self.dy               = 0
 
 class flying_duck_state_t:
    def __init__ (self):

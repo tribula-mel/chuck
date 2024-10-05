@@ -324,6 +324,88 @@ def draw_bonus (screen, game):
       x = x_convert_to_pygame (0x66 + 5*i)
       draw_digit (screen, x, y, number[i])
 
+def draw_chuck (screen, game):
+
+   x, y = game.chuck_state.el.gfx_offset
+   gfx_x = x_convert_to_pygame (x)
+   gfx_y = y_convert_to_pygame (y)
+   draw_element (screen, chuck_r, gfx_x, gfx_y, set_colour (chuck_r.colour))
+'''
+   if get_chuck_vertical_state (game) == falling:
+      return
+
+   x = x_convert_to_pygame (game.chuck_state.el.gfx_offset.x)
+   y = y_convert_to_pygame (game.chuck_state.el.gfx_offset.y)
+
+   if (get_chuck_vertical_state (game) == in_jump)
+      switch (game.chuck_state.exp_state)
+         case chuck_right:
+            draw_element (screen, chuck_r, x, y, set_colour (chuck_r.colour))
+         case chuck_right_ars:
+            draw_element (screen, chuck_rslar, x, y, set_colour (chuck_r.colour))
+         case chuck_right_als:
+            draw_element (screen, chuck_rslal, x, y, set_colour (chuck_r.colour))
+         case chuck_left:
+            draw_element (screen, chuck_l, x, y, set_colour (chuck_r.colour))
+         case chuck_left_als:
+            draw_element (screen, chuck_lslal, x, y, set_colour (chuck_r.colour))
+         case chuck_left_ars:
+            draw_element (screen, chuck_lslar, x, y, set_colour (chuck_r.colour))
+         case chuck_back:
+            draw_element (screen, chuck_b, x, y, set_colour (chuck_r.colour))
+         case chuck_back_ladlls:
+            draw_element (screen, chuck_bldru, x, y, set_colour (chuck_r.colour))
+         case chuck_back_laullb:
+            draw_element (screen, chuck_blurd, x, y, set_colour (chuck_r.colour))
+      return
+
+   switch (game.chuck_state.el.sprite_state)
+      case chuck_standing_one:
+      case chuck_standing_two:
+      case chuck_standing_three:
+      case chuck_standing_four:
+      case chuck_standing_five:
+      case chuck_standing_six:
+      case chuck_standing_seven:
+      case chuck_standing_eight:
+         if game.chuck_state.el.direction == right:
+            draw_element (sceen, chuck_r, x, y, set_colour (chuck_r.colour))
+         elif game.chuck_state.el.direction == left:
+            draw_element (screen, chuck_l, x, y, set_colour (chuck_r.colour))
+      case chuck_running_right_arm_one:
+      case chuck_running_right_arm_two:
+         if game.chuck_state.el.direction == direction_t.right:
+            draw_element (screen, chuck_rslar, x, y, set_colour (chuck_r.colour))
+         elif game.chuck_state.el.direction == direction_t.left:
+            draw_element (screen, chuck_lslar, x, y, set_colour (chuck_r.colour))
+      case chuck_running_left_arm_one:
+      case chuck_running_left_arm_two:
+         if game.chuck_state.el.direction == direction_t.right:
+            draw_element (screen, chuck_rslal, x, y, set_colour (chuck_r.colour))
+         elif game.chuck_state.el.direction == direction_t.left:
+            draw_element (screen, chuck_lslal, x, y, set_colour (chuck_r.colour))
+      case chuck_back_one:
+      case chuck_back_two:
+      case chuck_back_three:
+      case chuck_back_four:
+      case chuck_back_five:
+         draw_element (screen, chuck_b, x, y, set_colour (chuck_r.colour))
+      case chuck_back_left_arm:
+         draw_element (screen, chuck_blurd, x, y, set_colour (chuck_r.colour))
+      case chuck_back_right_arm:
+         draw_element (screen, chuck_bldru, x, y, set_colour (chuck_r.colour))
+
+   if (game->chuck_state.el.sprite_state == chuck_running_right_arm_one) or
+       (game->chuck_state.el.sprite_state == chuck_running_right_arm_two) or
+       (game->chuck_state.el.sprite_state == chuck_running_left_arm_one) or
+       (game->chuck_state.el.sprite_state == chuck_running_left_arm_two):
+      game->chuck_state.el.sprite_state += 1
+
+   if (game->chuck_state.el.sprite_state == chuck_back_left_arm) or
+       (game->chuck_state.el.sprite_state == chuck_back_right_arm):
+      game->chuck_state.el.sprite_state += 1
+'''
+
 def draw_elevator (screen, game):
    player = game.get_player_context ()
    level = player.get_current_level () % 8
@@ -548,6 +630,7 @@ while running:
    draw_ducks (screen, game)
    draw_flying_duck (screen, game)
    draw_elevator (screen, game)
+   draw_chuck (screen, game)
 
    move_duck (game)
    move_elevator (game)
