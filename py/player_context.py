@@ -85,6 +85,8 @@ class player_context_t:
          return 0
    def set_sandbox (self, x, y, content):
       self.sandbox[(x, y)] = content
+   def clear_sandbox (self):
+      self.sandbox.clear ()
 
    def get_n_eggs (self):
       return (self.n_of_eggs)

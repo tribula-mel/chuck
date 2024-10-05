@@ -44,7 +44,7 @@ def init_duck_state (game):
       x, y = game.levels[level % 8].duck_offsets[i]
       el.tile_offset = [x, y]
       el.gfx_offset = [8 * x, 8 * y + 0x14]
-      el.direction = direction_t.right
+      el.direction = direction_t.right.value
       el.sprite_state = 0
       ducks_state.element.append (el)
    ducks_state.duck_to_move = adjust_duck_speed (level, 8)
@@ -54,7 +54,7 @@ def init_flying_duck_state (game):
    flying_duck = flying_duck_state_t ()
    element = element_state_t ()
    element.gfx_offset = [0x04, 0x9e]
-   element.direction = direction_t.right
+   element.direction = direction_t.right.value
    element.sprite_state = 0
    flying_duck.dx = 0
    flying_duck.dy = 0
@@ -72,6 +72,7 @@ def init_elevator_state (game):
 
 def init_seed_state (game):
    level = game.player_context.current_level
+   game.seed_state.clear ()
    for i in range (0, game.levels[level % 8].n_seeds):
       seed_state = seed_state_t ()
       seed_state.tile_offset = game.levels[level % 8].seed_offsets[i]
@@ -80,6 +81,7 @@ def init_seed_state (game):
 
 def init_egg_state (game):
    level = game.player_context.current_level
+   game.egg_state.clear ()
    for i in range (0, game.levels[level % 8].n_eggs):
       egg_state = egg_state_t ()
       egg_state.tile_offset = game.levels[level % 8].egg_offsets[i]
@@ -89,15 +91,12 @@ def init_egg_state (game):
 def init_chuck_state (game):
    game.chuck_state.el.gfx_offset = [0x3c, 0x18]
    game.chuck_state.el.tile_offset.x = [0x7, 0x1]
-   game.chuck_state.el.direction = direction_t.right
+   game.chuck_state.el.direction = direction_t.right.value
    game.chuck_state.el.sprite_state = chuck_sprite_t.chuck_standing_one
    set_chuck_tile_rel_off_x (game, chuck_relative_x_tile_t.on_the_right_edge)
    set_chuck_tile_rel_off_y (game, chuck_relative_y_tile_t.on_the_bottom_edge)
    game.chuck_state.vertical_state = 0
    game.chuck_state.vertical_counter = 0
-
-def init_random_number_state (game):
-   game.random.number = 0x76767676
 
 def init_game_context (player):
    game = game_context_t (player)
@@ -121,7 +120,7 @@ def init_game_play (game):
    init_seed_state (game)
    init_egg_state (game)
    #init_chuck_state (game)
-   #init_random_number_state (game)
+   game.set_random ()
 
    # clear the sandbox
 
@@ -202,6 +201,9 @@ class game_context_t:
    def deinit_game_context (self):
       al_destroy_timer (get_game_timer (self))
       al_destroy_event_queue (get_game_queue (self))
+
+   def set_random (self):
+      self.random = [0x76, 0x76, 0x76, 0x76]
 
    def add_level (self, level):
       self.levels.append (level)

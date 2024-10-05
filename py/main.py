@@ -10,6 +10,10 @@ from gfx_sprites import *
 from player_context import *
 from game_context import *
 
+duck_half_stoop_start = 0x4
+duck_stoop            = 0x8
+duck_half_stoop_end   = 0x10
+
 N_PADDLES = 2
 
 scale = 2
@@ -230,34 +234,34 @@ def draw_ducks (screen, game):
       x = x_convert_to_pygame (off_x)
       y = y_convert_to_pygame (off_y)
       direction = game.ducks_state.element[i].direction
-      if direction == direction_t.right:
+      if direction == direction_t.right.value:
          if game.ducks_state.element[i].sprite_state == 0:
             draw_element (screen, duck_r, x, y, set_colour (duck_r.colour))
          elif game.ducks_state.element[i].sprite_state == 1:
             draw_element (screen, duck_rs, x, y, set_colour (duck_r.colour))
-         elif game.ducks_state.element[i].sprite_state == duck_half_stoop_start:
+         elif game.ducks_state.element[i].sprite_state == duck_stoop_t.duck_half_stoop_start.value:
             draw_element (screen, duck_rbs, x, y, set_colour (duck_r.colour))
-         elif game.ducks_state.element[i].sprite_state == duck_stoop:
+         elif game.ducks_state.element[i].sprite_state == duck_stoop_t.duck_stoop.value:
             draw_element (screen, duck_res, x, y, set_colour (duck_r.colour))
-         elif game.ducks_state.element[i].sprite_state == duck_half_stoop_end:
+         elif game.ducks_state.element[i].sprite_state == duck_stoop_t.duck_half_stoop_end.value:
             draw_element (screen, duck_rbs, x, y, set_colour (duck_r.colour))
-      if direction == direction_t.left:
+      if direction == direction_t.left.value:
          if game.ducks_state.element[i].sprite_state == 0:
             draw_element (screen, duck_l, x, y, set_colour (duck_r.colour))
          elif game.ducks_state.element[i].sprite_state == 1:
             draw_element (screen, duck_ls, x, y, set_colour (duck_r.colour))
-         elif game.ducks_state.element[i].sprite_state == duck_half_stoop_start:
+         elif game.ducks_state.element[i].sprite_state == duck_stoop_t.duck_half_stoop_start.value:
             draw_element (screen, duck_lbs, x - x_convert_to_pygame (8), y, set_colour (duck_r.colour))
-         elif game.ducks_state.element[i].sprite_state == duck_stoop:
+         elif game.ducks_state.element[i].sprite_state == duck_stoop_t.duck_stoop.value:
             draw_element (screen, duck_les, x - x_convert_to_pygame (8), y, set_colour (duck_r.colour))
-         elif game.ducks_state.element[i].sprite_state == duck_half_stoop_end:
+         elif game.ducks_state.element[i].sprite_state == duck_stoop_t.duck_half_stoop_end.value:
             draw_element (screen, duck_lbs, x - x_convert_to_pygame (8), y, set_colour (duck_r.colour))
-      if direction == direction_t.up:
+      if direction == direction_t.up.value:
          if game.ducks_state.element[i].sprite_state == 1:
             draw_element (screen, duck_brl, x, y, set_colour (duck_r.colour))
          elif game.ducks_state.element[i].sprite_state == 0:
             draw_element (screen, duck_bll, x, y, set_colour (duck_r.colour))
-      if direction == direction_t.down:
+      if direction == direction_t.down.value:
          if game.ducks_state.element[i].sprite_state == 1:
             draw_element (screen, duck_brl, x, y, set_colour (duck_r.colour))
          elif game.ducks_state.element[i].sprite_state == 0:
@@ -268,12 +272,12 @@ def draw_flying_duck (screen, game):
    x = x_convert_to_pygame (off_x)
    y = y_convert_to_pygame (off_y)
    direction = game.flying_duck_state.el.direction
-   if direction == direction_t.right:
+   if direction == direction_t.right.value:
       if game.flying_duck_state.el.sprite_state == 0:
          draw_element (screen, flying_duck_rcbwd, x, y, set_colour (flying_duck_rcbwd.colour))
       elif game.flying_duck_state.el.sprite_state == 1:
          draw_element (screen, flying_duck_rsbwu, x, y, set_colour (flying_duck_rcbwd.colour))
-   if direction == direction_t.left:
+   if direction == direction_t.left.value:
       if game.flying_duck_state.el.sprite_state == 0:
          draw_element (screen, flying_duck_lcbwd, x, y, set_colour (flying_duck_rcbwd.colour))
       elif game.flying_duck_state.el.sprite_state == 1:
@@ -331,6 +335,163 @@ def draw_elevator (screen, game):
       y = y_convert_to_pygame (off_y)
       draw_element (screen, elevator, x, y, set_colour (elevator.colour))
 
+def randomizer (game):
+   a = game.random[0]
+   a &= 0x48
+   a += 0x38
+   a = a << 1
+   c = (a & 0x80) >> 7
+   a = a << 1
+
+   cp = (game.random[3] & 0x80) >> 7
+   game.random[3] <<= 1
+   game.random[3] |= c
+   c = cp
+
+   cp = (game.random[2] & 0x80) >> 7
+   game.random[2] <<= 1
+   game.random[2] |= c
+   c = cp
+
+   cp = (game.random[1] & 0x80) >> 7
+   game.random[1] <<= 1
+   game.random[1] |= c
+   c = cp
+
+   cp = (game.random[0] & 0x80) >> 7
+   game.random[0] <<= 1
+   game.random[0] |= c
+
+   return game.random[0]
+
+def number_of_moves (moves):
+   count = 0
+   for i in range (0, 4):
+      if (moves & 0x1):
+         count += 1
+      moves >>= 1
+   return count
+
+def duck_one_move (game, moves, index):
+   player = game.player_context
+   x, y = game.ducks_state.element[index].gfx_offset
+   tile_x, tile_y = game.ducks_state.element[index].tile_offset
+   if moves == direction_t.up.value:
+      game.ducks_state.element[index].sprite_state ^= 1
+      y += 4
+      if game.ducks_state.element[index].direction != direction_t.up.value:
+         game.ducks_state.element[index].direction = direction_t.up.value
+   elif moves == direction_t.down.value:
+      game.ducks_state.element[index].sprite_state ^= 1
+      y -= 4
+      if game.ducks_state.element[index].direction != direction_t.down.value:
+         game.ducks_state.element[index].direction = direction_t.down.value
+   elif moves == direction_t.right.value:
+      if game.ducks_state.element[index].direction != direction_t.right.value:
+         game.ducks_state.element[index].direction = direction_t.right.value
+      # check if a seed is in the way
+      if player.get_sandbox (tile_x + 1, tile_y) & 0x08:
+         game.ducks_state.element[index].sprite_state = duck_stoop_t.duck_half_stoop_start.value
+      else:
+         game.ducks_state.element[index].sprite_state ^= 1
+         x += 4
+   elif moves == direction_t.left.value:
+      if game.ducks_state.element[index].direction != direction_t.left.value:
+         game.ducks_state.element[index].direction = direction_t.left.value
+      # check if a seed is in the way
+      if (player.get_sandbox (tile_x - 1, tile_y) & 0x08) and (game.ducks_state.element[index].sprite_state == 0):
+         game.ducks_state.element[index].sprite_state = duck_stoop_t.duck_half_stoop_start.value
+      else:
+         game.ducks_state.element[index].sprite_state ^= 1
+         x -= 4
+   game.ducks_state.element[index].gfx_offset = [x, y]
+   game.ducks_state.element[index].tile_offset = [int (x / 8), int ((y - 0x14) / 8)]
+
+def move_duck (game):
+   if game.ducks_state.n_ducks == 0:
+      return
+
+   if game.ducks_state.duck_to_move > game.ducks_state.n_ducks:
+      game.ducks_state.duck_to_move -= 1
+      return
+
+   moves = 0
+   player = game.get_player_context ()
+   index = game.ducks_state.duck_to_move - 1
+   game.ducks_state.duck_to_move -= 1
+   if game.ducks_state.duck_to_move == 0:
+      game.ducks_state.duck_to_move = adjust_duck_speed (player.current_level, 8)
+
+   x, y = game.ducks_state.element[index].tile_offset
+
+   # is duck with spread legs ?
+   if game.ducks_state.element[index].sprite_state == 0x01:
+      # just move in the same direction as previous move
+      moves = game.ducks_state.element[index].direction
+      duck_one_move (game, moves, index)
+      return
+
+   # clear the seed
+   if game.ducks_state.element[index].sprite_state == duck_stoop_t.duck_stoop.value:
+      if game.ducks_state.element[index].direction == direction_t.right.value:
+         if player.get_sandbox (x + 1, y) != 0:
+            game.seed_state[player.get_sandbox (x + 1, y) >> 4].present = False
+            player.set_sandbox (x + 1, y, 0)
+      else:
+         if player.get_sandbox (x - 1, y) != 0:
+            game.seed_state[player.get_sandbox (x - 1, y) >> 4].present = False
+            player.set_sandbox (x - 1, y, 0)
+
+   # is seed collection animation over ?
+   if game.ducks_state.element[index].sprite_state == duck_stoop_t.duck_half_stoop_end.value:
+      # the seed is collected and animation is over, reset to upstraight position
+      game.ducks_state.element[index].sprite_state = 0
+      return
+   # is duck collecting seed ?
+   if game.ducks_state.element[index].sprite_state >= duck_stoop_t.duck_half_stoop_start.value:
+      game.ducks_state.element[index].sprite_state <<= 1
+      return
+
+   # can move left (either platform or ladder over platform) ?
+   if (y >= 1) and (x >= 1):
+      if (player.get_sandbox (x - 1 , y - 1) & 0x1) == 0x01:
+         moves |= direction_t.left.value
+   # can move right (either platform or ladder over platform) ?
+   if (y >= 1) and (x < 0x13):
+      if (player.get_sandbox (x + 1 , y - 1) & 0x1) == 0x01:
+         moves |= direction_t.right.value
+   # can move up (either ladder or ladder over platform) ?
+   if x < 0x14:
+      if (player.get_sandbox (x, y + 2) & 0x2) == 0x02:
+         moves |= direction_t.up.value
+   # can move down (either ladder or ladder over platform) ?
+   if (y >= 1) and (x < 0x14):
+      if (player.get_sandbox (x, y - 1) & 0x2) == 0x02:
+         moves |= direction_t.down.value
+
+   if number_of_moves (moves) == 1:
+      duck_one_move (game, moves, index)
+      return
+
+   # filter out impossible moves
+   direction = game.ducks_state.element[index].direction
+   if direction >= 4:
+      direction ^= 0xf3
+   else:
+      direction ^= 0xfc
+   moves &= direction
+
+   if number_of_moves (moves) > 1:
+      # randomize
+      while True:
+         random = randomizer (game)
+         random &= moves
+         if number_of_moves (random) == 1:
+            break
+      moves = random
+
+   duck_one_move (game, moves, index)
+
 # pygame setup
 pygame.init()
 screen = pygame.display.set_mode((x_res * scale, y_res * scale))
@@ -354,14 +515,17 @@ while running:
          elif event.key == pygame.K_RIGHT:
             level = player.get_current_level () + 1
             player.set_current_level (level)
+            player.clear_sandbox ()
             init_game_play (game)
-       
+
    # RENDER YOUR GAME HERE
    screen.fill((0,0,0))
    draw_level (screen, game)
    draw_ducks (screen, game)
    draw_flying_duck (screen, game)
    draw_elevator (screen, game)
+
+   move_duck (game)
 
    # flip() the display to put your work on screen
    pygame.display.flip ()
