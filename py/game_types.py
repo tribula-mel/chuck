@@ -128,17 +128,19 @@ class exp_state_t (Enum):
 class chuck_state_t:
    def __init__ (self):
       self.el               = None
-      self.tile_rel_off_x   = 0
-      self.tile_rel_off_y   = 0
+      # rel_x_right_edge=0x7 rel_y_bottom_edge=0x0
+      self.tile_rel_off     = [0x7, 0x0]
       self.vertical_state   = 0
       self.vertical_counter = 0
-      self.dvx              = 0
-      self.dvy              = 0
+      self.dv               = 0
       self.exp_state        = 0
       self.jump_dx          = 0
-      self.offc             = 0
+      self.offa             = 0
+      self.offb             = 0
+      self.offc             = 1
       self.dx               = 0
       self.dy               = 0
+      self.jump_key         = 0
 
 class flying_duck_state_t:
    def __init__ (self):

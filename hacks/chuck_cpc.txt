@@ -676,6 +676,7 @@
            this seems to be required sprite
    output:
       ix = address of the sprite 
+      bc = sprite width and hight
    translates the index into required sprite address in memory
    it seems that $8000 table is referenced two times during this
       process, first the index in 'a' reg is used to get an index

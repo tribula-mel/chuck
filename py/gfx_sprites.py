@@ -544,6 +544,8 @@ chuck_blurd = sprite_t (0x01, 0x12, 0x02,
          0x06
       ])
 
+chuck_sprites = (chuck_r, chuck_rslar, chuck_rslal, chuck_l, chuck_lslal, chuck_lslar, chuck_b, chuck_bldru, chuck_blurd)
+
 # flying duck right closed beak wing down
 flying_duck_rcbwd = sprite_t (0x02, 0x18, 0x02,
       [

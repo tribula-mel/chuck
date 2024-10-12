@@ -93,9 +93,8 @@ def init_chuck_state (game):
    el.gfx_offset = [0x3c, 0x18]
    el.tile_offset = [0x7, 0x1]
    el.direction = direction_t.right.value
-   el.sprite_state = chuck_sprite_t.chuck_standing_one.value
-   #set_chuck_tile_rel_off_x (game, chuck_relative_x_tile_t.on_the_right_edge)
-   #set_chuck_tile_rel_off_y (game, chuck_relative_y_tile_t.on_the_bottom_edge)
+   #el.sprite_state = chuck_sprite_t.chuck_standing_one.value
+   el.sprite_state = 0
    cs = chuck_state_t ()
    cs.el = el
    game.chuck_state = cs
@@ -199,6 +198,24 @@ class game_context_t:
       self.queue = None
       self.timer = None
       self.display = None
+
+   def get_chuck_gfx_off (self):
+      return self.chuck_state.el.gfx_offset
+
+   def get_chuck_tile_rel_off (self):
+      return self.chuck_state.tile_rel_off
+
+   def set_chuck_tile_off (self, off):
+      tile_off = self.chuck_state.el.tile_offset
+      self.chuck_state.el.tile_offset = off
+      return tile_off == off
+   def get_chuck_tile_off (self):
+      return self.chuck_state.el.tile_offset
+
+   def set_chuck_dv (self, off):
+      self.chuck_state.dv = off
+   def get_chuck_dv (self):
+      return self.chuck_state.dv
 
    def deinit_game_context (self):
       al_destroy_timer (get_game_timer (self))

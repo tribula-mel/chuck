@@ -325,86 +325,11 @@ def draw_bonus (screen, game):
       draw_digit (screen, x, y, number[i])
 
 def draw_chuck (screen, game):
-
    x, y = game.chuck_state.el.gfx_offset
    gfx_x = x_convert_to_pygame (x)
    gfx_y = y_convert_to_pygame (y)
-   draw_element (screen, chuck_r, gfx_x, gfx_y, set_colour (chuck_r.colour))
-'''
-   if get_chuck_vertical_state (game) == falling:
-      return
-
-   x = x_convert_to_pygame (game.chuck_state.el.gfx_offset.x)
-   y = y_convert_to_pygame (game.chuck_state.el.gfx_offset.y)
-
-   if (get_chuck_vertical_state (game) == in_jump)
-      switch (game.chuck_state.exp_state)
-         case chuck_right:
-            draw_element (screen, chuck_r, x, y, set_colour (chuck_r.colour))
-         case chuck_right_ars:
-            draw_element (screen, chuck_rslar, x, y, set_colour (chuck_r.colour))
-         case chuck_right_als:
-            draw_element (screen, chuck_rslal, x, y, set_colour (chuck_r.colour))
-         case chuck_left:
-            draw_element (screen, chuck_l, x, y, set_colour (chuck_r.colour))
-         case chuck_left_als:
-            draw_element (screen, chuck_lslal, x, y, set_colour (chuck_r.colour))
-         case chuck_left_ars:
-            draw_element (screen, chuck_lslar, x, y, set_colour (chuck_r.colour))
-         case chuck_back:
-            draw_element (screen, chuck_b, x, y, set_colour (chuck_r.colour))
-         case chuck_back_ladlls:
-            draw_element (screen, chuck_bldru, x, y, set_colour (chuck_r.colour))
-         case chuck_back_laullb:
-            draw_element (screen, chuck_blurd, x, y, set_colour (chuck_r.colour))
-      return
-
-   switch (game.chuck_state.el.sprite_state)
-      case chuck_standing_one:
-      case chuck_standing_two:
-      case chuck_standing_three:
-      case chuck_standing_four:
-      case chuck_standing_five:
-      case chuck_standing_six:
-      case chuck_standing_seven:
-      case chuck_standing_eight:
-         if game.chuck_state.el.direction == right:
-            draw_element (sceen, chuck_r, x, y, set_colour (chuck_r.colour))
-         elif game.chuck_state.el.direction == left:
-            draw_element (screen, chuck_l, x, y, set_colour (chuck_r.colour))
-      case chuck_running_right_arm_one:
-      case chuck_running_right_arm_two:
-         if game.chuck_state.el.direction == direction_t.right:
-            draw_element (screen, chuck_rslar, x, y, set_colour (chuck_r.colour))
-         elif game.chuck_state.el.direction == direction_t.left:
-            draw_element (screen, chuck_lslar, x, y, set_colour (chuck_r.colour))
-      case chuck_running_left_arm_one:
-      case chuck_running_left_arm_two:
-         if game.chuck_state.el.direction == direction_t.right:
-            draw_element (screen, chuck_rslal, x, y, set_colour (chuck_r.colour))
-         elif game.chuck_state.el.direction == direction_t.left:
-            draw_element (screen, chuck_lslal, x, y, set_colour (chuck_r.colour))
-      case chuck_back_one:
-      case chuck_back_two:
-      case chuck_back_three:
-      case chuck_back_four:
-      case chuck_back_five:
-         draw_element (screen, chuck_b, x, y, set_colour (chuck_r.colour))
-      case chuck_back_left_arm:
-         draw_element (screen, chuck_blurd, x, y, set_colour (chuck_r.colour))
-      case chuck_back_right_arm:
-         draw_element (screen, chuck_bldru, x, y, set_colour (chuck_r.colour))
-
-   if (game->chuck_state.el.sprite_state == chuck_running_right_arm_one) or
-       (game->chuck_state.el.sprite_state == chuck_running_right_arm_two) or
-       (game->chuck_state.el.sprite_state == chuck_running_left_arm_one) or
-       (game->chuck_state.el.sprite_state == chuck_running_left_arm_two):
-      game->chuck_state.el.sprite_state += 1
-
-   if (game->chuck_state.el.sprite_state == chuck_back_left_arm) or
-       (game->chuck_state.el.sprite_state == chuck_back_right_arm):
-      game->chuck_state.el.sprite_state += 1
-'''
+   index = game.chuck_state.el.sprite_state
+   draw_element (screen, chuck_sprites[index], gfx_x, gfx_y, set_colour (chuck_r.colour))
 
 def draw_elevator (screen, game):
    player = game.get_player_context ()
@@ -665,6 +590,221 @@ def move_elevator (game):
       #   adj_chuck_all_off_y (game, +2)
    wait -= 1
 
+# original chuck code $94ca
+def chuck_platform_collision (game):
+   player = game.get_player_context ()
+   tile_rel_off_x, tile_rel_off_y = game.get_chuck_tile_rel_off ()
+   tile_off_x, tile_off_y = game.get_chuck_tile_off ()
+   gfx_x, gfx_y = game.get_chuck_gfx_off ()
+   dx = game.chuck_state.dx
+   dy = game.chuck_state.dy
+
+   if (dx > 0x0):
+      # check the screen limit 152 (original chuck $94ee)
+      if gfx_x  >= 0x98:
+         return True
+      if tile_rel_off_x < 0x5: # original chuck $94f3
+         return False
+      tile_off_x += 0x1
+   elif dx < 0x0:
+      # check the screen limit 0 (original chuck $94da)
+      if gfx_x == 0x0:
+         return True
+      if tile_rel_off_x > 0x2: # original chuck $94de
+         return False
+      tile_off_x -= 0x1
+   elif dx == 0x0:
+      return False
+
+   if (dy == 0x02): # original chuck code $94e3 and $94f8
+      return False
+
+   backup = tile_rel_off_y + dy
+   if (backup >= 0x0) and (backup < 0x8): # original chuck $94ff
+      if player.get_sandbox (tile_off_x, tile_off_y) == 0x1:
+         return True
+   elif backup >= 0x0:
+      tile_off_y += 0x1
+      if player.get_sandbox (tile_off_x, tile_off_y) == 0x1:
+         return True
+   elif (backup < 0x0):
+      tile_off_y -= 0x1
+      if player.get_sandbox (tile_off_x, tile_off_y) == 0x1:
+         return True
+
+   if (dy >= 0x0):
+      return False
+
+   tile_off_y += 0x1
+   if player.get_sandbox (tile_off_x, tile_off_y) == 0x1:
+      return True
+
+   return False
+
+# original chuck code $9522
+def do_set_chuck_state (game):
+   gfx = game.get_chuck_gfx_off ()
+   tile = game.get_chuck_tile_off ()
+   tile_rel = game.get_chuck_tile_rel_off ()
+   dx = game.chuck_state.dx
+   dy = game.chuck_state.dy
+   gfx[0] += dx
+   gfx[1] += dy
+   tile_rel[0] += dx
+   if tile_rel[0] < 0:
+      tile[0] -= 1
+   if tile_rel[0] >= 8:
+      tile[0] += 1
+   tile_rel[0] &= 0x7
+   tile_rel[1] += dy
+   tile = game.get_chuck_tile_off ()
+   if tile_rel[1] < 0:
+      tile[1] -= 1
+   if tile_rel[0] >= 8:
+      tile[1] += 1
+   tile_rel[1] &= 0x7
+   offc = game.chuck_state.offc
+   if offc == 0:
+      reg_c = 0x6
+      reg_a = tile_rel[1]
+   elif offc < 0:
+      reg_c = 0x3
+      reg_a = tile_rel[0]
+   else:
+      reg_c = 0x0
+      reg_a = tile_rel[0]
+   reg_a >>= 1
+   if (reg_a & 0x2) != 0x0:
+      reg_a &= 0x1
+      reg_a <<= 1
+   if game.chuck_state.vertical_state == 0x1:
+      # ladder case
+      if dy == 0:
+         reg_a = 0
+   else:
+      if dx == 0:
+         reg_a = 0
+   reg_a += reg_c
+   game.chuck_state.el.sprite_state = reg_a
+
+# original chuck code $925c
+def do_chuck_fall (game):
+   game.chuck_state.vertical_state = 0x3
+   tile_rel = game.get_chuck_tile_rel_off ()
+   if ((tile_rel[0] + game.chuck_state.dx) & 0x7) >= 4:
+      game.chuck_state.offa = 0
+      game.chuck_state.offb = -1
+   else:
+      game.chuck_state.offa = 1
+      game.chuck_state.offb = 1
+
+# original chuck code $9242
+def do_left_right (game):
+   player = game.get_player_context ()
+   game.chuck_state.dy = 0
+   tile_rel = game.get_chuck_tile_rel_off ()
+   tile_rel_x = tile_rel[0]
+   tile_x, tile_y = game.get_chuck_tile_off ()
+   tile_rel_x += game.chuck_state.dx
+   if tile_rel_x < 0:
+      tile_x -= 1
+   if tile_rel_x >= 8:
+      tile_x += 1
+   tile_y -= 1
+   if (player.get_sandbox (tile_x, tile_y) & 0x1) == 0:
+      do_chuck_fall (game)
+   if chuck_platform_collision (game) == True:
+      game.chuck_state.dx = 0
+   if game.chuck_state.dx != 0:
+      game.chuck_state.offc = game.chuck_state.dx
+   do_set_chuck_state (game)
+
+# original chuck code $9215
+def do_up_down (game):
+   player = game.get_player_context ()
+   tile_rel = game.get_chuck_tile_rel_off ()
+   # aligned with a ladder ?
+   if tile_rel[0] != 0x3:
+      do_left_right (game)
+      return
+   tile_x, tile_y = game.get_chuck_tile_off ()
+   if game.chuck_state.dy > 0:
+      tile_y += 2
+   else:
+      tile_y -= 1
+   if (player.get_sandbox (tile_x, tile_y) & 0x2) == 0:
+      do_left_right (game)
+      return
+   game.chuck_state.dx = 0
+   # on the ladder
+   game.chuck_state.vertical_state = 0x1
+   do_set_chuck_state (game)
+
+# original chuck code $92fa
+def do_jump_key (game):
+   return
+
+def jump_92c2 (game):
+   player = game.get_player_context ()
+   tile_x, tile_y = game.get_chuck_tile_off ()
+   tile_rel = game.get_chuck_tile_rel_off ()
+   if game.chuck_state.dy == 0:
+      game.chuck_state.offc = 0
+      do_set_chuck_state (game)
+   if tile_rel[1] != 0:
+      game.chuck_state.offc = 0
+      do_set_chuck_state (game)
+   if game.chuck_state.dy > 0:
+      if (player.get_sandbox (tile_x, tile_y + 2) & 0x2) == 0:
+         game.chuck_state.dy = 0
+   else:
+      if (player.get_sandbox (tile_x, tile_y - 1) & 0x2) == 0:
+         game.chuck_state.dy = 0
+   game.chuck_state.offc = 0
+   do_set_chuck_state (game)
+
+# original chuck code $9293
+def do_chuck_ladder (game):
+   player = game.get_player_context ()
+   tile_x, tile_y = game.get_chuck_tile_off ()
+   tile_rel = game.get_chuck_tile_rel_off ()
+   if game.chuck_state.jump_key == 0x10:
+      do_jump_key (game)
+   if game.chuck_state.dx == 0:
+      jump_92c2 (game)
+   if tile_rel[1] != 0:
+      jump_92c2 (game)
+   if (player.get_sandbox (tile_x, tile_y - 1) & 0x1) == 0:
+      jump_92c2 (game)
+   game.chuck_state.dy = 0
+   game.chuck_state.vertical_state = 0
+   if chuck_platform_collision (game) == True:
+      game.chuck_state.dx = 0
+   game.chuck_state.offc = 0
+   do_set_chuck_state (game)
+
+# original chuck code $91f9
+def move_chuck_vert (game):
+   if game.chuck_state.vertical_state == 0x1:
+      do_chuck_ladder (game)
+      return
+
+# original chuck code $91c3
+def move_chuck (game):
+   # check first vertical movement state
+   # e.g. if chuck is in a jump, on the elevator,
+   # ladder, or in a fall
+   if game.chuck_state.vertical_state != 0:
+      move_chuck_vert (game)
+      return
+   # check if jump key is pressed
+   if game.chuck_state.jump_key == 0x10:
+      do_jump_key (game)
+   if game.chuck_state.dy != 0:
+      do_up_down (game)
+      return
+   do_left_right (game)
+
 # pygame setup
 pygame.init()
 screen = pygame.display.set_mode((x_res * scale, y_res * scale))
@@ -685,11 +825,19 @@ while running:
          if event.key == pygame.K_ESCAPE:
             running = False
             break
-         elif event.key == pygame.K_RIGHT:
+         if event.key == pygame.K_n:
             level = player.get_current_level () + 1
             player.set_current_level (level)
             player.clear_sandbox ()
             init_game_play (game)
+         if event.key == pygame.K_RIGHT:
+            game.chuck_state.dx += 1
+         if event.key == pygame.K_LEFT:
+            game.chuck_state.dx += -1
+         if event.key == pygame.K_UP:
+            game.chuck_state.dy += 2
+         if event.key == pygame.K_DOWN:
+            game.chuck_state.dy += -2
 
    # RENDER YOUR GAME HERE
    screen.fill((0,0,0))
@@ -702,6 +850,9 @@ while running:
    move_duck (game)
    move_flying_duck (game)
    move_elevator (game)
+   move_chuck (game)
+   game.chuck_state.dx = 0
+   game.chuck_state.dy = 0
 
    # flip() the display to put your work on screen
    pygame.display.flip ()

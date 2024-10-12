@@ -2327,27 +2327,27 @@
 8C34: E5          push hl
 8C35: 21 00 80    ld   hl,$8000
 8C38: 87          add  a,a
-8C39: 87          add  a,a
+8C39: 87          add  a,a       # a = a * 4
 8C3A: 85          add  a,l
 8C3B: 6F          ld   l,a
 8C3C: 3E 00       ld   a,$00
 8C3E: 8C          adc  a,h
-8C3F: 67          ld   h,a
+8C3F: 67          ld   h,a       # hl += a
 8C40: 7E          ld   a,(hl)
 8C41: C6 07       add  a,$07
 8C43: CB 3F       srl  a
 8C45: CB 3F       srl  a
 8C47: CB 3F       srl  a
-8C49: 47          ld   b,a
+8C49: 47          ld   b,a       # sprite width
 8C4A: 23          inc  hl
-8C4B: 4E          ld   c,(hl)
+8C4B: 4E          ld   c,(hl)    # sprite height
 8C4C: C5          push bc
 8C4D: 23          inc  hl
 8C4E: 4E          ld   c,(hl)
 8C4F: 23          inc  hl
-8C50: 46          ld   b,(hl)
+8C50: 46          ld   b,(hl)    # bc = sprite offset
 8C51: 21 00 80    ld   hl,$8000
-8C54: 09          add  hl,bc
+8C54: 09          add  hl,bc     # hl = sprite address
 8C55: E5          push hl
 8C56: DD E1       pop  ix
 8C58: C1          pop  bc
@@ -2934,7 +2934,7 @@
 900D: C9          ret
 900E: FD 56 00    ld   d,(iy+$00)
 9011: FD 5E 01    ld   e,(iy+$01)
-9014: CD 0A 8C    call $8C0A           # calculated screen address for x,y
+9014: CD 0A 8C    call $8C0A           # calculate screen address for x,y
 9017: E5          push hl
 9018: 3E 08       ld   a,$08
 901A: CD 5B 8C    call $8C5B           # returns colour in reg e
@@ -3150,53 +3150,53 @@
 9209: 3A 56 7B    ld   a,($7B56)    # chuck is not moving vertically
 920C: E6 10       and  $10          # check for jump press
 920E: C2 FA 92    jp   nz,$92FA     # jump to $92FA if jump key pressed
-9211: 79          ld   a,c
+9211: 79          ld   a,c          # load up/down key press state
 9212: B7          or   a
-9213: 28 2D       jr   z,$9242
-9215: 7C          ld   a,h
+9213: 28 2D       jr   z,$9242      # jump to $9242 if no up/down key pressed
+9215: 7C          ld   a,h          # relative tile x offset
 9216: FE 03       cp   $03          # are we aligned with the ladder ?
 9218: 20 28       jr   nz,$9242
-921A: 79          ld   a,c
+921A: 79          ld   a,c          # we are
 921B: B7          or   a
 921C: FA 2D 92    jp   m,$922D
 921F: D5          push de
-9220: 1C          inc  e            # chuck moves up by 2 so test for ladder
-9221: 1C          inc  e
-9222: CD A3 8F    call $8FA3
+9220: 1C          inc  e            # chuck climbs up if there are two ladder
+9221: 1C          inc  e            # segments above him
+9222: CD A3 8F    call $8FA3        # reach to sandbox, result is in reg_a
 9225: D1          pop  de
-9226: E6 02       and  $02
+9226: E6 02       and  $02          # test for ladder
 9228: 28 18       jr   z,$9242
 922A: C3 37 92    jp   $9237        # there is ladder
 922D: D5          push de
-922E: 1D          dec  e
+922E: 1D          dec  e            # for climbing down only one ladder seg
 922F: CD A3 8F    call $8FA3
 9232: D1          pop  de
-9233: E6 02       and  $02
+9233: E6 02       and  $02          # test for ladder
 9235: 28 0B       jr   z,$9242
-9237: FD 36 06 00 ld   (iy+$06),$00
-923B: FD 36 04 01 ld   (iy+$04),$01
+9237: FD 36 06 00 ld   (iy+$06),$00 # left right dx = 0
+923B: FD 36 04 01 ld   (iy+$04),$01 # on ladder
 923F: C3 86 92    jp   $9286
-9242: FD 36 07 00 ld   (iy+$07),$00
+9242: FD 36 07 00 ld   (iy+$07),$00 # up down dy = 0
 9246: 0E 00       ld   c,$00
 9248: D5          push de
-9249: 7C          ld   a,h
-924A: 80          add  a,b
-924B: F2 4F 92    jp   p,$924F
-924E: 15          dec  d
+9249: 7C          ld   a,h          # a = tile_rel.x
+924A: 80          add  a,b          # a += dx (dx can be +1/-1)
+924B: F2 4F 92    jp   p,$924F      # if a >= 0 jump
+924E: 15          dec  d            # decrement tile_x
 924F: FE 08       cp   $08
-9251: FA 55 92    jp   m,$9255
-9254: 14          inc  d
-9255: 1D          dec  e
-9256: CD A3 8F    call $8FA3
+9251: FA 55 92    jp   m,$9255      # if a < 8 jump
+9254: 14          inc  d            # increment tile_x
+9255: 1D          dec  e            # test for platform either on the left or on the right
+9256: CD A3 8F    call $8FA3        # get the tile from the sandbox
 9259: D1          pop  de
-925A: E6 01       and  $01
-925C: 20 1F       jr   nz,$927D
-925E: FD 36 04 03 ld   (iy+$04),$03
-9262: 78          ld   a,b
-9263: 84          add  a,h
-9264: E6 07       and  $07
+925A: E6 01       and  $01          # test for platform
+925C: 20 1F       jr   nz,$927D     # if platform jump
+925E: FD 36 04 03 ld   (iy+$04),$03 # set the falling state
+9262: 78          ld   a,b          # a = dx
+9263: 84          add  a,h          # a += tile_rel.x
+9264: E6 07       and  $07          # limit to 0..7
 9266: FE 04       cp   $04
-9268: 38 0B       jr   c,$9275
+9268: 38 0B       jr   c,$9275      # if a < 4 (0..3) jump
 926A: FD 36 0B FF ld   (iy+$0b),$FF
 926E: FD 36 0A 00 ld   (iy+$0a),$00
 9272: C3 7D 92    jp   $927D
@@ -3210,12 +3210,12 @@
 928A: CA 22 95    jp   z,$9522
 928D: FD 77 0C    ld   (iy+$0c),a
 9290: C3 22 95    jp   $9522
-9293: 3A 56 7B    ld   a,($7B56)
+9293: 3A 56 7B    ld   a,($7B56)    # ladder case
 9296: E6 10       and  $10
 9298: C2 FA 92    jp   nz,$92FA
 929B: 78          ld   a,b
 929C: B7          or   a
-929D: 28 23       jr   z,$92C2
+929D: 28 23       jr   z,$92C2      # no left/right key pressed so jump
 929F: 7D          ld   a,l
 92A0: B7          or   a
 92A1: 20 1F       jr   nz,$92C2
@@ -3225,8 +3225,8 @@
 92A8: D1          pop  de
 92A9: E6 01       and  $01
 92AB: 28 15       jr   z,$92C2
-92AD: FD 36 07 00 ld   (iy+$07),$00
-92B1: FD 36 04 00 ld   (iy+$04),$00
+92AD: FD 36 07 00 ld   (iy+$07),$00 # we reached a platform at the bottom
+92B1: FD 36 04 00 ld   (iy+$04),$00 # of a ladder
 92B5: CD CA 94    call $94CA        # check collision with a platform (carry set if true)
 92B8: D2 F3 92    jp   nc,$92F3
 92BB: FD 36 06 00 ld   (iy+$06),$00
@@ -3244,7 +3244,7 @@
 92D3: D5          push de
 92D4: 1C          inc  e
 92D5: 1C          inc  e
-92D6: CD A3 8F    call $8FA3
+92D6: CD A3 8F    call $8FA3     # sandbox access
 92D9: D1          pop  de
 92DA: E6 02       and  $02
 92DC: 20 15       jr   nz,$92F3
@@ -3497,7 +3497,7 @@
 94E2: 79          ld   a,c
 94E3: FE 02       cp   $02                # test for dy == 2
 94E5: 28 EC       jr   z,$94D3            # if so exit with c_flag=0
-94E7: 15          dec  d                  # dec tile_y
+94E7: 15          dec  d                  # dec tile_x
 94E8: C3 FD 94    jp   $94FD
 94EB: FD 7E 00    ld   a,(iy+$00)         # chuck is jumping to the right
 94EE: FE 98       cp   $98                # check the screen boundary
@@ -3509,11 +3509,11 @@
 94F8: FE 02       cp   $02                # test for dy equal to 2
 94FA: 28 D7       jr   z,$94D3            # if dy == 2 exit c_flag=0
 94FC: 14          inc  d                  # inc tile_x
-94FD: 7D          ld   a,l
-94FE: 81          add  a,c
+94FD: 7D          ld   a,l                # a = tile_rel.y
+94FE: 81          add  a,c                # a += dy
 94FF: FE 08       cp   $08
-9501: 38 08       jr   c,$950B
-9503: F2 0A 95    jp   p,$950A
+9501: 38 08       jr   c,$950B            # if a < 8 jump
+9503: F2 0A 95    jp   p,$950A            # if a >= 8 jump
 9506: 1D          dec  e
 9507: C3 0B 95    jp   $950B
 950A: 1C          inc  e
@@ -3532,38 +3532,38 @@
 9521: C9          ret
 9522: FD 46 00    ld   b,(iy+$00)
 9525: FD 4E 01    ld   c,(iy+$01)
-9528: FD 56 06    ld   d,(iy+$06)
-952B: FD 5E 07    ld   e,(iy+$07)
+9528: FD 56 06    ld   d,(iy+$06)  # left/right increment (-1/+1)
+952B: FD 5E 07    ld   e,(iy+$07)  # down/up increment (-2/+2)
 952E: FD 66 08    ld   h,(iy+$08)
 9531: FD 6E 09    ld   l,(iy+$09)
-9534: 78          ld   a,b
-9535: 82          add  a,d
-9536: 47          ld   b,a
-9537: 79          ld   a,c
-9538: 83          add  a,e
-9539: 4F          ld   c,a
-953A: 7C          ld   a,h
-953B: 82          add  a,d
-953C: F2 42 95    jp   p,$9542
-953F: FD 35 02    dec  (iy+$02)
+9534: 78          ld   a,b         # a = gfx.x
+9535: 82          add  a,d         # a += dx
+9536: 47          ld   b,a         # b = new gfx.x
+9537: 79          ld   a,c         # a = gfx.y
+9538: 83          add  a,e         # a += dy
+9539: 4F          ld   c,a         # c = new gfx.y
+953A: 7C          ld   a,h         # a = tile_rel.x
+953B: 82          add  a,d         # a += dx
+953C: F2 42 95    jp   p,$9542     # if a >= 0 jump
+953F: FD 35 02    dec  (iy+$02)    # update the table - decrement tile.x
 9542: FE 08       cp   $08
-9544: FA 4A 95    jp   m,$954A
-9547: FD 34 02    inc  (iy+$02)
-954A: E6 07       and  $07
-954C: 67          ld   h,a
-954D: 7D          ld   a,l
-954E: 83          add  a,e
-954F: F2 55 95    jp   p,$9555
-9552: FD 35 03    dec  (iy+$03)
+9544: FA 4A 95    jp   m,$954A     # if a < 8 jump
+9547: FD 34 02    inc  (iy+$02)    # update the table - increment tile.x
+954A: E6 07       and  $07         # relative offset is 0..7
+954C: 67          ld   h,a         # h = new tile_rel.x
+954D: 7D          ld   a,l         # a = tile_rel.y
+954E: 83          add  a,e         # a += dy
+954F: F2 55 95    jp   p,$9555     # if a >= 0 jump
+9552: FD 35 03    dec  (iy+$03)    # update the table - decrement tile.y
 9555: FE 08       cp   $08
-9557: FA 5D 95    jp   m,$955D
-955A: FD 34 03    inc  (iy+$03)
-955D: E6 07       and  $07
-955F: 6F          ld   l,a
-9560: FD 70 00    ld   (iy+$00),b
-9563: FD 71 01    ld   (iy+$01),c
-9566: FD 74 08    ld   (iy+$08),h
-9569: FD 75 09    ld   (iy+$09),l
+9557: FA 5D 95    jp   m,$955D     # if a < 8 jump
+955A: FD 34 03    inc  (iy+$03)    # update the table - increment tile.y
+955D: E6 07       and  $07         # relative offset is 0..7
+955F: 6F          ld   l,a         # l = new tile_rel.y
+9560: FD 70 00    ld   (iy+$00),b  # update the table gfx.x
+9563: FD 71 01    ld   (iy+$01),c  # gfx.y
+9566: FD 74 08    ld   (iy+$08),h  # tile_rel.x
+9569: FD 75 09    ld   (iy+$09),l  # tile_rel.y
 956C: FD 7E 0C    ld   a,(iy+$0c)
 956F: B7          or   a
 9570: 28 0F       jr   z,$9581
@@ -3588,12 +3588,12 @@
 9590: FD 7E 04    ld   a,(iy+$04)
 9593: FE 01       cp   $01
 9595: 20 09       jr   nz,$95A0
-9597: 7B          ld   a,e
+9597: 7B          ld   a,e        # dy, ladder case
 9598: B7          or   a
 9599: 20 0B       jr   nz,$95A6
 959B: 06 00       ld   b,$00
 959D: C3 A6 95    jp   $95A6
-95A0: 7A          ld   a,d
+95A0: 7A          ld   a,d        # dx
 95A1: B7          or   a
 95A2: 20 02       jr   nz,$95A6
 95A4: 06 00       ld   b,$00
