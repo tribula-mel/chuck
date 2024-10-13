@@ -3226,7 +3226,7 @@
 92A9: E6 01       and  $01
 92AB: 28 15       jr   z,$92C2
 92AD: FD 36 07 00 ld   (iy+$07),$00 # we reached a platform at the bottom
-92B1: FD 36 04 00 ld   (iy+$04),$00 # of a ladder
+92B1: FD 36 04 00 ld   (iy+$04),$00 # off a ladder
 92B5: CD CA 94    call $94CA        # check collision with a platform (carry set if true)
 92B8: D2 F3 92    jp   nc,$92F3
 92BB: FD 36 06 00 ld   (iy+$06),$00

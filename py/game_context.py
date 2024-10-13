@@ -93,7 +93,6 @@ def init_chuck_state (game):
    el.gfx_offset = [0x3c, 0x18]
    el.tile_offset = [0x7, 0x1]
    el.direction = direction_t.right.value
-   #el.sprite_state = chuck_sprite_t.chuck_standing_one.value
    el.sprite_state = 0
    cs = chuck_state_t ()
    cs.el = el

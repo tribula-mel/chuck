@@ -657,10 +657,9 @@ def do_set_chuck_state (game):
       tile[0] += 1
    tile_rel[0] &= 0x7
    tile_rel[1] += dy
-   tile = game.get_chuck_tile_off ()
    if tile_rel[1] < 0:
       tile[1] -= 1
-   if tile_rel[0] >= 8:
+   if tile_rel[1] >= 8:
       tile[1] += 1
    tile_rel[1] &= 0x7
    offc = game.chuck_state.offc
@@ -687,17 +686,6 @@ def do_set_chuck_state (game):
    reg_a += reg_c
    game.chuck_state.el.sprite_state = reg_a
 
-# original chuck code $925c
-def do_chuck_fall (game):
-   game.chuck_state.vertical_state = 0x3
-   tile_rel = game.get_chuck_tile_rel_off ()
-   if ((tile_rel[0] + game.chuck_state.dx) & 0x7) >= 4:
-      game.chuck_state.offa = 0
-      game.chuck_state.offb = -1
-   else:
-      game.chuck_state.offa = 1
-      game.chuck_state.offb = 1
-
 # original chuck code $9242
 def do_left_right (game):
    player = game.get_player_context ()
@@ -712,7 +700,13 @@ def do_left_right (game):
       tile_x += 1
    tile_y -= 1
    if (player.get_sandbox (tile_x, tile_y) & 0x1) == 0:
-      do_chuck_fall (game)
+      game.chuck_state.vertical_state = 0x3
+      if ((game.chuck_state.dx + tile_rel_x) & 0x7) >= 4:
+         game.chuck_state.offa = 0
+         game.chuck_state.offb = -1
+      else:
+         game.chuck_state.offa = 1
+         game.chuck_state.offb = 1
    if chuck_platform_collision (game) == True:
       game.chuck_state.dx = 0
    if game.chuck_state.dx != 0:
@@ -748,12 +742,15 @@ def jump_92c2 (game):
    player = game.get_player_context ()
    tile_x, tile_y = game.get_chuck_tile_off ()
    tile_rel = game.get_chuck_tile_rel_off ()
+   game.chuck_state.dx = 0
    if game.chuck_state.dy == 0:
       game.chuck_state.offc = 0
       do_set_chuck_state (game)
+      return
    if tile_rel[1] != 0:
       game.chuck_state.offc = 0
       do_set_chuck_state (game)
+      return
    if game.chuck_state.dy > 0:
       if (player.get_sandbox (tile_x, tile_y + 2) & 0x2) == 0:
          game.chuck_state.dy = 0
@@ -772,10 +769,13 @@ def do_chuck_ladder (game):
       do_jump_key (game)
    if game.chuck_state.dx == 0:
       jump_92c2 (game)
+      return
    if tile_rel[1] != 0:
       jump_92c2 (game)
+      return
    if (player.get_sandbox (tile_x, tile_y - 1) & 0x1) == 0:
       jump_92c2 (game)
+      return
    game.chuck_state.dy = 0
    game.chuck_state.vertical_state = 0
    if chuck_platform_collision (game) == True:
@@ -783,10 +783,39 @@ def do_chuck_ladder (game):
    game.chuck_state.offc = 0
    do_set_chuck_state (game)
 
+# original chuck code $9445
+def do_chuck_fall (game):
+   player = game.get_player_context ()
+   tile_x, tile_y = game.get_chuck_tile_off ()
+   tile_rel_x, tile_rel_y = game.get_chuck_tile_rel_off ()
+   game.chuck_state.offa += 1
+   offa = game.chuck_state.offa
+   if offa < 0x4:
+      game.chuck_state.dx = game.chuck_state.offb
+      game.chuck_state.dy = -1
+   elif offa >= 0x4:
+      game.chuck_state.dx = 0
+      offa >>= 2
+      if offa >= 4:
+         offa = 3
+      offa = (-offa) - 1
+      game.chuck_state.dy = offa
+   if (game.chuck_state.dy + tile_rel_y) >= 0:
+      do_set_chuck_state (game)
+      return
+   else:
+      if (player.get_sandbox (tile_x, tile_y - 1) & 0x1) != 0x0:
+         game.chuck_state.vertical_state = 0x0
+         game.chuck_state.dy = -tile_rel_y
+   do_set_chuck_state (game)
+
 # original chuck code $91f9
 def move_chuck_vert (game):
    if game.chuck_state.vertical_state == 0x1:
       do_chuck_ladder (game)
+      return
+   elif game.chuck_state.vertical_state == 0x3:
+      do_chuck_fall (game)
       return
 
 # original chuck code $91c3
@@ -825,6 +854,11 @@ while running:
          if event.key == pygame.K_ESCAPE:
             running = False
             break
+         if event.key == pygame.K_t:
+            print ('tile = ', game.chuck_state.el.tile_offset)
+            print ('tile_rel = ', game.chuck_state.tile_rel_off)
+            print ('vertical_state = ', game.chuck_state.vertical_state)
+            print ('gfx = ', game.chuck_state.el.gfx_offset)
          if event.key == pygame.K_n:
             level = player.get_current_level () + 1
             player.set_current_level (level)
