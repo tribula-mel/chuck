@@ -736,7 +736,37 @@ def do_up_down (game):
 
 # original chuck code $92fa
 def do_jump_key (game):
-   return
+   player = game.get_player_context ()
+   tile_x, tile_y = game.get_chuck_tile_off ()
+   gfx = game.get_chuck_gfx_off ()
+   game.chuck_state.offa = 0
+   game.chuck_state.vertical_state = 0x2
+   game.chuck_state.offb = game.chuck_state.dx
+   if game.chuck_state.dx != 0:
+      game.chuck_state.offc = game.chuck_state.dx
+   offa = game.chuck_state.offa
+   offb = game.chuck_state.offb
+   offa >>= 2
+   if offa >= 6:
+      offa = 6
+   offa = -offa + 2
+   dy = offa
+   game.chuck_state.offa += 1
+   if offa <= 0:
+      jump_934d (game)
+      return
+   if ((player.get_sandbox (tile_x, tile_y)) & 0x1) != 0:
+      if gfx[1] < 0xae:
+         jump_934d (game)
+         return
+   else:
+      if ((player.get_sandbox (tile_x, tile_y + 1)) & 0x1) != 0:
+         if gfx[1] < 0xae:
+            jump_934d (game)
+            return
+   dy = -1
+   game.chuck_state.offa = 0xc
+   jump_93d0 (game)
 
 def jump_92c2 (game):
    player = game.get_player_context ()

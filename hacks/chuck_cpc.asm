@@ -3142,11 +3142,11 @@
 91F5: B7          or   a
 91F6: CA 09 92    jp   z,$9209
 91F9: FE 02       cp   $02
-91FB: CA 0C 93    jp   z,$930C
-91FE: DA 93 92    jp   c,$9293
+91FB: CA 0C 93    jp   z,$930C      # jump state
+91FE: DA 93 92    jp   c,$9293      # ladder state
 9201: FE 03       cp   $03
-9203: CA 45 94    jp   z,$9445
-9206: C3 8E 94    jp   $948E
+9203: CA 45 94    jp   z,$9445      # falling state
+9206: C3 8E 94    jp   $948E        # elevator state
 9209: 3A 56 7B    ld   a,($7B56)    # chuck is not moving vertically
 920C: E6 10       and  $10          # check for jump press
 920E: C2 FA 92    jp   nz,$92FA     # jump to $92FA if jump key pressed
@@ -3280,7 +3280,7 @@
 9324: B7          or   a
 9325: 28 26       jr   z,$934D
 9327: FA 4D 93    jp   m,$934D
-932A: D5          push de              # is chuck in the tile ?
+932A: D5          push de              # is chuck in the platform ?
 932B: CD A3 8F    call $8FA3           # load from sandbox
 932E: D1          pop  de
 932F: E6 01       and  $01
