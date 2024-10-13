@@ -847,6 +847,16 @@ init_game_play (game)
 while running:
    # poll for events
    # pygame.QUIT event means the user clicked X to close your window
+   keys = pygame.key.get_pressed ()
+   if keys[pygame.K_RIGHT]:
+      game.chuck_state.dx += 1
+   if keys[pygame.K_LEFT]:
+      game.chuck_state.dx += -1
+   if keys[pygame.K_UP]:
+      game.chuck_state.dy += 2
+   if keys[pygame.K_DOWN]:
+      game.chuck_state.dy += -2
+
    for event in pygame.event.get ():
       if event.type == pygame.QUIT:
          running = False
@@ -864,14 +874,6 @@ while running:
             player.set_current_level (level)
             player.clear_sandbox ()
             init_game_play (game)
-         if event.key == pygame.K_RIGHT:
-            game.chuck_state.dx += 1
-         if event.key == pygame.K_LEFT:
-            game.chuck_state.dx += -1
-         if event.key == pygame.K_UP:
-            game.chuck_state.dy += 2
-         if event.key == pygame.K_DOWN:
-            game.chuck_state.dy += -2
 
    # RENDER YOUR GAME HERE
    screen.fill((0,0,0))
@@ -891,6 +893,6 @@ while running:
    # flip() the display to put your work on screen
    pygame.display.flip ()
 
-   clock.tick (60) # limits FPS to 60
+   clock.tick (35) # limits FPS to 60
 
 pygame.quit()
