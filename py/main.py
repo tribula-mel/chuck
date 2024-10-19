@@ -532,10 +532,10 @@ def move_flying_duck (game):
          skip_flying (game, flyd_x, flyd_y, flyd_dx, flyd_dy, state)
          return
 
-      if abs (flyd_x + 0x4) >= chuck_x:
+      if (flyd_x + 0x4) >= chuck_x:
          # flying duck is to the chuck's right
          flyd_dx -= 1
-         if (flyd_dx + 0x5) < 0:
+         if flyd_dx < -0x5:
             flyd_dx += 1
          game.flying_duck_state.el.direction = direction_t.left.value
       else:
@@ -559,7 +559,9 @@ def move_flying_duck (game):
 
       if abs (flyd_y + flyd_dy) < 0x20:
          flyd_dy = -flyd_dy
-      if abs (flyd_x + flyd_dx) >= 0x90:
+      if (flyd_x + flyd_dx) >= 0x90:
+         flyd_dx = -flyd_dx
+      elif (flyd_x + flyd_dx) < 0x0:
          flyd_dx = -flyd_dx
 
       skip_flying (game, flyd_x, flyd_y, flyd_dx, flyd_dy, state)
