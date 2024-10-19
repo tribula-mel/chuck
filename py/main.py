@@ -982,6 +982,7 @@ def move_chuck (game):
    # check if jump key is pressed
    if game.chuck_state.jump_key == 0x10:
       do_jump_key (game)
+      return
    if game.chuck_state.dy != 0:
       do_up_down (game)
       return
