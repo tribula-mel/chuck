@@ -4003,14 +4003,14 @@
 98B4: 1C          inc  e
 98B5: 7D          ld   a,l
 98B6: 83          add  a,e
-98B7: FE 20       cp   $20
+98B7: FE 20       cp   $20          # bottom screen limit check
 98B9: 30 04       jr   nc,$98BF
 98BB: 7B          ld   a,e
 98BC: ED 44       neg
 98BE: 5F          ld   e,a
 98BF: 7C          ld   a,h
 98C0: 82          add  a,d
-98C1: FE 90       cp   $90
+98C1: FE 90       cp   $90          # right screen limit check
 98C3: 38 04       jr   c,$98C9
 98C5: 7A          ld   a,d
 98C6: ED 44       neg
