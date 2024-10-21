@@ -965,7 +965,8 @@
    a = sprite ?
 
 -| $7b0b contains $ff for the second elevator paddle
-      the one that is always on top
+      the one that is always on top (only one paddle is drawn
+      on the screen at a time)
    $7b08 elevator paddle x position
    $7b09 elevator paddle y position ($4 for the bottom paddle)
    $7b0a elevator paddle y position for the second paddle ($42)

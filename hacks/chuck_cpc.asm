@@ -3475,7 +3475,7 @@
 94B8: B7          or   a
 94B9: 28 03       jr   z,$94BE
 94BB: FD 77 0C    ld   (iy+$0c),a
-94BE: CD CA 94    call $94CA              # check collision with a platform (carry set if true)
+94BE: CD CA 94    call $94CA # check collision with a platform (carry set if true)
 94C1: 30 04       jr   nc,$94C7
 94C3: FD 36 06 00 ld   (iy+$06),$00
 94C7: C3 22 95    jp   $9522
