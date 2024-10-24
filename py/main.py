@@ -593,17 +593,14 @@ def move_elevator (game):
    wait -= 1
 
 # original chuck code $94ca
-def chuck_platform_collision (game):
+def chuck_platform_collision (game, dx, dy):
    player = game.get_player_context ()
    tile_rel_off_x, tile_rel_off_y = game.get_chuck_tile_rel_off ()
    tile_off_x, tile_off_y = game.get_chuck_tile_off ()
    gfx_x, gfx_y = game.get_chuck_gfx_off ()
-   dx = game.chuck_state.dx
-   dy = game.chuck_state.dy
-
    if (dx > 0x0):
       # check the screen limit 152 (original chuck $94ee)
-      if gfx_x  >= 0x98:
+      if gfx_x >= 0x98:
          return True
       if tile_rel_off_x < 0x5: # original chuck $94f3
          return False
@@ -617,10 +614,8 @@ def chuck_platform_collision (game):
       tile_off_x -= 0x1
    elif dx == 0x0:
       return False
-
    if (dy == 0x02): # original chuck code $94e3 and $94f8
       return False
-
    backup = tile_rel_off_y + dy
    if (backup >= 0x0) and (backup < 0x8): # original chuck $94ff
       if player.get_sandbox (tile_off_x, tile_off_y) == 0x1:
@@ -633,14 +628,11 @@ def chuck_platform_collision (game):
       tile_off_y -= 0x1
       if player.get_sandbox (tile_off_x, tile_off_y) == 0x1:
          return True
-
    if (dy >= 0x0):
       return False
-
    tile_off_y += 0x1
    if player.get_sandbox (tile_off_x, tile_off_y) == 0x1:
       return True
-
    return False
 
 # original chuck code $9522
@@ -709,7 +701,9 @@ def do_left_right (game):
       else:
          game.chuck_state.offa = 1
          game.chuck_state.offb = 1
-   if chuck_platform_collision (game) == True:
+   dx = game.chuck_state.dx
+   dy = game.chuck_state.dy
+   if chuck_platform_collision (game, dx, dy) == True:
       game.chuck_state.dx = 0
    if game.chuck_state.dx != 0:
       game.chuck_state.offc = game.chuck_state.dx
@@ -754,7 +748,7 @@ def jump_93d0 (game, dx, dy):
    player = game.get_player_context ()
    level = player.get_current_level () % 8
    if game.levels[level].elevator_offset == None:
-      if chuck_platform_collision (game) == True:
+      if chuck_platform_collision (game, dx, dy) == True:
          dx = -dx
          game.chuck_state.offb = dx
       game.chuck_state.dx = dx
@@ -777,7 +771,7 @@ def jump_93d0 (game, dx, dy):
          game.chuck_state.vertical_state = 0x04
          jump_943c (game, dx, dy)
          return
-   if chuck_platform_collision (game) == True:
+   if chuck_platform_collision (game, dx, dy) == True:
       dx = -dx
       game.chuck_state.offb = dx
    game.chuck_state.dx = dx
@@ -882,15 +876,11 @@ def do_chuck_jump_state (game):
    if offa <= 0:
       jump_934d (game, dx, dy)
       return
-   if ((player.get_sandbox (tile_x, tile_y)) & 0x1) != 0:
+   if ((player.get_sandbox (tile_x, tile_y)) & 0x1) != 0 or \
+        player.get_sandbox (tile_x, tile_y + 1) != 1:
       if gfx[1] < 0xae:
          jump_934d (game, dx, dy)
          return
-   else:
-      if player.get_sandbox (tile_x, tile_y + 1) != 1:
-         if gfx[1] < 0xae:
-            jump_934d (game, dx, dy)
-            return
    dy = -1
    game.chuck_state.offa = 0xc
    jump_93d0 (game, dx, dy)
@@ -945,7 +935,9 @@ def do_chuck_ladder (game):
       return
    game.chuck_state.dy = 0
    game.chuck_state.vertical_state = 0
-   if chuck_platform_collision (game) == True:
+   dx = game.chuck_state.dx
+   dy = game.chuck_state.dy
+   if chuck_platform_collision (game, dx, dy) == True:
       game.chuck_state.dx = 0
    game.chuck_state.offc = 0
    do_set_chuck_state (game)
@@ -989,7 +981,9 @@ def do_chuck_elevator_state (game):
    game.chuck_state.dy = 0x1
    if game.chuck_state.dx != 0x0:
       game.chuck_state.ofc = game.chuck_state.dx
-   if chuck_platform_collision (game) == True:
+   dx = game.chuck_state.dx
+   dy = game.chuck_state.dy
+   if chuck_platform_collision (game, dx, dy) == True:
       game.chuck_state.dx = 0
    do_set_chuck_state (game)
 
