@@ -760,7 +760,7 @@ def jump_93d0 (game, dx, dy):
    el1 = game.elevator_state[1]
    if ((gfx[0] > el0[0] - 1) and (gfx[0] < el0[0] + 0x9)):
       if el0[1] <= (gfx[1] - 0x11) and el0[1] >= (gfx[1] - 0x13 + dy):
-         dy = el1[0] - gfx[1] + 0x12;
+         dy = el0[1] - gfx[1] + 0x12;
          game.chuck_state.offa = 0x0
          game.chuck_state.vertical_state = 0x04
          jump_943c (game, dx, dy)
@@ -968,6 +968,7 @@ def do_chuck_fall (game):
          game.chuck_state.dy = -tile_rel_y
    do_set_chuck_state (game)
 
+# chuck code $948e
 def do_chuck_elevator_state (game):
    if game.chuck_state.jump_key == 0x10:
       do_jump_key (game)
