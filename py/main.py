@@ -981,7 +981,7 @@ def do_chuck_elevator_state (game):
       game.chuck_state.vertical_state = 0x3
    game.chuck_state.dy = 0x1
    if game.chuck_state.dx != 0x0:
-      game.chuck_state.ofc = game.chuck_state.dx
+      game.chuck_state.offc = game.chuck_state.dx
    dx = game.chuck_state.dx
    dy = game.chuck_state.dy
    if chuck_platform_collision (game, dx, dy) == True:

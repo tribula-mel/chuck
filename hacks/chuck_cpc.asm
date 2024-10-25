@@ -3601,11 +3601,11 @@
 95A7: 81          add  a,c
 95A8: FD 4E 05    ld   c,(iy+$05)
 95AB: FD 77 05    ld   (iy+$05),a
-95AE: 91          sub  c
-95AF: B2          or   d
-95B0: B3          or   e
-95B1: C8          ret  z
-95B2: CD 0E 90    call $900E
+95AE: 91          sub  c          # if no sprite state change
+95AF: B2          or   d          # and dx = 0
+95B0: B3          or   e          #  and dy = 0
+95B1: C8          ret  z          # then return
+95B2: CD 0E 90    call $900E      # redraw chuck in a new position
 95B5: C9          ret
 95B6: C3 DA 95    jp   $95DA
 95B9: C3 30 96    jp   $9630
