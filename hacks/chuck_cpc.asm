@@ -3424,7 +3424,7 @@
 943C: FD 70 06    ld   (iy+$06),b
 943F: FD 71 07    ld   (iy+$07),c
 9442: C3 22 95    jp   $9522
-9445: FD 34 0A    inc  (iy+$0a)
+9445: FD 34 0A    inc  (iy+$0a)     # chuck fall
 9448: FD 7E 0A    ld   a,(iy+$0a)
 944B: FE 04       cp   $04
 944D: 30 0F       jr   nc,$945E
