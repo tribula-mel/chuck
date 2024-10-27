@@ -747,30 +747,23 @@ def jump_943c (game, dx, dy):
 def jump_93d0 (game, dx, dy):
    player = game.get_player_context ()
    level = player.get_current_level () % 8
-   if game.levels[level].elevator_offset == None:
-      if chuck_platform_collision (game, dx, dy) == True:
-         dx = -dx
-         game.chuck_state.offb = dx
-      game.chuck_state.dx = dx
-      game.chuck_state.dy = dy
-      do_set_chuck_state (game)
-      return
-   gfx = game.get_chuck_gfx_off ()
-   el0 = game.elevator_state[0]
-   el1 = game.elevator_state[1]
-   if ((gfx[0] > el0[0] - 1) and (gfx[0] < el0[0] + 0x9)):
-      if el0[1] <= (gfx[1] - 0x11) and el0[1] >= (gfx[1] - 0x13 + dy):
-         dy = el0[1] - gfx[1] + 0x12;
-         game.chuck_state.offa = 0x0
-         game.chuck_state.vertical_state = 0x04
-         jump_943c (game, dx, dy)
-         return
-      elif el1[1] <= (gfx[1] - 0x11) and el1[1] >= (gfx[1] - 0x13 + dy):
-         dy = el1[1] - gfx[1] + 0x12;
-         game.chuck_state.offa = 0x0
-         game.chuck_state.vertical_state = 0x04
-         jump_943c (game, dx, dy)
-         return
+   if game.levels[level].elevator_offset != None:
+      gfx = game.get_chuck_gfx_off ()
+      el0 = game.elevator_state[0]
+      el1 = game.elevator_state[1]
+      if ((gfx[0] > el0[0] - 1) and (gfx[0] < el0[0] + 0x9)):
+         if el0[1] <= (gfx[1] - 0x11) and el0[1] >= (gfx[1] - 0x13 + dy):
+            dy = el0[1] - gfx[1] + 0x12;
+            game.chuck_state.offa = 0x0
+            game.chuck_state.vertical_state = 0x04
+            jump_943c (game, dx, dy)
+            return
+         elif el1[1] <= (gfx[1] - 0x11) and el1[1] >= (gfx[1] - 0x13 + dy):
+            dy = el1[1] - gfx[1] + 0x12;
+            game.chuck_state.offa = 0x0
+            game.chuck_state.vertical_state = 0x04
+            jump_943c (game, dx, dy)
+            return
    if chuck_platform_collision (game, dx, dy) == True:
       dx = -dx
       game.chuck_state.offb = dx
@@ -949,7 +942,7 @@ def do_chuck_fall (game):
    tile_rel_x, tile_rel_y = game.get_chuck_tile_rel_off ()
    game.chuck_state.offa += 1
    offa = game.chuck_state.offa
-   if offa < 0x4:
+   if offa < 0x4 and offa >= 0:
       game.chuck_state.dx = game.chuck_state.offb
       game.chuck_state.dy = -1
    elif offa >= 0x4:
@@ -957,12 +950,9 @@ def do_chuck_fall (game):
       offa >>= 2
       if offa >= 4:
          offa = 3
-      offa = (-offa) - 1
+      offa = (-offa) - 1 # xor $ff
       game.chuck_state.dy = offa
-   if (game.chuck_state.dy + tile_rel_y) >= 0:
-      do_set_chuck_state (game)
-      return
-   else:
+   if (game.chuck_state.dy + tile_rel_y) < 0:
       if (player.get_sandbox (tile_x, tile_y - 1) & 0x1) != 0x0:
          game.chuck_state.vertical_state = 0x0
          game.chuck_state.dy = -tile_rel_y
@@ -976,8 +966,8 @@ def do_chuck_elevator_state (game):
    gfx = game.get_chuck_gfx_off ()
    el0 = game.elevator_state[0]
    if (el0[0] - 0x1) >= gfx[0] or (el0[0] - 0x1 + 0xa) < gfx[0]:
-      game.chuck_state.ofa = 0x0
-      game.chuck_state.ofb = 0x0
+      game.chuck_state.offa = 0x0
+      game.chuck_state.offb = 0x0
       game.chuck_state.vertical_state = 0x3
    game.chuck_state.dy = 0x1
    if game.chuck_state.dx != 0x0:
