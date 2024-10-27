@@ -70,7 +70,6 @@ def draw_element (screen, element, x, y, colour):
    index = 0
    x_backup = x
    mask = 0x80
-
    for i in range (0, element.height):
       for j in range (0, element.width):
          for k in range (0, 8):
@@ -124,29 +123,23 @@ def draw_game_status (screen, game):
    number = []
    max_lives = 0
    player = game.get_player_context ()
-
    # draw STATUS (chuck original $8d3b)
    x = x_convert_to_pygame (0x0)
    y = y_convert_to_pygame (0xc7)
    draw_element (screen, score_txt, x, y, set_colour (score_txt.colour))
-
    draw_score (screen, game)
-
    # draw PLAYER (chuck original $8d67)
    x = x_convert_to_pygame (0x0)
    y = y_convert_to_pygame (0xb8)
    draw_element (screen, player_txt, x, y, set_colour (player_txt.colour))
-
    # draw player number
    x = x_convert_to_pygame (0x1b)
    y = y_convert_to_pygame (0xb7)
    draw_digit (screen, x, y, 1)
-
    # draw LEVEL (chuck original $8d80)
    x = x_convert_to_pygame (0x24)
    y = y_convert_to_pygame (0xb8)
    draw_element (screen, level_txt, x, y, set_colour (level_txt.colour))
-
    # draw level number
    y = y_convert_to_pygame (0xb7)
    player.set_current_level_gfx ()
@@ -156,12 +149,10 @@ def draw_game_status (screen, game):
       draw_digit (screen, x, y, number[i])
 
    draw_bonus (screen, game)
-
    # draw TIME (chuck original $8dda)
    x = x_convert_to_pygame (0x7e)
    y = y_convert_to_pygame (0xb8)
    draw_element (screen, time_txt, x, y, set_colour (time_txt.colour))
-
    # draw time numbers
    y = y_convert_to_pygame (0xb7)
    player.set_time_gfx ()
@@ -169,7 +160,6 @@ def draw_game_status (screen, game):
    for i in range (0, 3):
       x = x_convert_to_pygame (0x91 + 5*i)
       draw_digit (screen, x, y, number[i])
-
    # draw lives
    y = y_convert_to_pygame (0xbd)
    max_lives = player.get_lives ()
@@ -288,7 +278,6 @@ def draw_score (screen, game):
    y = 0
    number = None
    player = game.get_player_context ()
-
    # draw "red block" (chuck original $8d46 - $8d59)
    #    this block is drawn for current active player
    #    x = player_number * $22 - $07
@@ -297,7 +286,6 @@ def draw_score (screen, game):
    x = x_convert_to_pygame (0x1b)
    y = y_convert_to_pygame (0xc7)
    draw_element (screen, red_background, x, y, set_colour (red_background.colour))
-
    # draw 6 score digits
    y = y_convert_to_pygame (0xc6)
    number = player.get_score_gfx ()
@@ -310,12 +298,10 @@ def draw_bonus (screen, game):
    y = 0
    number = None
    player = game.get_player_context ()
-
    # draw BONUS (chuck original $8db3)
    x = x_convert_to_pygame (0x4e);
    y = y_convert_to_pygame (0xb8);
    draw_element (screen, bonus_txt, x, y, set_colour (bonus_txt.colour))
-
    # draw bonus numbers
    y = y_convert_to_pygame (0xb7)
    player.set_bonus_gfx ()
@@ -349,26 +335,21 @@ def randomizer (game):
    a = a << 1
    c = (a & 0x80) >> 7
    a = a << 1
-
    cp = (game.random[3] & 0x80) >> 7
    game.random[3] <<= 1
    game.random[3] |= c
    c = cp
-
    cp = (game.random[2] & 0x80) >> 7
    game.random[2] <<= 1
    game.random[2] |= c
    c = cp
-
    cp = (game.random[1] & 0x80) >> 7
    game.random[1] <<= 1
    game.random[1] |= c
    c = cp
-
    cp = (game.random[0] & 0x80) >> 7
    game.random[0] <<= 1
    game.random[0] |= c
-
    return game.random[0]
 
 def number_of_moves (moves):
@@ -417,27 +398,22 @@ def duck_one_move (game, moves, index):
 def move_duck (game):
    if game.ducks_state.n_ducks == 0:
       return
-
    if game.ducks_state.duck_to_move > game.ducks_state.n_ducks:
       game.ducks_state.duck_to_move -= 1
       return
-
    moves = 0
    player = game.get_player_context ()
    index = game.ducks_state.duck_to_move - 1
    game.ducks_state.duck_to_move -= 1
    if game.ducks_state.duck_to_move == 0:
       game.ducks_state.duck_to_move = adjust_duck_speed (player.current_level, 8)
-
    x, y = game.ducks_state.element[index].tile_offset
-
    # is duck with spread legs ?
    if game.ducks_state.element[index].sprite_state == 0x01:
       # just move in the same direction as previous move
       moves = game.ducks_state.element[index].direction
       duck_one_move (game, moves, index)
       return
-
    # clear the seed
    if game.ducks_state.element[index].sprite_state == duck_stoop_t.duck_stoop.value:
       if game.ducks_state.element[index].direction == direction_t.right.value:
@@ -448,7 +424,6 @@ def move_duck (game):
          if player.get_sandbox (x - 1, y) != 0:
             game.seed_state[player.get_sandbox (x - 1, y) >> 4].present = False
             player.set_sandbox (x - 1, y, 0)
-
    # is seed collection animation over ?
    if game.ducks_state.element[index].sprite_state == duck_stoop_t.duck_half_stoop_end.value:
       # the seed is collected and animation is over, reset to upstraight position
@@ -458,7 +433,6 @@ def move_duck (game):
    if game.ducks_state.element[index].sprite_state >= duck_stoop_t.duck_half_stoop_start.value:
       game.ducks_state.element[index].sprite_state <<= 1
       return
-
    # can move left (either platform or ladder over platform) ?
    if (y >= 1) and (x >= 1):
       if (player.get_sandbox (x - 1 , y - 1) & 0x1) == 0x01:
@@ -475,11 +449,9 @@ def move_duck (game):
    if (y >= 1) and (x < 0x14):
       if (player.get_sandbox (x, y - 1) & 0x2) == 0x02:
          moves |= direction_t.down.value
-
    if number_of_moves (moves) == 1:
       duck_one_move (game, moves, index)
       return
-
    # filter out impossible moves
    direction = game.ducks_state.element[index].direction
    if direction >= 4:
@@ -487,7 +459,6 @@ def move_duck (game):
    else:
       direction ^= 0xfc
    moves &= direction
-
    if number_of_moves (moves) > 1:
       # randomize
       while True:
@@ -496,13 +467,11 @@ def move_duck (game):
          if number_of_moves (random) == 1:
             break
       moves = random
-
    duck_one_move (game, moves, index)
 
 def flying_duck_free (level):
    if level >= 8:
       return True
-
    return False
 
 def skip_flying (game, flyd_x, flyd_y, flyd_dx, flyd_dy, state):
@@ -524,14 +493,11 @@ def move_flying_duck (game):
    flyd_dy = game.flying_duck_state.dy
    state = game.flying_duck_state.el.sprite_state
    chuck_x, chuck_y = game.chuck_state.el.gfx_offset
-
    if fd_wait == 0:
       fd_wait = 8
-
       if flying_duck_free (game.player_context.current_level) == False:
          skip_flying (game, flyd_x, flyd_y, flyd_dx, flyd_dy, state)
          return
-
       if (flyd_x + 0x4) >= chuck_x:
          # flying duck is to the chuck's right
          flyd_dx -= 1
@@ -544,7 +510,6 @@ def move_flying_duck (game):
          if (flyd_dx - 0x6) >= 0:
             flyd_dx -= 1
          game.flying_duck_state.el.direction = direction_t.right.value
-
       chuck_y += 0x4
       if chuck_y < flyd_y:
          # flying duck is above chuck
@@ -556,18 +521,14 @@ def move_flying_duck (game):
          flyd_dy += 1
          if (flyd_dy - 0x7) >= 0:
             flyd_dy -= 1
-
       if abs (flyd_y + flyd_dy) < 0x20:
          flyd_dy = -flyd_dy
       if (flyd_x + flyd_dx) >= 0x90:
          flyd_dx = -flyd_dx
       elif (flyd_x + flyd_dx) < 0x0:
          flyd_dx = -flyd_dx
-
       skip_flying (game, flyd_x, flyd_y, flyd_dx, flyd_dy, state)
-
    fd_wait -= 1
-
 wait = 2
 
 def move_elevator (game):
@@ -587,9 +548,6 @@ def move_elevator (game):
          y1 = 4
       game.elevator_state[0] = [x0, y0]
       game.elevator_state[1] = [x1, y1]
-
-      #if get_chuck_vertical_state (game) == on_elevator:
-      #   adj_chuck_all_off_y (game, +2)
    wait -= 1
 
 # original chuck code $94ca
@@ -730,21 +688,24 @@ def do_up_down (game):
    game.chuck_state.vertical_state = 0x1
    do_set_chuck_state (game)
 
-def jump_93c1 (game, dx, dy):
+# chuck original $93c1
+def ____move_state (game, dx, dy):
    player = game.get_player_context ()
    tile_x, tile_y = game.get_chuck_tile_off ()
    tile_rel = game.get_chuck_tile_rel_off ()
    if (tile_rel[1] + dy) == 0x8:
       if (player.get_sandbox (tile_x, tile_y) & 0x1) != 0x0:
          game.chuck_state.vertical_state = 0x0
-   jump_93d0 (game, dx, dy)
+   elevator_action (game, dx, dy)
 
-def jump_943c (game, dx, dy):
+# chuck original $943c
+def set_move_state (game, dx, dy):
    game.chuck_state.dx = dx
    game.chuck_state.dy = dy
    do_set_chuck_state (game)
 
-def jump_93d0 (game, dx, dy):
+# chuck original $93d0
+def elevator_action (game, dx, dy):
    player = game.get_player_context ()
    level = player.get_current_level () % 8
    if game.levels[level].elevator_offset != None:
@@ -756,34 +717,33 @@ def jump_93d0 (game, dx, dy):
             dy = el0[1] - gfx[1] + 0x12;
             game.chuck_state.offa = 0x0
             game.chuck_state.vertical_state = 0x04
-            jump_943c (game, dx, dy)
+            set_move_state (game, dx, dy)
             return
          elif el1[1] <= (gfx[1] - 0x11) and el1[1] >= (gfx[1] - 0x13 + dy):
             dy = el1[1] - gfx[1] + 0x12;
             game.chuck_state.offa = 0x0
             game.chuck_state.vertical_state = 0x04
-            jump_943c (game, dx, dy)
+            set_move_state (game, dx, dy)
             return
    if chuck_platform_collision (game, dx, dy) == True:
       dx = -dx
       game.chuck_state.offb = dx
-   game.chuck_state.dx = dx
-   game.chuck_state.dy = dy
-   do_set_chuck_state (game)
+   set_move_state (game, dx, dy)
 
-def jump_93a5 (game, dx, dy):
+# chuck original $93a5
+def ___move_state (game, dx, dy):
    player = game.get_player_context ()
    tile_x, tile_y = game.get_chuck_tile_off ()
    tile_rel = game.get_chuck_tile_rel_off ()
    if (tile_rel[1] + dy) > 0x0:
-      jump_93c1 (game, dx, dy)
+      ____move_state (game, dx, dy)
       return
    if (player.get_sandbox (tile_x, tile_y - 1) & 0x1) == 0x0:
-      jump_93d0 (game, dx, dy)
+      elevator_action (game, dx, dy)
       return
    game.chuck_state.vertical_state = 0x0
    dy = -tile_rel[1]
-   jump_93d0 (game, dx, dy)
+   elevator_action (game, dx, dy)
 
 # original chuck code $9385
 def catch_on_ladder_down (game, dx, dy):
@@ -791,18 +751,15 @@ def catch_on_ladder_down (game, dx, dy):
    tile_x, tile_y = game.get_chuck_tile_off ()
    tile_rel = game.get_chuck_tile_rel_off ()
    if (player.get_sandbox (tile_x, tile_y) & 0x2) == 0x0:
-      jump_93a5 (game, dx, dy)
+      ___move_state (game, dx, dy)
       return
    if (player.get_sandbox (tile_x, tile_y + 1) & 0x2) == 0x0:
-      jump_93a5 (game, dx, dy)
+      ___move_state (game, dx, dy)
       return
    game.chuck_state.vertical_state = 0x1
    if ((tile_rel[1] + dy) & 0x1) != 0x0:
       dy -= 1
-   game.chuck_state.dx = dx
-   game.chuck_state.dy = dy
-   do_set_chuck_state (game)
-   return
+   set_move_state (game, dx, dy)
 
 # original chuck code $9376
 def catch_on_ladder (game, dx, dy):
@@ -810,37 +767,33 @@ def catch_on_ladder (game, dx, dy):
    game.chuck_state.vertical_state = 0x1
    if ((tile_rel[1] + dy) & 0x1) != 0x0:
       dy += 1
-   # jump_943c
-   game.chuck_state.dx = dx
-   game.chuck_state.dy = dy
-   do_set_chuck_state (game)
+   set_move_state (game, dx, dy)
 
-def jump_9385 (game, dx, dy):
+# chuck orginal $9385
+def __move_state (game, dx, dy):
    player = game.get_player_context ()
    tile_x, tile_y = game.get_chuck_tile_off ()
    tile_rel = game.get_chuck_tile_rel_off ()
    if (player.get_sandbox (tile_x, tile_y) & 0x2) == 0x0:
-      jump_93a5 (game, dx, dy)
+      ___move_state (game, dx, dy)
       return
    if (player.get_sandbox (tile_x, tile_y + 1) & 0x2) == 0x0:
-      jump_93a5 (game, dx, dy)
+      ___move_state (game, dx, dy)
       return
    game.chuck_state.vertical_state = 0x1
    if ((tile_rel[1] + dy) & 0x1) != 0:
       dy -= 1
-   # jump_943c
-   game.chuck_state.dx = dx
-   game.chuck_state.dy = dy
-   do_set_chuck_state (game)
+   set_move_state (game, dx, dy)
 
-def jump_934d (game, dx, dy):
+# chuck original 934d
+def _move_state (game, dx, dy):
    player = game.get_player_context ()
    tile_x, tile_y = game.get_chuck_tile_off ()
    tile_rel = game.get_chuck_tile_rel_off ()
    if (tile_rel[0] + dx) == 0x3:
       if game.chuck_state.dy != 0:
          if game.chuck_state.dy < 0:
-            jump_9385 (game, dx, dy)
+            __move_state (game, dx, dy)
             return
          if (player.get_sandbox (tile_x, tile_y + 1) & 0x2) != 0x0:
             catch_on_ladder (game, dx, dy)
@@ -851,7 +804,7 @@ def jump_934d (game, dx, dy):
          if (player.get_sandbox (tile_x, y) & 0x2) != 0x0:
             catch_on_ladder (game, dx, dy)
             return
-   jump_93a5 (game, dx, dy)
+   ___move_state (game, dx, dy)
 
 # original chuck code $930c
 def do_chuck_jump_state (game):
@@ -867,16 +820,16 @@ def do_chuck_jump_state (game):
    dy = offa
    game.chuck_state.offa += 1
    if offa <= 0:
-      jump_934d (game, dx, dy)
+      _move_state (game, dx, dy)
       return
    if ((player.get_sandbox (tile_x, tile_y)) & 0x1) != 0 or \
         player.get_sandbox (tile_x, tile_y + 1) != 1:
       if gfx[1] < 0xae:
-         jump_934d (game, dx, dy)
+         _move_state (game, dx, dy)
          return
    dy = -1
    game.chuck_state.offa = 0xc
-   jump_93d0 (game, dx, dy)
+   elevator_action (game, dx, dy)
 
 # original chuck code $92fa
 def do_jump_key (game):
@@ -887,7 +840,8 @@ def do_jump_key (game):
       game.chuck_state.offc = game.chuck_state.dx
    do_chuck_jump_state (game)
 
-def jump_92c2 (game):
+# chuck original $92c2
+def __do_chuck_ladder (game):
    player = game.get_player_context ()
    tile_x, tile_y = game.get_chuck_tile_off ()
    tile_rel = game.get_chuck_tile_rel_off ()
@@ -918,16 +872,16 @@ def do_chuck_ladder (game):
       do_jump_key (game)
       return
    if game.chuck_state.dx == 0:
-      jump_92c2 (game)
+      __do_chuck_ladder (game)
       return
    if tile_rel[1] != 0:
-      jump_92c2 (game)
+      __do_chuck_ladder (game)
       return
    if (player.get_sandbox (tile_x, tile_y - 1) & 0x1) == 0:
-      jump_92c2 (game)
+      __do_chuck_ladder (game)
       return
    game.chuck_state.dy = 0
-   game.chuck_state.vertical_state = 0
+   game.chuck_state.vertical_state = 0x0
    dx = game.chuck_state.dx
    dy = game.chuck_state.dy
    if chuck_platform_collision (game, dx, dy) == True:
@@ -1015,11 +969,9 @@ pygame.init()
 screen = pygame.display.set_mode((x_res * scale, y_res * scale))
 clock = pygame.time.Clock()
 running = True
-
 player = player_context_t ()
 game = init_game_context (player)
 init_game_play (game)
-
 while running:
    # poll for events
    # pygame.QUIT event means the user clicked X to close your window
@@ -1034,7 +986,6 @@ while running:
       game.chuck_state.dy += -2
    if keys[pygame.K_LCTRL]:
       game.chuck_state.jump_key = 0x10
-
    for event in pygame.event.get ():
       if event.type == pygame.QUIT:
          running = False
@@ -1052,7 +1003,6 @@ while running:
             player.set_current_level (level)
             player.clear_sandbox ()
             init_game_play (game)
-
    # RENDER YOUR GAME HERE
    screen.fill((0,0,0))
    draw_level (screen, game)
@@ -1060,7 +1010,6 @@ while running:
    draw_flying_duck (screen, game)
    draw_elevator (screen, game)
    draw_chuck (screen, game)
-
    move_duck (game)
    move_flying_duck (game)
    move_elevator (game)
@@ -1068,10 +1017,7 @@ while running:
    game.chuck_state.dx = 0
    game.chuck_state.dy = 0
    game.chuck_state.jump_key = 0
-
    # flip() the display to put your work on screen
    pygame.display.flip ()
-
    clock.tick (35) # limits FPS to 60
-
 pygame.quit()
