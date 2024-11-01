@@ -25,6 +25,8 @@ DOTS_PER_PIXEL_Y = 2
 x_res = DOTS_PER_PIXEL_X * 160
 y_res = DOTS_PER_PIXEL_Y * 200
 
+font = None
+
 # chuck tile x offset to pygame
 def tile_x_convert_to_pygame (offset):
    # 8 pixels per chuck x offset
@@ -76,7 +78,6 @@ def draw_element (screen, element, x, y, colour):
             if element.sprite[index] & mask:
                w = DOTS_PER_PIXEL_X * scale
                h = DOTS_PER_PIXEL_Y * scale
-               #al_draw_filled_rectangle(x, y, x + w, y + h, colour);
                pygame.draw.rect(screen, colour, [x, y, w, h])
             x += DOTS_PER_PIXEL_X * scale
             mask = mask >> 1
@@ -964,17 +965,111 @@ def move_chuck (game):
       return
    do_left_right (game)
 
+def draw_chuckie_egg (screen):
+   # C
+   x = x_convert_to_pygame (0x2)
+   y = y_convert_to_pygame (0xc7)
+   draw_element (screen, title_c, x, y, set_colour (title_c.colour))
+   # H
+   x = x_convert_to_pygame (0x11)
+   y = y_convert_to_pygame (0xc7)
+   draw_element (screen, title_h, x, y, set_colour (title_h.colour))
+   # U
+   x = x_convert_to_pygame (0x20)
+   y = y_convert_to_pygame (0xc7)
+   draw_element (screen, title_u, x, y, set_colour (title_u.colour))
+   # C
+   x = x_convert_to_pygame (0x2f)
+   y = y_convert_to_pygame (0xc7)
+   draw_element (screen, title_c, x, y, set_colour (title_c.colour))
+   # K
+   x = x_convert_to_pygame (0x3e)
+   y = y_convert_to_pygame (0xc7)
+   draw_element (screen, title_k, x, y, set_colour (title_k.colour))
+   # I
+   x = x_convert_to_pygame (0x4d)
+   y = y_convert_to_pygame (0xc7)
+   draw_element (screen, title_i, x, y, set_colour (title_i.colour))
+   # E
+   x = x_convert_to_pygame (0x5c)
+   y = y_convert_to_pygame (0xc7)
+   draw_element (screen, title_e, x, y, set_colour (title_e.colour))
+   # E
+   x = x_convert_to_pygame (0x72)
+   y = y_convert_to_pygame (0xc7)
+   draw_element (screen, title_e, x, y, set_colour (title_e.colour))
+   # G
+   x = x_convert_to_pygame (0x81)
+   y = y_convert_to_pygame (0xc7)
+   draw_element (screen, title_g, x, y, set_colour (title_g.colour))
+   # G
+   x = x_convert_to_pygame (0x90)
+   y = y_convert_to_pygame (0xc7)
+   draw_element (screen, title_g, x, y, set_colour (title_g.colour))
+
+def title_loop (screen):
+   global font
+   clock = pygame.time.Clock()
+
+   while True:
+      screen.fill((0,0,0))
+      # draw chuckie egg letters
+      draw_chuckie_egg (screen)
+
+      tf = font.render ( "K E Y S", False, (0x00, 0xff, 0xff))
+      screen.blit (tf, (x_convert_to_pygame (0x30), y_convert_to_pygame (0x98)))
+      tf = font.render ("   Up .. 'up'", False, (0x00, 0xff, 0xff))
+      screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x80)))
+      tf = font.render (" Down .. 'down'", False, (0x00, 0xff, 0xff))
+      screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x70)))
+      tf = font.render (" Left .. 'left'", False, (0x00, 0xff, 0xff))
+      screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x60)))
+      tf = font.render ("Right .. 'right'", False, (0x00, 0xff, 0xff))
+      screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x50)))
+      tf = font.render (' Jump .. LCTRL', False, (0x00, 0xff, 0xff))
+      screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x40)))
+      tf = font.render (" Hold .. 'H'", False, (0xff, 0x00, 0xff))
+      screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x28)))
+      tf = font.render ("Abort .. Escape +'H'", False, (0xff, 0x00, 0xff))
+      screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x20)))
+      tf = font.render ('Press ', False, (0xff, 0xff, 0x80))
+      screen.blit (tf, (x_convert_to_pygame (0x10), y_convert_to_pygame (0x10)))
+      tf = font.render ('S', False, (0x00, 0xff, 0xff))
+      screen.blit (tf, (x_convert_to_pygame (0x40), y_convert_to_pygame (0x10)))
+      tf = font.render (' to start', False, (0xff, 0xff, 0x80))
+      screen.blit (tf, (x_convert_to_pygame (0x48), y_convert_to_pygame (0x10)))
+      tf = font.render ('K', False, (0x00, 0xff, 0xff))
+      screen.blit (tf, (x_convert_to_pygame (0x10), y_convert_to_pygame (0x8)))
+      tf = font.render (' to change keys', False, (0xff, 0xff, 0x80))
+      screen.blit (tf, (x_convert_to_pygame (0x18), y_convert_to_pygame (0x8)))
+
+      pygame.display.flip ()
+      clock.tick (35) # limits FPS
+
+   # show the ready message
+   screen.fill((0,0,0))
+   tf = font.render ("Get  ready", False, (0xff, 0xff, 0x80))
+   screen.blit (tf, (x_convert_to_pygame (0x8 * 0x5),
+                     y_convert_to_pygame (199 - 0x8 * 0xa)))
+   tf = font.render ("Player 1", False, (0x00, 0xff, 0xff))
+   screen.blit (tf, (x_convert_to_pygame (0x8 * 0x6),
+                     y_convert_to_pygame (199 - 0x8 * 0xc)))
+   pygame.display.flip ()
+
 # pygame setup
 pygame.init()
 screen = pygame.display.set_mode((x_res * scale, y_res * scale))
+screen.fill((0,0,0))
 clock = pygame.time.Clock()
 running = True
+font = pygame.font.Font('amstrad_cpc464.ttf', 32 * scale)
 player = player_context_t ()
 game = init_game_context (player)
 init_game_play (game)
 while running:
    # poll for events
    # pygame.QUIT event means the user clicked X to close your window
+   title_loop (screen)
    keys = pygame.key.get_pressed ()
    if keys[pygame.K_RIGHT]:
       game.chuck_state.dx += 1
@@ -1019,5 +1114,5 @@ while running:
    game.chuck_state.jump_key = 0
    # flip() the display to put your work on screen
    pygame.display.flip ()
-   clock.tick (35) # limits FPS to 60
+   clock.tick (35) # limits FPS
 pygame.quit()
