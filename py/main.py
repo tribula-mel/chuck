@@ -1007,42 +1007,46 @@ def draw_chuckie_egg (screen):
    y = y_convert_to_pygame (0xc7)
    draw_element (screen, title_g, x, y, set_colour (title_g.colour))
 
+def render_font (text, colour):
+   global font
+   tf = font.render (text, True, colour)
+   txt_w, txt_h = tf.get_size ()
+   tf = pygame.transform.smoothscale (tf, (2 * txt_w, txt_h))
+   return tf
+
 def title_loop (screen):
    global font
    clock = pygame.time.Clock()
-
    while True:
       screen.fill((0,0,0))
       # draw chuckie egg letters
       draw_chuckie_egg (screen)
-
-      tf = font.render ( "K E Y S", False, (0x00, 0xff, 0xff))
+      tf = render_font ("K E Y S", (0x00, 0xff, 0xff))
       screen.blit (tf, (x_convert_to_pygame (0x30), y_convert_to_pygame (0x98)))
-      tf = font.render ("   Up .. 'up'", False, (0x00, 0xff, 0xff))
+      tf = render_font ("   Up .. 'up'", (0x00, 0xff, 0xff))
       screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x80)))
-      tf = font.render (" Down .. 'down'", False, (0x00, 0xff, 0xff))
+      tf = render_font (" Down .. 'down'", (0x00, 0xff, 0xff))
       screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x70)))
-      tf = font.render (" Left .. 'left'", False, (0x00, 0xff, 0xff))
+      tf = render_font (" Left .. 'left'", (0x00, 0xff, 0xff))
       screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x60)))
-      tf = font.render ("Right .. 'right'", False, (0x00, 0xff, 0xff))
+      tf = render_font ("Right .. 'right'", (0x00, 0xff, 0xff))
       screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x50)))
-      tf = font.render (' Jump .. LCTRL', False, (0x00, 0xff, 0xff))
+      tf = render_font (' Jump .. LCTRL', (0x00, 0xff, 0xff))
       screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x40)))
-      tf = font.render (" Hold .. 'H'", False, (0xff, 0x00, 0xff))
+      tf = render_font (" Hold .. 'H'", (0xff, 0x00, 0xff))
       screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x28)))
-      tf = font.render ("Abort .. Escape +'H'", False, (0xff, 0x00, 0xff))
+      tf = render_font ("Abort .. Escape +'H'", (0xff, 0x00, 0xff))
       screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x20)))
-      tf = font.render ('Press ', False, (0xff, 0xff, 0x80))
+      tf = render_font ('Press ', (0xff, 0xff, 0x80))
       screen.blit (tf, (x_convert_to_pygame (0x10), y_convert_to_pygame (0x10)))
-      tf = font.render ('S', False, (0x00, 0xff, 0xff))
+      tf = render_font ('S', (0x00, 0xff, 0xff))
       screen.blit (tf, (x_convert_to_pygame (0x40), y_convert_to_pygame (0x10)))
-      tf = font.render (' to start', False, (0xff, 0xff, 0x80))
+      tf = render_font (' to start', (0xff, 0xff, 0x80))
       screen.blit (tf, (x_convert_to_pygame (0x48), y_convert_to_pygame (0x10)))
-      tf = font.render ('K', False, (0x00, 0xff, 0xff))
+      tf = render_font ('K', (0x00, 0xff, 0xff))
       screen.blit (tf, (x_convert_to_pygame (0x10), y_convert_to_pygame (0x8)))
-      tf = font.render (' to change keys', False, (0xff, 0xff, 0x80))
+      tf = render_font (' to change keys', (0xff, 0xff, 0x80))
       screen.blit (tf, (x_convert_to_pygame (0x18), y_convert_to_pygame (0x8)))
-
       pygame.display.flip ()
       clock.tick (35) # limits FPS
 
@@ -1062,7 +1066,7 @@ screen = pygame.display.set_mode((x_res * scale, y_res * scale))
 screen.fill((0,0,0))
 clock = pygame.time.Clock()
 running = True
-font = pygame.font.Font('amstrad_cpc464.ttf', 32 * scale)
+font = pygame.font.Font('amstrad_cpc464.ttf', 8 * 2 * scale)
 player = player_context_t ()
 game = init_game_context (player)
 init_game_play (game)
