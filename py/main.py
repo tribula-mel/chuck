@@ -25,7 +25,13 @@ DOTS_PER_PIXEL_Y = 2
 x_res = DOTS_PER_PIXEL_X * 160
 y_res = DOTS_PER_PIXEL_Y * 200
 
+clock = None
 font = None
+
+high_score = [('1000', "A'n'F"), ('1000', "A'n'F"), ('1000', "A'n'F"),
+              ('1000', "A'n'F"), ('1000', "A'n'F"), ('1000', "A'n'F"),
+              ('1000', "A'n'F"), ('1000', "A'n'F"), ('1000', "A'n'F"),
+              ('1000', "A'n'F")]
 
 # chuck tile x offset to pygame
 def tile_x_convert_to_pygame (offset):
@@ -1014,109 +1020,171 @@ def render_font (text, colour):
    tf = pygame.transform.smoothscale (tf, (2 * txt_w, txt_h))
    return tf
 
-def title_loop (screen):
-   global font
-   clock = pygame.time.Clock()
-   while True:
-      screen.fill((0,0,0))
-      # draw chuckie egg letters
-      draw_chuckie_egg (screen)
-      tf = render_font ("K E Y S", (0x00, 0xff, 0xff))
-      screen.blit (tf, (x_convert_to_pygame (0x30), y_convert_to_pygame (0x98)))
-      tf = render_font ("   Up .. 'up'", (0x00, 0xff, 0xff))
-      screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x80)))
-      tf = render_font (" Down .. 'down'", (0x00, 0xff, 0xff))
-      screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x70)))
-      tf = render_font (" Left .. 'left'", (0x00, 0xff, 0xff))
-      screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x60)))
-      tf = render_font ("Right .. 'right'", (0x00, 0xff, 0xff))
-      screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x50)))
-      tf = render_font (' Jump .. LCTRL', (0x00, 0xff, 0xff))
-      screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x40)))
-      tf = render_font (" Hold .. 'H'", (0xff, 0x00, 0xff))
-      screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x28)))
-      tf = render_font ("Abort .. Escape +'H'", (0xff, 0x00, 0xff))
-      screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x20)))
-      tf = render_font ('Press ', (0xff, 0xff, 0x80))
-      screen.blit (tf, (x_convert_to_pygame (0x10), y_convert_to_pygame (0x10)))
-      tf = render_font ('S', (0x00, 0xff, 0xff))
-      screen.blit (tf, (x_convert_to_pygame (0x40), y_convert_to_pygame (0x10)))
-      tf = render_font (' to start', (0xff, 0xff, 0x80))
-      screen.blit (tf, (x_convert_to_pygame (0x48), y_convert_to_pygame (0x10)))
-      tf = render_font ('K', (0x00, 0xff, 0xff))
-      screen.blit (tf, (x_convert_to_pygame (0x10), y_convert_to_pygame (0x8)))
-      tf = render_font (' to change keys', (0xff, 0xff, 0x80))
-      screen.blit (tf, (x_convert_to_pygame (0x18), y_convert_to_pygame (0x8)))
-      pygame.display.flip ()
-      clock.tick (35) # limits FPS
+def draw_high_score (screen):
+   global high_score
+   y = 0x88 # original chuck $a085
+   leading_zero = True
+   digit = [' 0', ' 1', ' 2', ' 3', ' 4', ' 5', ' 6', ' 7', ' 8', ' 9', '10']
+   for i in range (0, 10):
+      # position
+      tf = render_font (digit[i + 1], (0x00, 0xff, 0xff))
+      screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (y)))
+      score, name = high_score[i]
+      # name
+      tf = render_font (name, (0x00, 0xff, 0xff))
+      screen.blit (tf, (x_convert_to_pygame (0x60), y_convert_to_pygame (y)))
+      # score
+      tf = render_font (score, (0x00, 0xff, 0xff))
+      screen.blit (tf, (x_convert_to_pygame (0x28), y_convert_to_pygame (y)))
+      y -= 0xc
 
+def title_loop_scores (screen):
+   screen.fill((0,0,0))
+   # draw chuckie egg letters
+   draw_chuckie_egg (screen)
+   # original game prints the text at location (0x5, 0x7)
+   # this translates into screen positions (0x20, 0x98)
+   #   formula being screen_x = 8 * (text_x - 1)
+   #                 screen_y = 8 * (25 - (text_y - 1))
+   tf = render_font ('HIGH  SCORES', (0xff, 0xff, 0xff))
+   screen.blit (tf, (x_convert_to_pygame (0x20), y_convert_to_pygame (0x98)))
+   tf = render_font ('Press ', (0xff, 0xff, 0x80))
+   screen.blit (tf, (x_convert_to_pygame (0x10), y_convert_to_pygame (0x10)))
+   tf = render_font ('S', (0x00, 0xff, 0xff))
+   screen.blit (tf, (x_convert_to_pygame (0x40), y_convert_to_pygame (0x10)))
+   tf = render_font (' to start', (0xff, 0xff, 0x80))
+   screen.blit (tf, (x_convert_to_pygame (0x48), y_convert_to_pygame (0x10)))
+   tf = render_font ('K', (0x00, 0xff, 0xff))
+   screen.blit (tf, (x_convert_to_pygame (0x10), y_convert_to_pygame (0x8)))
+   tf = render_font (' to change keys', (0xff, 0xff, 0x80))
+   screen.blit (tf, (x_convert_to_pygame (0x18), y_convert_to_pygame (0x8)))
+   draw_high_score (screen)
+   pygame.display.flip ()
+
+def title_loop_keys (screen):
+   screen.fill((0,0,0))
+   # draw chuckie egg letters
+   draw_chuckie_egg (screen)
+   tf = render_font ('K E Y S', (0x00, 0xff, 0xff))
+   screen.blit (tf, (x_convert_to_pygame (0x30), y_convert_to_pygame (0x98)))
+   tf = render_font ("   Up .. 'up'", (0x00, 0xff, 0xff))
+   screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x80)))
+   tf = render_font (" Down .. 'down'", (0x00, 0xff, 0xff))
+   screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x70)))
+   tf = render_font (" Left .. 'left'", (0x00, 0xff, 0xff))
+   screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x60)))
+   tf = render_font ("Right .. 'right'", (0x00, 0xff, 0xff))
+   screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x50)))
+   tf = render_font (' Jump .. LCTRL', (0x00, 0xff, 0xff))
+   screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x40)))
+   tf = render_font (" Hold .. 'H'", (0xff, 0x00, 0xff))
+   screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x28)))
+   tf = render_font ("Abort .. Escape +'H'", (0xff, 0x00, 0xff))
+   screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (0x20)))
+   tf = render_font ('Press ', (0xff, 0xff, 0x80))
+   screen.blit (tf, (x_convert_to_pygame (0x10), y_convert_to_pygame (0x10)))
+   tf = render_font ('S', (0x00, 0xff, 0xff))
+   screen.blit (tf, (x_convert_to_pygame (0x40), y_convert_to_pygame (0x10)))
+   tf = render_font (' to start', (0xff, 0xff, 0x80))
+   screen.blit (tf, (x_convert_to_pygame (0x48), y_convert_to_pygame (0x10)))
+   tf = render_font ('K', (0x00, 0xff, 0xff))
+   screen.blit (tf, (x_convert_to_pygame (0x10), y_convert_to_pygame (0x8)))
+   tf = render_font (' to change keys', (0xff, 0xff, 0x80))
+   screen.blit (tf, (x_convert_to_pygame (0x18), y_convert_to_pygame (0x8)))
+   pygame.display.flip ()
+
+def title_loop (screen, game):
+   while do_events (game, [pygame.QUIT, pygame.KEYDOWN],
+                    [pygame.K_ESCAPE, pygame.K_s]):
+      title_loop_scores (screen)
+      pygame.time.wait (3000)
+      title_loop_keys (screen)
+      pygame.time.wait (3000)
    # show the ready message
    screen.fill((0,0,0))
-   tf = font.render ("Get  ready", False, (0xff, 0xff, 0x80))
+   tf = render_font ("Get  ready", (0xff, 0xff, 0x80))
    screen.blit (tf, (x_convert_to_pygame (0x8 * 0x5),
                      y_convert_to_pygame (199 - 0x8 * 0xa)))
-   tf = font.render ("Player 1", False, (0x00, 0xff, 0xff))
+   tf = render_font ("Player 1", (0x00, 0xff, 0xff))
    screen.blit (tf, (x_convert_to_pygame (0x8 * 0x6),
                      y_convert_to_pygame (199 - 0x8 * 0xc)))
    pygame.display.flip ()
+   pygame.time.wait (1000)
 
-# pygame setup
-pygame.init()
-screen = pygame.display.set_mode((x_res * scale, y_res * scale))
-screen.fill((0,0,0))
-clock = pygame.time.Clock()
-running = True
-font = pygame.font.Font('amstrad_cpc464.ttf', 8 * 2 * scale)
-player = player_context_t ()
-game = init_game_context (player)
-init_game_play (game)
-while running:
-   # poll for events
-   # pygame.QUIT event means the user clicked X to close your window
-   title_loop (screen)
-   keys = pygame.key.get_pressed ()
-   if keys[pygame.K_RIGHT]:
-      game.chuck_state.dx += 1
-   if keys[pygame.K_LEFT]:
-      game.chuck_state.dx += -1
-   if keys[pygame.K_UP]:
-      game.chuck_state.dy += 2
-   if keys[pygame.K_DOWN]:
-      game.chuck_state.dy += -2
-   if keys[pygame.K_LCTRL]:
-      game.chuck_state.jump_key = 0x10
+def do_events (game, events, keys):
+   player = game.get_player_context ()
    for event in pygame.event.get ():
-      if event.type == pygame.QUIT:
-         running = False
-      elif event.type == pygame.KEYDOWN:
-         if event.key == pygame.K_ESCAPE:
-            running = False
-            break
-         if event.key == pygame.K_t:
-            print ('tile = ', game.chuck_state.el.tile_offset)
-            print ('tile_rel = ', game.chuck_state.tile_rel_off)
-            print ('vertical_state = ', game.chuck_state.vertical_state)
-            print ('gfx = ', game.chuck_state.el.gfx_offset)
-         if event.key == pygame.K_n:
-            level = player.get_current_level () + 1
-            player.set_current_level (level)
-            player.clear_sandbox ()
-            init_game_play (game)
-   # RENDER YOUR GAME HERE
-   screen.fill((0,0,0))
-   draw_level (screen, game)
-   draw_ducks (screen, game)
-   draw_flying_duck (screen, game)
-   draw_elevator (screen, game)
-   draw_chuck (screen, game)
-   move_duck (game)
-   move_flying_duck (game)
-   move_elevator (game)
-   move_chuck (game)
-   game.chuck_state.dx = 0
-   game.chuck_state.dy = 0
-   game.chuck_state.jump_key = 0
-   # flip() the display to put your work on screen
-   pygame.display.flip ()
-   clock.tick (35) # limits FPS
-pygame.quit()
+      for et in events:
+         if event.type == pygame.QUIT and et == pygame.QUIT:
+            exit ()
+         elif event.type == pygame.KEYDOWN and et == pygame.KEYDOWN:
+            for ke in keys:
+               if event.key == pygame.K_ESCAPE and ke == pygame.K_ESCAPE:
+                  exit ()
+               if event.key == pygame.K_t and ke == pygame.K_t:
+                  print ('tile = ', game.chuck_state.el.tile_offset)
+                  print ('tile_rel = ', game.chuck_state.tile_rel_off)
+                  print ('vertical_state = ', game.chuck_state.vertical_state)
+                  print ('gfx = ', game.chuck_state.el.gfx_offset)
+               if event.key == pygame.K_n and ke == pygame.K_n:
+                  level = player.get_current_level () + 1
+                  player.set_current_level (level)
+                  player.clear_sandbox ()
+                  init_game_play (game)
+               if event.key == pygame.K_s and ke == pygame.K_s:
+                  return False
+   return True
+
+def game_loop (screen, game):
+   global clock
+   while True:
+      keys = pygame.key.get_pressed ()
+      if keys[pygame.K_RIGHT]:
+         game.chuck_state.dx += 1
+      if keys[pygame.K_LEFT]:
+         game.chuck_state.dx += -1
+      if keys[pygame.K_UP]:
+         game.chuck_state.dy += 2
+      if keys[pygame.K_DOWN]:
+         game.chuck_state.dy += -2
+      if keys[pygame.K_LCTRL]:
+         game.chuck_state.jump_key = 0x10
+      running = do_events (game, [pygame.QUIT, pygame.KEYDOWN],
+                           [pygame.K_ESCAPE, pygame.K_t, pygame.K_n])
+      if (running == False):
+         break
+      screen.fill((0,0,0))
+      draw_level (screen, game)
+      draw_ducks (screen, game)
+      draw_flying_duck (screen, game)
+      draw_elevator (screen, game)
+      draw_chuck (screen, game)
+      move_duck (game)
+      move_flying_duck (game)
+      move_elevator (game)
+      move_chuck (game)
+      game.chuck_state.dx = 0
+      game.chuck_state.dy = 0
+      game.chuck_state.jump_key = 0
+      pygame.display.flip ()
+      clock.tick (35) # limits FPS
+
+def main ():
+   global clock
+   global font
+   # pygame setup
+   pygame.init ()
+   screen = pygame.display.set_mode ((x_res * scale, y_res * scale))
+   screen.fill ((0,0,0))
+   clock = pygame.time.Clock ()
+   font = pygame.font.Font ('amstrad_cpc464.ttf', 8 * 2 * scale)
+   player = player_context_t ()
+   game = init_game_context (player)
+   init_game_play (game)
+   while True:
+      title_loop (screen, game)
+      game_loop (screen, game)
+   pygame.quit ()
+
+if __name__ == '__main__':
+   main ()
