@@ -224,6 +224,50 @@ def draw_level (screen, game):
    y = y_convert_to_pygame (0xae)
    draw_element (screen, cage, x, y, set_colour (cage.colour))
 
+def chuck_collect_seed (game, x, y):
+   player = game.get_player_context ()
+   # play sound
+   # clear a seed
+   player.set_sandbox (x, y, 0);
+   # do other seed logic in here (in time)
+   #    stop the level timer
+   #    assign points to the score
+   #set_score (game->player_context,
+   #           get_score (game->player_context) + 50)
+   #set_time_off (game, 0x14) # original chuck $99f6
+
+def adjust_egg_score (level):
+   if level < 36:
+      return 100 + 100 * (level / 4)
+   else:
+      return 1000
+
+def chuck_collect_egg (game, x, y):
+   player = game.get_player_context ()
+   # play sound
+   # clear an egg
+   player.set_sandbox (x, y, 0);
+   # do other seed logic in here (in time)
+   #    assign points to the score
+   #set_score (game->player_context,
+   #           get_score (game->player_context) +
+   #adjust_egg_score (game->player_context->current_level));
+   # move to next level when all eggs collected
+   #set_n_eggs (game->player_context, get_n_eggs (game->player_context) + 1);
+   #if (get_n_eggs (game->player_context) == MAX_N_EGGS)
+   #   set_next_level (game, true);
+
+def collectables (game):
+   player = game.get_player_context ()
+   x, y = game.get_chuck_tile_off ()
+   rel = game.get_chuck_tile_rel_off ()
+   # check if should collect a seed
+   if (player.get_sandbox (x, y) & 0x8) and (rel[1] <= 0x2):
+      chuck_collect_seed (game, x, y)
+   # check if should collect an egg
+   if (player.get_sandbox (x, y) & 0x4) and (rel[1] <= 0x2):
+      chuck_collect_egg (game, x, y)
+
 def draw_ducks (screen, game):
    n_ducks = game.ducks_state.n_ducks
    for i in range (0, n_ducks):
@@ -1164,6 +1208,7 @@ def game_loop (screen, game):
       move_flying_duck (game)
       move_elevator (game)
       move_chuck (game)
+      collectables (game)
       game.chuck_state.dx = 0
       game.chuck_state.dy = 0
       game.chuck_state.jump_key = 0
