@@ -177,27 +177,19 @@ def draw_game_status (screen, game):
       draw_element (screen, life, x_convert_to_pygame (0x1b + 4*i),
                     y, set_colour (life.colour))
 
-def draw_level (screen, game):
+def init_level (game):
    player = game.get_player_context ()
    current_level = player.get_current_level () % 8
-   # draw game status at the top
-   draw_game_status (screen, game)
-   # draw platforms first
+   # init platforms first
    for i in range (0, game.levels[current_level].n_platforms):
       off_y, off_x, end = game.levels[current_level].platform_offsets[i]
-      x = tile_x_convert_to_pygame (off_x)
-      y = tile_y_convert_to_pygame (off_y)
       n = end - off_x + 1
-      draw_platform (screen, x, y, n)
       for j in range (0, n):
          player.set_sandbox (off_x + j, off_y, 0x01)
-   # next draw ladders
+   # next ladders
    for i in range (0, game.levels[current_level].n_ladders):
       off_x, off_y, end = game.levels[current_level].ladder_offsets[i]
-      x = tile_x_convert_to_pygame (off_x)
-      y = tile_y_convert_to_pygame (off_y)
       n = end - off_y + 1
-      draw_ladder (screen, x, y, n)
       for j in range (0, n):
          if player.get_sandbox (off_x, off_y + j) == 0x01:
             player.set_sandbox (off_x, off_y + j, 0x03)
@@ -205,20 +197,28 @@ def draw_level (screen, game):
             player.set_sandbox (off_x, off_y + j, 0x02)
    # eggs please
    for i in range (0, game.levels[current_level].n_eggs):
-      if game.egg_state[i].present == True:
-         off_x, off_y = game.levels[current_level].egg_offsets[i]
-         x = tile_x_convert_to_pygame (off_x)
-         y = tile_y_convert_to_pygame (off_y)
-         draw_element (screen, egg, x, y, set_colour (egg.colour))
-         player.set_sandbox (off_x, off_y, 0x04 + i * 0x10)
+      off_x, off_y = game.levels[current_level].egg_offsets[i]
+      player.set_sandbox (off_x, off_y, 0x04 + i * 0x10)
    # add some seeds
    for i in range (0, game.levels[current_level].n_seeds):
-      if game.seed_state[i].present == True:
-         off_x, off_y = game.levels[current_level].seed_offsets[i]
-         x = tile_x_convert_to_pygame (off_x)
-         y = tile_y_convert_to_pygame (off_y)
+      off_x, off_y = game.levels[current_level].seed_offsets[i]
+      player.set_sandbox (off_x, off_y, 0x08 + i * 0x10);
+
+def draw_level (screen, game):
+   player = game.get_player_context ()
+   # draw game status at the top
+   draw_game_status (screen, game)
+   for key in player.sandbox:
+      x = tile_x_convert_to_pygame (key[0])
+      y = tile_y_convert_to_pygame (key[1])
+      if player.sandbox[key] == 0x1:
+         draw_element (screen, platform, x, y, set_colour (platform.colour))
+      elif player.sandbox[key] == 0x2 or player.sandbox[key] == 0x3:
+         draw_element (screen, ladder, x, y, set_colour (ladder.colour))
+      elif (player.sandbox[key] & 0x4) != 0x0:
+         draw_element (screen, egg, x, y, set_colour (egg.colour))
+      elif (player.sandbox[key] & 0x8) != 0x0:
          draw_element (screen, seed, x, y, set_colour (seed.colour))
-         player.set_sandbox (off_x, off_y, 0x08 + i * 0x10);
    # lastly draw cage
    x = x_convert_to_pygame (0x00)
    y = y_convert_to_pygame (0xae)
@@ -425,11 +425,11 @@ def move_duck (game):
    if game.ducks_state.element[index].sprite_state == duck_stoop_t.duck_stoop.value:
       if game.ducks_state.element[index].direction == direction_t.right.value:
          if player.get_sandbox (x + 1, y) != 0:
-            game.seed_state[player.get_sandbox (x + 1, y) >> 4].present = False
+            #game.seed_state[player.get_sandbox (x + 1, y) >> 4].present = False
             player.set_sandbox (x + 1, y, 0)
       else:
          if player.get_sandbox (x - 1, y) != 0:
-            game.seed_state[player.get_sandbox (x - 1, y) >> 4].present = False
+            #game.seed_state[player.get_sandbox (x - 1, y) >> 4].present = False
             player.set_sandbox (x - 1, y, 0)
    # is seed collection animation over ?
    if game.ducks_state.element[index].sprite_state == duck_stoop_t.duck_half_stoop_end.value:
@@ -1131,6 +1131,7 @@ def do_events (game, events, keys):
                   player.set_current_level (level)
                   player.clear_sandbox ()
                   init_game_play (game)
+                  init_level (game)
                if event.key == pygame.K_s and ke == pygame.K_s:
                   return False
    return True
@@ -1181,6 +1182,7 @@ def main ():
    player = player_context_t ()
    game = init_game_context (player)
    init_game_play (game)
+   init_level (game)
    while True:
       title_loop (screen, game)
       game_loop (screen, game)

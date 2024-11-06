@@ -60,16 +60,6 @@ class ducks_state_t:
       self.duck_to_move = 0
       self.n_ducks      = 0
 
-class seed_state_t:
-   def __init__ (self):
-      self.tile_offset = None
-      self.present     = False
-
-class egg_state_t:
-   def __init__ (self):
-      self.tile_offset = None
-      self.present     = False
-
 class chuck_state_t:
    def __init__ (self):
       self.el               = None

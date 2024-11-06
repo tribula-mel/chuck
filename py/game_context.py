@@ -70,24 +70,6 @@ def init_elevator_state (game):
       x, y = game.levels[level % 8].elevator_offset[i]
       game.elevator_state.append ([x, y])
 
-def init_seed_state (game):
-   level = game.player_context.current_level
-   game.seed_state.clear ()
-   for i in range (0, game.levels[level % 8].n_seeds):
-      seed_state = seed_state_t ()
-      seed_state.tile_offset = game.levels[level % 8].seed_offsets[i]
-      seed_state.present = True
-      game.seed_state.append (seed_state)
-
-def init_egg_state (game):
-   level = game.player_context.current_level
-   game.egg_state.clear ()
-   for i in range (0, game.levels[level % 8].n_eggs):
-      egg_state = egg_state_t ()
-      egg_state.tile_offset = game.levels[level % 8].egg_offsets[i]
-      egg_state.present = True
-      game.egg_state.append (egg_state)
-
 def init_chuck_state (game):
    el = element_state_t ()
    el.gfx_offset = [0x3c, 0x18]
@@ -117,8 +99,6 @@ def init_game_play (game):
    init_duck_state (game)
    init_flying_duck_state (game)
    init_elevator_state (game)
-   init_seed_state (game)
-   init_egg_state (game)
    init_chuck_state (game)
    game.set_random ()
 
@@ -128,8 +108,6 @@ def init_game_play (game):
    player.set_score (0)
    player.set_bonus (calc_level_bonus (level))
    player.set_time (calc_level_time (level))
-   #player.set_current_level (level)
-   #set_back_to_title (game, False)
 
 def init_game_next_level (game):
    player = game.player_context
@@ -138,8 +116,6 @@ def init_game_next_level (game):
    init_duck_state (game)
    init_flying_duck_state (game)
    init_elevator_state (game)
-   init_seed_state (game)
-   init_egg_state (game)
    init_chuck_state (game)
    init_random_number_state (game)
 
@@ -177,7 +153,6 @@ def init_game_restart_level (game):
 
 class game_context_t:
    def __init__ (self, player_context):
-      self.back_to_title = False
       self.next_level = False
       self.restart_level = False
       self.life_lost = False
@@ -189,14 +164,9 @@ class game_context_t:
       self.ducks_state = None
       self.flying_duck_state = None;
       self.elevator_state = None
-      self.seed_state = []
-      self.egg_state = []
       self.random = None
       self.time_off_ticks = None
       self.font = None
-      self.queue = None
-      self.timer = None
-      self.display = None
 
    def get_chuck_gfx_off (self):
       return self.chuck_state.el.gfx_offset
@@ -216,10 +186,6 @@ class game_context_t:
    def get_chuck_dv (self):
       return self.chuck_state.dv
 
-   def deinit_game_context (self):
-      al_destroy_timer (get_game_timer (self))
-      al_destroy_event_queue (get_game_queue (self))
-
    def set_random (self):
       self.random = [0x76, 0x76, 0x76, 0x76]
 
@@ -235,26 +201,6 @@ class game_context_t:
       self.font = font
    def get_game_font (self):
       return self.font
-
-   def set_game_queue (self, queue):
-      self.queue = queue
-   def get_game_queue (self):
-      return self.queue
-
-   def set_game_timer (self, timer):
-      self.timer = timer
-   def get_game_timer (self):
-      return self.timer
-
-   def set_game_display (self, display):
-      self.display = display
-   def get_game_display (self):
-      return self.display
-
-   def set_back_to_title (self, value):
-      self.back_to_title = value
-   def get_back_to_title (self):
-      return self.back_to_title
 
    def set_next_level (self, value):
       self.next_level = value
