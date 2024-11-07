@@ -109,48 +109,6 @@ def init_game_play (game):
    player.set_bonus (calc_level_bonus (level))
    player.set_time (calc_level_time (level))
 
-def init_game_next_level (game):
-   player = game.player_context
-   level = player.current_level
-
-   init_duck_state (game)
-   init_flying_duck_state (game)
-   init_elevator_state (game)
-   init_chuck_state (game)
-   init_random_number_state (game)
-
-   set_back_to_title (game, false)
-   set_next_level (game, false)
-   set_restart_level (game, false)
-   set_life_lost (game, false)
-   set_time_off (game, 0)
-
-   # init player status
-   set_bonus (player, calc_level_bonus (level))
-   set_time (player, calc_level_time (level))
-   set_n_eggs (player, 0)
-   # clear the sandbox
-   memset (player.sandbox, 0, OFFSET_X_MAX * OFFSET_Y_MAX)
-
-def init_game_restart_level (game):
-   player = game.player_context
-   level = player.current_level
-
-   init_duck_state (game)
-   init_flying_duck_state (game)
-   init_elevator_state (game)
-   init_chuck_state (game)
-   init_random_number_state (game)
-
-   set_back_to_title (game, false)
-   set_next_level (game, false)
-   set_restart_level (game, false)
-   set_life_lost (game, false)
-   set_time_off (game, 0)
-
-   # init player status
-   set_time (player, calc_level_time (level))
-
 class game_context_t:
    def __init__ (self, player_context):
       self.next_level = False
@@ -180,11 +138,6 @@ class game_context_t:
       return tile_off == off
    def get_chuck_tile_off (self):
       return self.chuck_state.el.tile_offset
-
-   def set_chuck_dv (self, off):
-      self.chuck_state.dv = off
-   def get_chuck_dv (self):
-      return self.chuck_state.dv
 
    def set_random (self):
       self.random = [0x76, 0x76, 0x76, 0x76]

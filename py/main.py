@@ -199,6 +199,7 @@ def init_level (game):
    for i in range (0, game.levels[current_level].n_eggs):
       off_x, off_y = game.levels[current_level].egg_offsets[i]
       player.set_sandbox (off_x, off_y, 0x04 + i * 0x10)
+   player.set_n_eggs (game.levels[current_level].n_eggs)
    # add some seeds
    for i in range (0, game.levels[current_level].n_seeds):
       off_x, off_y = game.levels[current_level].seed_offsets[i]
@@ -232,8 +233,7 @@ def chuck_collect_seed (game, x, y):
    # do other seed logic in here (in time)
    #    stop the level timer
    #    assign points to the score
-   #set_score (game->player_context,
-   #           get_score (game->player_context) + 50)
+   player.set_score (player.get_score () + 50)
    #set_time_off (game, 0x14) # original chuck $99f6
 
 def adjust_egg_score (level):
@@ -249,24 +249,30 @@ def chuck_collect_egg (game, x, y):
    player.set_sandbox (x, y, 0);
    # do other seed logic in here (in time)
    #    assign points to the score
-   #set_score (game->player_context,
-   #           get_score (game->player_context) +
-   #adjust_egg_score (game->player_context->current_level));
+   score = player.get_score () + adjust_egg_score (player.get_current_level ())
+   player.set_score (score)
    # move to next level when all eggs collected
-   #set_n_eggs (game->player_context, get_n_eggs (game->player_context) + 1);
-   #if (get_n_eggs (game->player_context) == MAX_N_EGGS)
-   #   set_next_level (game, true);
+   player.set_n_eggs (player.get_n_eggs () - 1)
+   if player.get_n_eggs () == 0:
+      game.set_next_level (True)
 
 def collectables (game):
    player = game.get_player_context ()
    x, y = game.get_chuck_tile_off ()
    rel = game.get_chuck_tile_rel_off ()
+   vstate = game.chuck_state.vertical_state
    # check if should collect a seed
    if (player.get_sandbox (x, y) & 0x8) and (rel[1] <= 0x2):
       chuck_collect_seed (game, x, y)
    # check if should collect an egg
    if (player.get_sandbox (x, y) & 0x4) and (rel[1] <= 0x2):
       chuck_collect_egg (game, x, y)
+   elif vstate == 0x2 and rel[1] < 0x4:
+      if player.get_sandbox (x, y) & 0x4:
+         chuck_collect_egg (game, x, y)
+      elif vstate == 0x2:
+         if player.get_sandbox (x, y + 1) & 0x4:
+            chuck_collect_egg (game, x, y + 1)
 
 def draw_ducks (screen, game):
    n_ducks = game.ducks_state.n_ducks
@@ -1182,6 +1188,7 @@ def do_events (game, events, keys):
 
 def game_loop (screen, game):
    global clock
+   player = game.get_player_context ()
    while True:
       keys = pygame.key.get_pressed ()
       if keys[pygame.K_RIGHT]:
@@ -1198,6 +1205,13 @@ def game_loop (screen, game):
                            [pygame.K_ESCAPE, pygame.K_t, pygame.K_n])
       if (running == False):
          break
+      if game.get_next_level () == True:
+         game.set_next_level (False)
+         level = player.get_current_level () + 1
+         player.set_current_level (level)
+         player.clear_sandbox ()
+         init_game_play (game)
+         init_level (game)
       screen.fill((0,0,0))
       draw_level (screen, game)
       draw_ducks (screen, game)
