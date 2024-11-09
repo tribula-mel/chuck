@@ -339,6 +339,23 @@ def draw_bonus (screen, game):
       x = x_convert_to_pygame (0x66 + 5*i)
       draw_digit (screen, x, y, number[i])
 
+def animate_score (screen, game):
+   player = game.get_player_context ()
+   score = player.get_score ()
+   bonus = player.get_bonus ()
+   if (bonus == 0):
+      return
+   while bonus != 0:
+      bonus -= 10
+      score += 10
+      player.set_bonus (bonus)
+      player.set_score (score)
+      draw_bonus (screen, game)
+      draw_score (screen, game)
+      # sound todo
+      pygame.time.wait (10)
+      pygame.display.flip ()
+
 def draw_chuck (screen, game):
    x, y = game.chuck_state.el.gfx_offset
    gfx_x = x_convert_to_pygame (x)
@@ -1070,7 +1087,7 @@ def chuck_collision_check (screen, game):
    duck_y = 0
    n_ducks = 0
    flyd_x, flyd_y = game.flying_duck_state.el.gfx_offset
-   chuck_x, chuck_y = game.get_chuck_gfx_off (game)
+   chuck_x, chuck_y = game.get_chuck_gfx_off ()
    # compare chuck y with $14
    if chuck_y < 0x14:
       # life lost
@@ -1085,7 +1102,7 @@ def chuck_collision_check (screen, game):
    if game.ducks_state.n_ducks != 0:
       n_ducks = game.ducks_state.n_ducks
       for i in range (0, n_ducks):
-         duck_x, duck_y = game.ducks_state.ducks_state[i].gfx_offset
+         duck_x, duck_y = game.ducks_state.element[i].gfx_offset
          if abs (duck_x - chuck_x + 0x5) < 0xb:
             if abs (duck_y - chuck_y + 0xd) < 0x1d:
                # life lost
@@ -1221,12 +1238,18 @@ def title_loop_keys (screen):
    pygame.display.flip ()
 
 def title_loop (screen, game):
+   func = title_loop_scores
+   counter = 180
    while do_events (game, [pygame.QUIT, pygame.KEYDOWN],
                     [pygame.K_ESCAPE, pygame.K_s]):
-      title_loop_scores (screen)
-      pygame.time.wait (3000)
-      title_loop_keys (screen)
-      pygame.time.wait (3000)
+      func (screen)
+      clock.tick (30) # limits FPS
+      counter -= 1
+      if counter == 90:
+         func = title_loop_keys
+      elif counter == 0:
+         func = title_loop_scores
+         counter = 180
    # show the ready message
    screen.fill((0,0,0))
    tf = render_font ("Get  ready", (0xff, 0xff, 0x80))
@@ -1262,12 +1285,13 @@ def do_events (game, events, keys):
                   return False
    return True
 
-def level_management (game):
+def level_management (screen, game):
    player = game.get_player_context ()
    if game.get_title_screen () == True:
       game.set_title_screen (False)
       return False
    elif game.get_next_level () == True:
+      animate_score (screen, game)
       game.set_next_level (False)
       level = player.get_current_level () + 1
       player.set_current_level (level)
@@ -1298,7 +1322,7 @@ def game_loop (screen, game):
                            [pygame.K_ESCAPE, pygame.K_t, pygame.K_n])
       if (running == False):
          break
-      running = level_management (game)
+      running = level_management (screen, game)
       if (running == False):
          break
       screen.fill((0,0,0))
@@ -1312,6 +1336,7 @@ def game_loop (screen, game):
       move_elevator (game)
       move_chuck (game)
       collectables (game)
+      #chuck_collision_check (screen, game)
       move_time (screen, game)
       game.chuck_state.dx = 0
       game.chuck_state.dy = 0
