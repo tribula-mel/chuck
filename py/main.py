@@ -1322,15 +1322,16 @@ def game_loop (screen, game):
                            [pygame.K_ESCAPE, pygame.K_t, pygame.K_n])
       if (running == False):
          break
-      running = level_management (screen, game)
-      if (running == False):
-         break
       screen.fill((0,0,0))
       draw_level (screen, game)
       draw_ducks (screen, game)
       draw_flying_duck (screen, game)
       draw_elevator (screen, game)
       draw_chuck (screen, game)
+      pygame.display.flip ()
+      running = level_management (screen, game)
+      if (running == False):
+         break
       move_duck (game)
       move_flying_duck (game)
       move_elevator (game)
@@ -1341,7 +1342,6 @@ def game_loop (screen, game):
       game.chuck_state.dx = 0
       game.chuck_state.dy = 0
       game.chuck_state.jump_key = 0
-      pygame.display.flip ()
       clock.tick (35) # limits FPS
 
 def main ():
