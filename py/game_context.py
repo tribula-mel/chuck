@@ -92,27 +92,56 @@ def init_game_context (player):
    game.add_level (level_classic_eight)
    return game
 
-def init_game_play (game):
+def init_level (game):
    player = game.get_player_context ()
-   level = player.get_current_level ()
+   current_level = player.get_current_level () % 8
+   # init platforms first
+   for i in range (0, game.levels[current_level].n_platforms):
+      off_y, off_x, end = game.levels[current_level].platform_offsets[i]
+      n = end - off_x + 1
+      for j in range (0, n):
+         player.set_sandbox (off_x + j, off_y, 0x01)
+   # next ladders
+   for i in range (0, game.levels[current_level].n_ladders):
+      off_x, off_y, end = game.levels[current_level].ladder_offsets[i]
+      n = end - off_y + 1
+      for j in range (0, n):
+         if player.get_sandbox (off_x, off_y + j) == 0x01:
+            player.set_sandbox (off_x, off_y + j, 0x03)
+         else:
+            player.set_sandbox (off_x, off_y + j, 0x02)
+   # eggs please
+   for i in range (0, game.levels[current_level].n_eggs):
+      off_x, off_y = game.levels[current_level].egg_offsets[i]
+      player.set_sandbox (off_x, off_y, 0x04 + i * 0x10)
+   player.set_n_eggs (game.levels[current_level].n_eggs)
+   # add some seeds
+   for i in range (0, game.levels[current_level].n_seeds):
+      off_x, off_y = game.levels[current_level].seed_offsets[i]
+      player.set_sandbox (off_x, off_y, 0x08 + i * 0x10);
 
+def init_game_play (game, reset_score = True, next_level = True):
+   player = game.get_player_context ()
+   if reset_score == True:
+      player.set_score (0)
+      player.set_lives (5)
+      player.set_current_level (0)
+   level = player.get_current_level ()
+   player.set_time (calc_level_time (level))
+   if next_level == True:
+      player.clear_sandbox ()
+      init_level (game)
+      player.set_bonus (calc_level_bonus (level))
    init_duck_state (game)
    init_flying_duck_state (game)
    init_elevator_state (game)
    init_chuck_state (game)
    game.set_random ()
 
-   # clear the sandbox
-
-   # init game status
-   player.set_score (0)
-   player.set_bonus (calc_level_bonus (level))
-   player.set_time (calc_level_time (level))
-
 class game_context_t:
    def __init__ (self, player_context):
       self.next_level = False
-      self.restart_level = False
+      self.title_screen = False
       self.life_lost = False
       self.number_of_players = 1
       self.current_player = 1
@@ -123,7 +152,7 @@ class game_context_t:
       self.flying_duck_state = None;
       self.elevator_state = None
       self.random = None
-      self.time_off_ticks = None
+      self.time_off_ticks = 0
       self.font = None
 
    def get_chuck_gfx_off (self):
@@ -160,10 +189,10 @@ class game_context_t:
    def get_next_level (self):
       return self.next_level
 
-   def set_restart_level (self, value):
-      self.restart_level = value
-   def get_restart_level (self):
-      return self.restart_level
+   def set_title_screen (self, value):
+      self.title_screen = value
+   def get_title_screen (self):
+      return self.title_screen
 
    def set_life_lost (self, value):
       self.life_lost = value

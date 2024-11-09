@@ -130,7 +130,7 @@ def draw_game_status (screen, game):
    number = []
    max_lives = 0
    player = game.get_player_context ()
-   # draw STATUS (chuck original $8d3b)
+   # draw SCORE (chuck original $8d3b)
    x = x_convert_to_pygame (0x0)
    y = y_convert_to_pygame (0xc7)
    draw_element (screen, score_txt, x, y, set_colour (score_txt.colour))
@@ -177,34 +177,6 @@ def draw_game_status (screen, game):
       draw_element (screen, life, x_convert_to_pygame (0x1b + 4*i),
                     y, set_colour (life.colour))
 
-def init_level (game):
-   player = game.get_player_context ()
-   current_level = player.get_current_level () % 8
-   # init platforms first
-   for i in range (0, game.levels[current_level].n_platforms):
-      off_y, off_x, end = game.levels[current_level].platform_offsets[i]
-      n = end - off_x + 1
-      for j in range (0, n):
-         player.set_sandbox (off_x + j, off_y, 0x01)
-   # next ladders
-   for i in range (0, game.levels[current_level].n_ladders):
-      off_x, off_y, end = game.levels[current_level].ladder_offsets[i]
-      n = end - off_y + 1
-      for j in range (0, n):
-         if player.get_sandbox (off_x, off_y + j) == 0x01:
-            player.set_sandbox (off_x, off_y + j, 0x03)
-         else:
-            player.set_sandbox (off_x, off_y + j, 0x02)
-   # eggs please
-   for i in range (0, game.levels[current_level].n_eggs):
-      off_x, off_y = game.levels[current_level].egg_offsets[i]
-      player.set_sandbox (off_x, off_y, 0x04 + i * 0x10)
-   player.set_n_eggs (game.levels[current_level].n_eggs)
-   # add some seeds
-   for i in range (0, game.levels[current_level].n_seeds):
-      off_x, off_y = game.levels[current_level].seed_offsets[i]
-      player.set_sandbox (off_x, off_y, 0x08 + i * 0x10);
-
 def draw_level (screen, game):
    player = game.get_player_context ()
    # draw game status at the top
@@ -234,7 +206,7 @@ def chuck_collect_seed (game, x, y):
    #    stop the level timer
    #    assign points to the score
    player.set_score (player.get_score () + 50)
-   #set_time_off (game, 0x14) # original chuck $99f6
+   game.set_time_off (0x14) # original chuck $99f6
 
 def adjust_egg_score (level):
    if level < 36:
@@ -586,15 +558,15 @@ def move_flying_duck (game):
          flyd_dx = -flyd_dx
       skip_flying (game, flyd_x, flyd_y, flyd_dx, flyd_dy, state)
    fd_wait -= 1
-wait = 2
 
+elevator_timeout = 2
 def move_elevator (game):
-   global wait
+   global elevator_timeout
    level = game.get_player_context ().get_current_level ()
    if game.levels[level % 8].elevator_offset == None:
       return
-   if wait == 0:
-      wait = 2
+   if elevator_timeout == 0:
+      elevator_timeout = 2
       x0, y0 = game.elevator_state[0]
       y0 += 2
       if y0 > 0xae:
@@ -605,7 +577,7 @@ def move_elevator (game):
          y1 = 4
       game.elevator_state[0] = [x0, y0]
       game.elevator_state[1] = [x1, y1]
-   wait -= 1
+   elevator_timeout -= 1
 
 # original chuck code $94ca
 def chuck_platform_collision (game, dx, dy):
@@ -1063,6 +1035,111 @@ def draw_chuckie_egg (screen):
    y = y_convert_to_pygame (0xc7)
    draw_element (screen, title_g, x, y, set_colour (title_g.colour))
 
+def draw_red_box (screen, game, x_left, x_right, y_top, y_bottom):
+   x = x_convert_to_pygame (0x8 * x_left)
+   y = y_convert_to_pygame (199 - (0x8 * y_top))
+   w = x_convert_to_pygame (0x8 * (x_right - x_left + 1))
+   h = y_convert_to_pygame (199 - 0x8 * (y_bottom - y_top + 1))
+   pygame.draw.rect(screen, (0xff, 0x00, 0x00), [x, y, w, h])
+
+def draw_out_of_time (screen, game):
+   # original window is (0x6, 0xd), (0x9, 0xd)
+   draw_red_box (screen, game, 0x6, 0xd, 0x9, 0xd)
+   tf = render_font ("Out of", (0xff, 0xff, 0xff))
+   screen.blit (tf, (x_convert_to_pygame (0x8 * 0x7), y_convert_to_pygame (199 - 0x8 * 0xa)))
+   tf = render_font ("Time !", (0xff, 0xff, 0xff))
+   screen.blit (tf, (x_convert_to_pygame (0x8 * 0x7), y_convert_to_pygame (199 - 0x8 * 0xc)))
+   pygame.display.flip ()
+   # 3 seconds timeout
+   pygame.time.wait (3000)
+
+def draw_game_over (screen, game):
+   # original window is (0x4, 0xf), (0x9, 0xd)
+   draw_red_box (screen, game, 0x4, 0xf, 0x9, 0xd)
+   tf = render_font ("GAME  OVER", (0xff, 0xff, 0xff))
+   screen.blit (tf, (x_convert_to_pygame (0x8 * 0x5), y_convert_to_pygame (199 - 0x8 * 0xa)))
+   tf = render_font ("Player 1", (0xff, 0xff, 0xff))
+   screen.blit (tf, (x_convert_to_pygame (0x8 * 0x6), y_convert_to_pygame (199 - 0x8 * 0xc)))
+   pygame.display.flip ()
+   # 3 seconds timeout
+   pygame.time.wait (3000)
+
+# original chuck $9bc6
+def chuck_collision_check (screen, game):
+   duck_x = 0
+   duck_y = 0
+   n_ducks = 0
+   flyd_x, flyd_y = game.flying_duck_state.el.gfx_offset
+   chuck_x, chuck_y = game.get_chuck_gfx_off (game)
+   # compare chuck y with $14
+   if chuck_y < 0x14:
+      # life lost
+      life_management (screen, game)
+      return
+   # compare chuck y with $b0
+   if chuck_y >= 0xb0:
+      # life lost
+      life_management (screen, game)
+      return
+   # if ducks present then check for collision
+   if game.ducks_state.n_ducks != 0:
+      n_ducks = game.ducks_state.n_ducks
+      for i in range (0, n_ducks):
+         duck_x, duck_y = game.ducks_state.ducks_state[i].gfx_offset
+         if abs (duck_x - chuck_x + 0x5) < 0xb:
+            if abs (duck_y - chuck_y + 0xd) < 0x1d:
+               # life lost
+               life_management (screen, game)
+               return
+   # if flying duck free check for collision
+   if flying_duck_free (game.player_context.current_level) == True:
+      flyd_x += 0x9
+      if abs (flyd_x - chuck_x) < 0xb:
+         flyd_y += 0x9
+         if abs (flyd_y - chuck_y) < 0x1d:
+            # life lost
+            life_management (screen, game)
+
+def life_management (screen, game):
+   player = game.get_player_context ()
+   # reduce number of lives for the current player
+   # if zero then game over
+   # move to the next player (if any)
+   lives = player.get_lives ()
+   #sound_generate_event (snd_handle, SOUND_EVENT_PLAY_LIFE_LOST, 0);
+   # wait for the tune to finish which is 2.15 sec
+   pygame.time.wait (2500)
+   if lives == 0:
+      # game over
+      draw_game_over (screen, game)
+      game.set_title_screen (True)
+   else:
+      player.set_lives (lives - 1)
+      game.set_life_lost (True)
+
+timeout = 4 # original chuck $96bb
+def move_time (screen, game):
+   global timeout
+   player = game.get_player_context ()
+   time = player.get_time ()
+   bonus = player.get_bonus ()
+   timeout = timeout - 1
+   if timeout == 0:
+      timeout = 4
+      ticks = game.get_time_off ()
+      if ticks == 0:
+         if time == 0:
+            draw_out_of_time (screen, game)
+            life_management (screen, game)
+            return
+         player.set_time (time - 1)
+         time_gfx = player.get_time_gfx ()
+         if (time_gfx[2] == 0x0) or (time_gfx[2] == 0x5):
+            if bonus != 0:
+               player.set_bonus (bonus - 10)
+      else:
+         game.set_time_off (ticks - 1)
+
 def render_font (text, colour):
    global font
    tf = font.render (text, True, colour)
@@ -1180,38 +1257,50 @@ def do_events (game, events, keys):
                   level = player.get_current_level () + 1
                   player.set_current_level (level)
                   player.clear_sandbox ()
-                  init_game_play (game)
-                  init_level (game)
+                  init_game_play (game, reset_score = False)
                if event.key == pygame.K_s and ke == pygame.K_s:
                   return False
    return True
+
+def level_management (game):
+   player = game.get_player_context ()
+   if game.get_title_screen () == True:
+      game.set_title_screen (False)
+      return False
+   elif game.get_next_level () == True:
+      game.set_next_level (False)
+      level = player.get_current_level () + 1
+      player.set_current_level (level)
+      init_game_play (game, reset_score = False)
+   elif game.get_life_lost () == True:
+      game.set_life_lost (False)
+      init_game_play (game, reset_score = False, next_level = False)
+
+def game_keys (game):
+   keys = pygame.key.get_pressed ()
+   if keys[pygame.K_RIGHT]:
+      game.chuck_state.dx += 1
+   if keys[pygame.K_LEFT]:
+      game.chuck_state.dx += -1
+   if keys[pygame.K_UP]:
+      game.chuck_state.dy += 2
+   if keys[pygame.K_DOWN]:
+      game.chuck_state.dy += -2
+   if keys[pygame.K_LCTRL]:
+      game.chuck_state.jump_key = 0x10
 
 def game_loop (screen, game):
    global clock
    player = game.get_player_context ()
    while True:
-      keys = pygame.key.get_pressed ()
-      if keys[pygame.K_RIGHT]:
-         game.chuck_state.dx += 1
-      if keys[pygame.K_LEFT]:
-         game.chuck_state.dx += -1
-      if keys[pygame.K_UP]:
-         game.chuck_state.dy += 2
-      if keys[pygame.K_DOWN]:
-         game.chuck_state.dy += -2
-      if keys[pygame.K_LCTRL]:
-         game.chuck_state.jump_key = 0x10
+      game_keys (game)
       running = do_events (game, [pygame.QUIT, pygame.KEYDOWN],
                            [pygame.K_ESCAPE, pygame.K_t, pygame.K_n])
       if (running == False):
          break
-      if game.get_next_level () == True:
-         game.set_next_level (False)
-         level = player.get_current_level () + 1
-         player.set_current_level (level)
-         player.clear_sandbox ()
-         init_game_play (game)
-         init_level (game)
+      running = level_management (game)
+      if (running == False):
+         break
       screen.fill((0,0,0))
       draw_level (screen, game)
       draw_ducks (screen, game)
@@ -1223,6 +1312,7 @@ def game_loop (screen, game):
       move_elevator (game)
       move_chuck (game)
       collectables (game)
+      move_time (screen, game)
       game.chuck_state.dx = 0
       game.chuck_state.dy = 0
       game.chuck_state.jump_key = 0
@@ -1235,15 +1325,13 @@ def main ():
    # pygame setup
    pygame.init ()
    screen = pygame.display.set_mode ((x_res * scale, y_res * scale))
-   screen.fill ((0,0,0))
    clock = pygame.time.Clock ()
    font = pygame.font.Font ('amstrad_cpc464.ttf', 8 * 2 * scale)
    player = player_context_t ()
    game = init_game_context (player)
-   init_game_play (game)
-   init_level (game)
    while True:
       title_loop (screen, game)
+      init_game_play (game)
       game_loop (screen, game)
    pygame.quit ()
 

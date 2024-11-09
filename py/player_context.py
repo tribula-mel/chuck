@@ -50,8 +50,8 @@ class player_context_t:
       # new life every 10000 points
       if (prior != self.gfx_score[1]):
          # max is 255 lives
-         if (get_lives (self) < 0xff):
-            set_lives (self, get_lives (self) + 1)
+         if (self.get_lives () < 0xff):
+            self.set_lives (self.get_lives () + 1)
 
    def get_time (self):
       return self.time
