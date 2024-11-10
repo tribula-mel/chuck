@@ -1103,17 +1103,17 @@ def chuck_collision_check (screen, game):
       n_ducks = game.ducks_state.n_ducks
       for i in range (0, n_ducks):
          duck_x, duck_y = game.ducks_state.element[i].gfx_offset
-         if abs (duck_x - chuck_x + 0x5) < 0xb:
-            if abs (duck_y - chuck_y + 0xd) < 0x1d:
+         if ((duck_x - chuck_x + 0x5) & 0xff) < 0xb:
+            if ((duck_y - chuck_y + 0xd) & 0xff) < 0x1d:
                # life lost
                life_management (screen, game)
                return
    # if flying duck free check for collision
    if flying_duck_free (game.player_context.current_level) == True:
       flyd_x += 0x9
-      if abs (flyd_x - chuck_x) < 0xb:
+      if ((flyd_x - chuck_x) & 0xff) < 0xb:
          flyd_y += 0x9
-         if abs (flyd_y - chuck_y) < 0x1d:
+         if ((flyd_y - chuck_y) & 0xff) < 0x1d:
             # life lost
             life_management (screen, game)
 
@@ -1328,6 +1328,7 @@ def game_loop (screen, game):
       draw_flying_duck (screen, game)
       draw_elevator (screen, game)
       draw_chuck (screen, game)
+      chuck_collision_check (screen, game)
       pygame.display.flip ()
       running = level_management (screen, game)
       if (running == False):
@@ -1337,7 +1338,6 @@ def game_loop (screen, game):
       move_elevator (game)
       move_chuck (game)
       collectables (game)
-      #chuck_collision_check (screen, game)
       move_time (screen, game)
       game.chuck_state.dx = 0
       game.chuck_state.dy = 0
