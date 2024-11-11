@@ -124,6 +124,17 @@ def draw_digit (screen, x, y, digit):
    elif digit == 9:
       draw_element (screen, digit_9, x, y, set_colour (digit_0.colour))
 
+def draw_lives (screen, game):
+   y = y_convert_to_pygame (0xbd)
+   player = game.get_player_context ()
+   max_lives = player.get_lives ()
+   # there is only space for eight life sprites
+   if max_lives > 8:
+      max_lives = 8
+   for i in range (0, max_lives):
+      draw_element (screen, life, x_convert_to_pygame (0x1b + 4*i),
+                    y, set_colour (life.colour))
+
 def draw_game_status (screen, game):
    x = 0
    y = 0
@@ -154,7 +165,6 @@ def draw_game_status (screen, game):
    for i in range (0, len (number)):
       x = x_convert_to_pygame (0x3b + 5*i)
       draw_digit (screen, x, y, number[i])
-
    draw_bonus (screen, game)
    # draw TIME (chuck original $8dda)
    x = x_convert_to_pygame (0x7e)
@@ -167,15 +177,7 @@ def draw_game_status (screen, game):
    for i in range (0, 3):
       x = x_convert_to_pygame (0x91 + 5*i)
       draw_digit (screen, x, y, number[i])
-   # draw lives
-   y = y_convert_to_pygame (0xbd)
-   max_lives = player.get_lives ()
-   # there is only space for eight life sprites
-   if max_lives > 8:
-      max_lives = 8
-   for i in range (0, max_lives):
-      draw_element (screen, life, x_convert_to_pygame (0x1b + 4*i),
-                    y, set_colour (life.colour))
+   draw_lives (screen, game)
 
 def draw_level (screen, game):
    player = game.get_player_context ()
@@ -352,6 +354,7 @@ def animate_score (screen, game):
       player.set_score (score)
       draw_bonus (screen, game)
       draw_score (screen, game)
+      draw_lives (screen, game)
       # sound todo
       pygame.time.wait (10)
       pygame.display.flip ()
