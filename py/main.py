@@ -1237,6 +1237,18 @@ def title_loop_keys (screen):
    screen.blit (tf, (x_convert_to_pygame (0x18), y_convert_to_pygame (0x8)))
    pygame.display.flip ()
 
+def get_ready_player (screen):
+   # show the ready message
+   screen.fill((0,0,0))
+   tf = render_font ("Get  ready", (0xff, 0xff, 0x80))
+   screen.blit (tf, (x_convert_to_pygame (0x8 * 0x5),
+                     y_convert_to_pygame (199 - 0x8 * 0xa)))
+   tf = render_font ("Player 1", (0x00, 0xff, 0xff))
+   screen.blit (tf, (x_convert_to_pygame (0x8 * 0x6),
+                     y_convert_to_pygame (199 - 0x8 * 0xc)))
+   pygame.display.flip ()
+   pygame.time.wait (1000)
+
 def title_loop (screen, game):
    func = title_loop_scores
    counter = 180
@@ -1250,16 +1262,7 @@ def title_loop (screen, game):
       elif counter == 0:
          func = title_loop_scores
          counter = 180
-   # show the ready message
-   screen.fill((0,0,0))
-   tf = render_font ("Get  ready", (0xff, 0xff, 0x80))
-   screen.blit (tf, (x_convert_to_pygame (0x8 * 0x5),
-                     y_convert_to_pygame (199 - 0x8 * 0xa)))
-   tf = render_font ("Player 1", (0x00, 0xff, 0xff))
-   screen.blit (tf, (x_convert_to_pygame (0x8 * 0x6),
-                     y_convert_to_pygame (199 - 0x8 * 0xc)))
-   pygame.display.flip ()
-   pygame.time.wait (1000)
+   get_ready_player (screen)
 
 def do_events (game, events, keys):
    player = game.get_player_context ()
@@ -1299,6 +1302,7 @@ def level_management (screen, game):
    elif game.get_life_lost () == True:
       game.set_life_lost (False)
       init_game_play (game, reset_score = False, next_level = False)
+      get_ready_player (screen)
 
 def game_keys (game):
    keys = pygame.key.get_pressed ()
