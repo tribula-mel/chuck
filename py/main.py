@@ -92,6 +92,52 @@ def draw_element (screen, element, x, y, colour):
       x = x_backup
       y += DOTS_PER_PIXEL_Y * scale
 
+def manage_highscore (screen, score):
+   global high_score
+   index = 0
+   name = ''
+   pos = 0
+   for hs in high_score:
+      if int (hs[0]) < score:
+         # we have high score
+         index = high_score.index (hs)
+         high_score.pop ()
+         high_score.insert (index, (str (score), name))
+         y = 0x88 - index * 0xc
+         screen.fill ((0,0,0))
+         tf = render_font ("HIGH  SCORES", (0xff, 0xff, 0xff))
+         screen.blit (tf, (x_convert_to_pygame (0x20), y_convert_to_pygame (0x98)))
+         tf = render_font ("ENTER YOUR NAME", (0xff, 0xff, 0x80))
+         screen.blit (tf, (x_convert_to_pygame (0x10), y_convert_to_pygame (0x10)))
+         tf = render_font ("Player  1", (0xff, 0xff, 0x80))
+         screen.blit (tf, (x_convert_to_pygame (0x28), y_convert_to_pygame (0x8)))
+         draw_high_score (screen)
+         tf = render_font (">", (0xff, 0xff, 0xff))
+         screen.blit (tf, (x_convert_to_pygame (0x58), y_convert_to_pygame (y)))
+         pygame.display.flip ()
+         while True:
+            event = pygame.event.wait ()
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+               high_score.remove ((str (score), ''))
+               high_score.insert (index, (str (score), name))
+               return
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_BACKSPACE:
+               if pos >= 0:
+                  tf = render_font (name, (0x00, 0x00, 0x00))
+                  tf.fill ((0,0,0))
+                  screen.blit (tf, (x_convert_to_pygame (0x60 + index * 0x8), y_convert_to_pygame (y)))
+                  if pos > 0:
+                     pos -= 1
+                  name = name [0:pos]
+            elif event.type == pygame.KEYDOWN:
+               if pos < 8:
+                  name += event.unicode
+                  pos += 1
+            tf = render_font (name, (0x00, 0xff, 0xff))
+            screen.blit (tf, (x_convert_to_pygame (0x60), y_convert_to_pygame (y)))
+            pygame.display.flip ()
+            clock.tick (30)
+
 def draw_platform (screen, x, y, w):
    for i in range (0, w):
       draw_element (screen, platform, x, y, set_colour (platform.colour))
@@ -212,7 +258,7 @@ def chuck_collect_seed (game, x, y):
 
 def adjust_egg_score (level):
    if level < 36:
-      return 100 + 100 * (level / 4)
+      return 100 + 100 * int (level / 4)
    else:
       return 1000
 
@@ -1132,6 +1178,7 @@ def life_management (screen, game):
    if lives == 0:
       # game over
       draw_game_over (screen, game)
+      manage_highscore (screen, player.score)
       game.set_title_screen (True)
    else:
       player.set_lives (lives - 1)
@@ -1172,7 +1219,7 @@ def draw_high_score (screen):
    y = 0x88 # original chuck $a085
    leading_zero = True
    digit = [' 0', ' 1', ' 2', ' 3', ' 4', ' 5', ' 6', ' 7', ' 8', ' 9', '10']
-   for i in range (0, 10):
+   for i in range (0, len (high_score)):
       # position
       tf = render_font (digit[i + 1], (0x00, 0xff, 0xff))
       screen.blit (tf, (x_convert_to_pygame (0x0), y_convert_to_pygame (y)))
@@ -1186,7 +1233,7 @@ def draw_high_score (screen):
       y -= 0xc
 
 def title_loop_scores (screen):
-   screen.fill((0,0,0))
+   screen.fill ((0,0,0))
    # draw chuckie egg letters
    draw_chuckie_egg (screen)
    # original game prints the text at location (0x5, 0x7)
@@ -1209,7 +1256,7 @@ def title_loop_scores (screen):
    pygame.display.flip ()
 
 def title_loop_keys (screen):
-   screen.fill((0,0,0))
+   screen.fill ((0,0,0))
    # draw chuckie egg letters
    draw_chuckie_egg (screen)
    tf = render_font ('K E Y S', (0x00, 0xff, 0xff))
@@ -1242,7 +1289,7 @@ def title_loop_keys (screen):
 
 def get_ready_player (screen):
    # show the ready message
-   screen.fill((0,0,0))
+   screen.fill ((0,0,0))
    tf = render_font ("Get  ready", (0xff, 0xff, 0x80))
    screen.blit (tf, (x_convert_to_pygame (0x8 * 0x5),
                      y_convert_to_pygame (199 - 0x8 * 0xa)))
@@ -1329,7 +1376,7 @@ def game_loop (screen, game):
                            [pygame.K_ESCAPE, pygame.K_t, pygame.K_n])
       if (running == False):
          break
-      screen.fill((0,0,0))
+      screen.fill ((0,0,0))
       draw_level (screen, game)
       draw_ducks (screen, game)
       draw_flying_duck (screen, game)
