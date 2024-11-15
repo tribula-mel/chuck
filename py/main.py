@@ -1380,10 +1380,10 @@ def game_loop (screen, game):
       draw_level (screen, game)
       draw_ducks (screen, game)
       draw_flying_duck (screen, game)
-      draw_elevator (screen, game)
       draw_chuck (screen, game)
-      chuck_collision_check (screen, game)
+      draw_elevator (screen, game)
       pygame.display.flip ()
+      chuck_collision_check (screen, game)
       running = level_management (screen, game)
       if (running == False):
          break
