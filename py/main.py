@@ -248,6 +248,7 @@ def draw_level (screen, game):
 def chuck_collect_seed (game, x, y):
    player = game.get_player_context ()
    # play sound
+   game.sounds.seed.play ()
    # clear a seed
    player.set_sandbox (x, y, 0);
    # do other seed logic in here (in time)
@@ -265,6 +266,7 @@ def adjust_egg_score (level):
 def chuck_collect_egg (game, x, y):
    player = game.get_player_context ()
    # play sound
+   game.sounds.egg.play ()
    # clear an egg
    player.set_sandbox (x, y, 0);
    # do other seed logic in here (in time)
@@ -393,6 +395,7 @@ def animate_score (screen, game):
    bonus = player.get_bonus ()
    if (bonus == 0):
       return
+   game.sounds.score.play ()
    while bonus != 0:
       bonus -= 10
       score += 10
@@ -404,6 +407,7 @@ def animate_score (screen, game):
       # sound todo
       pygame.time.wait (10)
       pygame.display.flip ()
+   pygame.mixer.stop()
 
 def draw_chuck (screen, game):
    x, y = game.chuck_state.el.gfx_offset
@@ -760,6 +764,8 @@ def do_left_right (game):
       game.chuck_state.dx = 0
    if game.chuck_state.dx != 0:
       game.chuck_state.offc = game.chuck_state.dx
+   # sound
+   #game.sounds.left_right.play ()
    do_set_chuck_state (game)
 
 # original chuck code $9215
@@ -957,6 +963,8 @@ def __do_chuck_ladder (game):
          game.chuck_state.dy = 0
    game.chuck_state.offc = 0
    do_set_chuck_state (game)
+   # play sound
+   # game.sounds.vertical.play ()
 
 # original chuck code $9293
 def do_chuck_ladder (game):
@@ -1172,7 +1180,7 @@ def life_management (screen, game):
    # if zero then game over
    # move to the next player (if any)
    lives = player.get_lives ()
-   #sound_generate_event (snd_handle, SOUND_EVENT_PLAY_LIFE_LOST, 0);
+   game.sounds.life_lost.play ()
    # wait for the tune to finish which is 2.15 sec
    pygame.time.wait (2500)
    if lives == 0:
@@ -1398,16 +1406,28 @@ def game_loop (screen, game):
       game.chuck_state.jump_key = 0
       clock.tick (35) # limits FPS
 
+def init_sounds (game):
+   snds = sounds ()
+   snds.left_right = pygame.mixer.Sound ('left_right.ogg')
+   snds.vertical = pygame.mixer.Sound ('vertical.ogg')
+   snds.life_lost = pygame.mixer.Sound ('life_lost.ogg')
+   snds.egg = pygame.mixer.Sound ('egg.ogg')
+   snds.seed = pygame.mixer.Sound ('seed.ogg')
+   snds.score = pygame.mixer.Sound ('score.ogg')
+   game.sounds = snds
+
 def main ():
    global clock
    global font
    # pygame setup
    pygame.init ()
+   pygame.mixer.init()
    screen = pygame.display.set_mode ((x_res * scale, y_res * scale))
    clock = pygame.time.Clock ()
    font = pygame.font.Font ('amstrad_cpc464.ttf', 8 * 2 * scale)
    player = player_context_t ()
    game = init_game_context (player)
+   init_sounds (game)
    while True:
       title_loop (screen, game)
       init_game_play (game)

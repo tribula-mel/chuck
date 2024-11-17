@@ -138,6 +138,15 @@ def init_game_play (game, reset_score = True, next_level = True):
    init_chuck_state (game)
    game.set_random ()
 
+class sounds:
+   def __init__ (self):
+      self.left_tight = None
+      self.vertical = None
+      self.life_lost = None
+      self.egg = None
+      self.seed = None
+      self.score = None
+
 class game_context_t:
    def __init__ (self, player_context):
       self.next_level = False
@@ -154,6 +163,7 @@ class game_context_t:
       self.random = None
       self.time_off_ticks = 0
       self.font = None
+      self.sounds = None
 
    def get_chuck_gfx_off (self):
       return self.chuck_state.el.gfx_offset
