@@ -1,3 +1,14 @@
-+ chuck movement: up/down rework          [ ]
-+ 4 players support                       [ ]
-+ title screen                            [p]
+-| high priority
+   + fix top jump life loss                  [ ]
+   + fix chuck sprite status                 [ ]
+   + fix jump through platform on 8th level  [ ]
+   + fix out of moves duck issue             [ ]
+   + add get ready msg after life loss       [ ]
+
+-| low priority
+   + chuck movement: up/down rework          [ ]
+   + 4 players support                       [ ]
+   + title screen                            [p]
+
+-| key
+   p = partial
