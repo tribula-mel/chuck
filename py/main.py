@@ -16,7 +16,7 @@ duck_half_stoop_end   = 0x10
 
 N_PADDLES = 2
 
-scale = 2
+scale = 1
 
 DOTS_PER_PIXEL_X = 4
 DOTS_PER_PIXEL_Y = 2
@@ -764,8 +764,7 @@ def do_left_right (game):
       game.chuck_state.dx = 0
    if game.chuck_state.dx != 0:
       game.chuck_state.offc = game.chuck_state.dx
-   # sound
-   #game.sounds.left_right.play ()
+      game.sounds.left_right.play ()
    do_set_chuck_state (game)
 
 # original chuck code $9215
@@ -962,9 +961,9 @@ def __do_chuck_ladder (game):
       if (player.get_sandbox (tile_x, tile_y - 1) & 0x2) == 0:
          game.chuck_state.dy = 0
    game.chuck_state.offc = 0
+   if game.chuck_state.dy != 0:
+      game.sounds.vertical.play ()
    do_set_chuck_state (game)
-   # play sound
-   # game.sounds.vertical.play ()
 
 # original chuck code $9293
 def do_chuck_ladder (game):
